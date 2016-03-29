@@ -4,3 +4,5 @@
 
 #include "Engine.h"
 
+#include "AssertionMacros.h"
+DECLARE_LOG_CATEGORY_EXTERN(LogSGame, Display, All);

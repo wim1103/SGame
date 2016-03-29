@@ -79,4 +79,7 @@ public:
 	/** Get a grid address relative to another grid address. Offset between addresses is measured in tiles. */
 	UFUNCTION(BlueprintCallable, Category = Tile)
 	bool GetGridAddressWithOffset(int32 InitialGridAddress, int32 XOffset, int32 YOffset, int32 &ReturnGridAddress);
+
+	/** Calculate if the two address are neighbor, the link is 8 directions*/
+	bool AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB);
 };

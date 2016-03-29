@@ -152,3 +152,30 @@ bool ASGGrid::GetGridAddressWithOffset(int32 InitialGridAddress, int32 XOffset, 
 	return true;
 }
 
+bool ASGGrid::AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB)
+{
+	if (GridAddressA == GridAddressB)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("Pass in the same addresses"));
+		return false;
+	}
+	else if ((FMath::Min(GridAddressA, GridAddressB) < 0) || (FMath::Max(GridAddressA, GridAddressB) >= (GridWidth * GridHeight)))
+	{
+		UE_LOG(LogSGame, Warning, TEXT("Pass in the invalid addresses"));
+		return false;
+	}
+
+	auto AddressARow = GridAddressA / GridWidth;
+	auto AddressAColumn = GridAddressA % GridWidth;
+	auto AddressBRow = GridAddressB / GridWidth;
+	auto AddressBColumn = GridAddressB % GridWidth;
+
+	// The two address are neighbors only if there row and column distance less than 1
+	if (FMath::Abs(AddressARow - AddressBRow) <= 1 && FMath::Abs(AddressAColumn - AddressBColumn) <= 1)
+	{
+		return true;
+	}
+
+	return false;
+}
+
