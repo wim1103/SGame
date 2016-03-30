@@ -32,7 +32,8 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	// Update Link Line
+	/** Update Link Line */
+	UFUNCTION(BlueprintCallable, Category = Update)
 	bool UpdateLinkLine();
 
 	// AActor interface
@@ -48,6 +49,9 @@ public:
 	/** Static line points. Test only, for static link lines.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int32> StaticLinePoints;
+
+	/** Link line points */
+	TArray<int32> LinkLinePoints;
 
 protected:
 	// The sprite asset for link corners 45 degree
@@ -66,6 +70,13 @@ protected:
 	UPROPERTY(Category = Sprite, EditAnywhere, BlueprintReadOnly, meta = (DisplayThumbnail = "true"))
 	UPaperSprite* BodySprite;
 
+	/** Body sprites for render the link line body lines and coners */
+	UPROPERTY(Category = Sprite, VisibleAnywhere, BlueprintReadOnly)
+	TArray<UPaperSpriteComponent*> BodySpriteRenderComponentsArray;
+
+	/** Update link line using the line points */
+	bool UpdateLinkLine(const TArray<int32>& LinePoints);
+
 private:
 	/** Head sprite for render the link line head */
 	UPROPERTY(Category = Sprite, VisibleAnywhere, BlueprintReadOnly, meta = (ExposeFunctionCategories = "Sprite,Rendering,Physics,Components|Sprite", AllowPrivateAccess = "true"))
@@ -74,10 +85,6 @@ private:
 	/** Tail sprite for render the link line tail */
 	UPROPERTY(Category = Sprite, VisibleAnywhere, BlueprintReadOnly, meta = (ExposeFunctionCategories = "Sprite,Rendering,Physics,Components|Sprite", AllowPrivateAccess = "true"))
 	UPaperSpriteComponent* TailSpriteRenderComponent;
-
-	/** Body sprites for render the link line body lines and coners */
-	UPROPERTY(Category = Sprite, VisibleAnywhere, BlueprintReadOnly, meta = (ExposeFunctionCategories = "Sprite,Rendering,Physics,Components|Sprite", AllowPrivateAccess = "true"))
-	TArray<UPaperSpriteComponent*> BodySpriteRenderComponentsArray;
 
 	UPaperSpriteComponent* CreateLineCorner(int inAngle, int inLastAngle);
 	UPaperSpriteComponent* CreateLineSegment(int inAngle, bool inIsHead, bool inIsTail);

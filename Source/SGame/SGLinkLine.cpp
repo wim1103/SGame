@@ -2,7 +2,7 @@
 
 #include "SGame.h"
 #include "SGLinkLine.h"
-#include "UObjectGlobals.h"
+#include "Math/UnrealMathUtility.h"
 
 // Sets default values
 ASGLinkLine::ASGLinkLine()
@@ -26,7 +26,6 @@ ASGLinkLine::ASGLinkLine()
 void ASGLinkLine::BeginPlay()
 {
 	Super::BeginPlay();
-
 	if (bIsStaticLine == true)
 	{
 	}
@@ -41,143 +40,177 @@ void ASGLinkLine::Tick( float DeltaTime )
 
 bool ASGLinkLine::UpdateLinkLine()
 {
-	return true;
-	/*
 	if (bIsStaticLine == true)
 	{
 		if (StaticLinePoints.Num() < 2)
 		{
-			return true;
+			return false;
 		}
 
-		// Clean the body sprites
-		for (int32 i = 0; i < BodySpriteRenderComponentsArray.Num(); i++)
-		{
-			checkSlow(BodySpriteRenderComponentsArray[i] != nullptr);
-			// Detach the component
-			BodySpriteRenderComponentsArray[i]->DetachFromParent();
-			BodySpriteRenderComponentsArray[i]->UnregisterComponent();
-		}
-		BodySpriteRenderComponentsArray.Empty();
-
-		// Iterate all points, and generate line between the two points
-		ELinkDirection LastDirection = ELD_Begin;
-		for (int32 i = 1; i < StaticLinePoints.Num(); i++)
-		{
-			auto CurrentTileID = StaticLinePoints[i];
-			auto LastTileID = StaticLinePoints[i - 1];
-
-			FVector CurrentTileCoords, LastTileCorrds;
-			CurrentTileCoords.X = CurrentTileID / 6;
-			CurrentTileCoords.Y = CurrentTileID % 6;
-			LastTileCorrds.X = LastTileID / 6;
-			LastTileCorrds.Y = LastTileID % 6;
-
-			UPaperSpriteComponent* NewLineSegmentSprite = nullptr;
-			
-			// Caculate the new line body sprite rotation angle
-			int32 NewSpriteAngle = 0;
-			if (CurrentTileCoords.X - LastTileCorrds.X == 1)
-			{
-				if (CurrentTileCoords.Y == LastTileCorrds.Y)
-				{
-					NewSpriteAngle = 0;
-				}
-				else if (CurrentTileCoords.Y - LastTileCorrds.Y == 1)
-				{
-					NewSpriteAngle = 45;
-				}
-				else if (CurrentTileCoords.Y - LastTileCorrds.Y == -1)
-				{
-					NewSpriteAngle = -45;
-				}
-			}
-			else if (CurrentTileCoords.X - LastTileCorrds.X == 0)
-			{
-				if (CurrentTileCoords.Y - LastTileCorrds.Y == 1)
-				{
-					NewSpriteAngle = 90;
-				}
-				if (CurrentTileCoords.Y - LastTileCorrds.Y == -1)
-				{
-					NewSpriteAngle = -90;
-				}
-			}
-			else if (CurrentTileCoords.X - LastTileCorrds.X == -1)
-			{
-				if (CurrentTileCoords.Y == LastTileCorrds.Y)
-				{
-					NewSpriteAngle = 180;
-				}
-				else if (CurrentTileCoords.Y - LastTileCorrds.Y == 1)
-				{
-					NewSpriteAngle = 135;
-				}
-				else if (CurrentTileCoords.Y - LastTileCorrds.Y == -1)
-				{
-					NewSpriteAngle = 225;
-				}
-			}
-
-			// Create line corners
-			if (i >= 2)
-			{
-				// Check if the two line in the same direction (positive or negative), if so no corner needed
-				if ((NewSpriteAngle + 360 - m_LastAngle) % 180 != 0)
-				{
-					UPaperSpriteComponent* NewLineCornerSprite = nullptr;
-					NewLineCornerSprite = CreateLineCorner(NewSpriteAngle, m_LastAngle);
-
-					if (NewLineCornerSprite == nullptr)
-					{
-						UE_LOG(LogSGame, Warning, TEXT("New corner sprite create failed."));
-						return false;
-					}
-
-					// 将Position设置到上一个的中心
-					FVector LinePosition;
-					LinePosition.X = LastTileCorrds.X * 106 + 106 / 2;
-					LinePosition.Z = (6 - LastTileCorrds.Y - 0.5f) * 106;
-					NewLineCornerSprite->SetRelativeLocation(LinePosition);
-				}
-			}
-
-			// 重定位线段头
-			if (i == stPath.GetLength() - 1)
-			{
-				// 将Position设置到上一个的中心
-				CCPoint LinePosition;
-				LinePosition.x = CurrentTileCoords.X * GRID_COLUMN_SIZE + GRID_COLUMN_SIZE / 2;
-				LinePosition.y = (MAX_FIELD_ROW_NUM - CurrentTileCoords.Y - 0.5f) * GRID_ROW_SIZE;
-				m_pArrowHead->setPosition(LinePosition);
-				m_pArrowHead->setRotation(NewSpriteAngle);
-			}
-
-			// 创建线段
-			NewLineSegmentSprite = CreateLineSegment(NewSpriteAngle, i == stPath.GetLength() - 1, i == 1);
-			if (NewLineSegmentSprite == NULL)
-			{
-				LOG_ERR("New sprite create failed.");
-				return false;
-			}
-
-			// 将Position设置到上一个的中心
-			CCPoint LinePosition;
-			LinePosition.x = LastTileCorrds.X * GRID_COLUMN_SIZE + GRID_COLUMN_SIZE / 2;
-			LinePosition.y = (MAX_FIELD_ROW_NUM - LastTileCorrds.Y - 0.5f) * GRID_ROW_SIZE;
-			NewLineSegmentSprite->setPosition(LinePosition);
-
-			// 添加到Batch Sprite里
-			m_pSpriteBatchNode->addChild(NewLineSegmentSprite, 100);
-
-			// 记录当前的Angle
-			m_LastAngle = NewSpriteAngle;
-		}
+		return UpdateLinkLine(StaticLinePoints);
 	}
-	*/
+
+	if (LinkLinePoints.Num() < 2)
+	{
+		return false;
+	}
+
+	return UpdateLinkLine(LinkLinePoints);
 }
 
+bool ASGLinkLine::UpdateLinkLine(const TArray<int32>& LinePoints)
+{
+	// Clean the body sprites
+	for (int32 i = 0; i < BodySpriteRenderComponentsArray.Num(); i++)
+	{
+		checkSlow(BodySpriteRenderComponentsArray[i] != nullptr);
+		// Detach the component
+		BodySpriteRenderComponentsArray[i]->DetachFromParent();
+		BodySpriteRenderComponentsArray[i]->UnregisterComponent();
+	}
+	BodySpriteRenderComponentsArray.Empty();
 
+	// The link line should scale to 1.5 to fit the grid
+	RootComponent->SetWorldScale3D(FVector(1.5f, 1.5f, 1.5f));
+
+	// Iterate all points, and generate line between the two points
+	ELinkDirection LastDirection = ELD_Begin;
+	for (int32 i = 0; i < StaticLinePoints.Num(); i++)
+	{
+		// For the first point, we just mark down the initial position
+		FVector InitialTileCorrds;
+		if (i == 0)
+		{
+			InitialTileCorrds.X = StaticLinePoints[0] % 6;
+			InitialTileCorrds.Y = StaticLinePoints[0] / 6;
+
+			// Set the link line at the head position
+			FVector LinkLineWorldLocation = RootComponent->GetComponentLocation();
+			LinkLineWorldLocation.X = (InitialTileCorrds.X + 0.5f - 3) * 106.0f;
+			LinkLineWorldLocation.Z = (InitialTileCorrds.Y + 0.5f - 3) * 106.0f;
+			RootComponent->SetWorldLocation(LinkLineWorldLocation);
+
+			// Continue from points 1
+			continue;
+		}
+
+		auto CurrentTileID = StaticLinePoints[i];
+		auto LastTileID = StaticLinePoints[i - 1];
+		FVector CurrentTileCoords, LastTileCorrds;
+		CurrentTileCoords.X = CurrentTileID % 6;
+		CurrentTileCoords.Y = CurrentTileID / 6;
+		LastTileCorrds.X = LastTileID % 6;
+		LastTileCorrds.Y = LastTileID / 6;
+
+		UPaperSpriteComponent* NewLineSegmentSprite = nullptr;
+
+		// Caculate the new line body sprite rotation angle
+		int32 NewSpriteAngle = 0;
+		if (CurrentTileCoords.X - LastTileCorrds.X == 1)
+		{
+			if (CurrentTileCoords.Y == LastTileCorrds.Y)
+			{
+				NewSpriteAngle = 0;
+			}
+			else if (CurrentTileCoords.Y - LastTileCorrds.Y == 1)
+			{
+				NewSpriteAngle = 45;
+			}
+			else if (CurrentTileCoords.Y - LastTileCorrds.Y == -1)
+			{
+				NewSpriteAngle = -45;
+			}
+		}
+		else if (CurrentTileCoords.X - LastTileCorrds.X == 0)
+		{
+			if (CurrentTileCoords.Y - LastTileCorrds.Y == 1)
+			{
+				NewSpriteAngle = 90;
+			}
+			if (CurrentTileCoords.Y - LastTileCorrds.Y == -1)
+			{
+				NewSpriteAngle = -90;
+			}
+		}
+		else if (CurrentTileCoords.X - LastTileCorrds.X == -1)
+		{
+			if (CurrentTileCoords.Y == LastTileCorrds.Y)
+			{
+				NewSpriteAngle = 180;
+			}
+			else if (CurrentTileCoords.Y - LastTileCorrds.Y == 1)
+			{
+				NewSpriteAngle = 135;
+			}
+			else if (CurrentTileCoords.Y - LastTileCorrds.Y == -1)
+			{
+				NewSpriteAngle = 225;
+			}
+		}
+
+		// Create line corners
+		if (i >= 2)
+		{
+			// Check if the two line in the same direction (positive or negative), if so no corner needed
+			if ((NewSpriteAngle + 360 - m_LastAngle) % 180 != 0)
+			{
+				UPaperSpriteComponent* NewLineCornerSprite = nullptr;
+				NewLineCornerSprite = CreateLineCorner(NewSpriteAngle, m_LastAngle);
+				if (NewLineCornerSprite == nullptr)
+				{
+					UE_LOG(LogSGame, Warning, TEXT("New corner sprite create failed."));
+					return false;
+				}
+
+				// Set to the last point location
+				FVector CornerPosition;
+				CornerPosition.X = (LastTileCorrds.X - InitialTileCorrds.X) * 70;
+
+				// We want the corner sort infront of lines to 
+				// make the intersection more beautiful
+				CornerPosition.Y = 10;
+				CornerPosition.Z = (LastTileCorrds.Y - InitialTileCorrds.Y) * 70;
+				NewLineCornerSprite->SetRelativeLocation(CornerPosition);
+			}
+		}
+
+		// For the line head
+		if (i == StaticLinePoints.Num() - 1)
+		{
+			// Set to the current point location
+			FVector HeadPosition;
+			HeadPosition.X = (CurrentTileCoords.X - InitialTileCorrds.X) * 70;
+			// We want the head sort infront of lines to 
+			// make the intersection more beautiful
+			HeadPosition.Y = 10;
+			HeadPosition.Z = (CurrentTileCoords.Y - InitialTileCorrds.Y) * 70;
+			HeadSpriteRenderComponent->SetRelativeLocation(HeadPosition);
+
+			// Set the head rotation
+			HeadSpriteRenderComponent->SetRelativeRotation(FRotator(NewSpriteAngle, 0, 0));
+		}
+
+		// Create the line segment
+		NewLineSegmentSprite = CreateLineSegment(NewSpriteAngle, i == StaticLinePoints.Num() - 1, i == 1);
+		if (NewLineSegmentSprite == NULL)
+		{
+			UE_LOG(LogSGame, Warning, TEXT("New sprite create failed."));
+			return false;
+		}
+
+		// Set to the last point location
+		FVector LineSegmentPosition;
+		LineSegmentPosition.X = (LastTileCorrds.X - InitialTileCorrds.X) * 70;
+		LineSegmentPosition.Y = i == 1 ? -10 : 0;
+		LineSegmentPosition.Z = (LastTileCorrds.Y - InitialTileCorrds.Y) * 70;
+		NewLineSegmentSprite->SetRelativeLocation(LineSegmentPosition);
+
+		// Mark down current angle
+		m_LastAngle = NewSpriteAngle;
+	}
+
+	return true;
+}
 
 #if WITH_EDITOR
 bool ASGLinkLine::GetReferencedContentObjects(TArray<UObject*>& Objects) const
@@ -212,134 +245,89 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngl
 	NewSprite->Mobility = EComponentMobility::Movable;
 	NewSprite->RegisterComponent();
 	NewSprite->AttachParent = RootComponent;
-	BodySpriteRenderComponentsArray.Add(NewSprite);
 	
-	// 1. We should set the proper sprite based on the angle
-	// 2. We should do some flip adjustment based on the angle
-	if (abs(inAngle - inLastAngle) == 45)
+	int32 AngleDiff = FMath::Abs(inAngle - inLastAngle);
+	switch (AngleDiff)
 	{
+	case 45:
+		// Note that, the 135 texture is inner angle, currently we are using the outter angle
+		// So we choose 135 sprite
 		NewSprite->SetSprite(Corner_135_Sprite);
-		if (inAngle < inLastAngle)
-		{
-			// FlipY
-			NewSprite->SetRelativeScale3D(FVector(1, -1, 1));
-		}
-	}
-	else if (abs(inAngle - inLastAngle) == 90)
-	{
+		break;
+	case 90:
 		NewSprite->SetSprite(Corner_90_Sprite);
-		if (inAngle < inLastAngle)
-		{
-			// FlipY
-			NewSprite->SetRelativeScale3D(FVector(1, -1, 1));
-		}
-	}
-	else if (abs(inAngle - inLastAngle) == 135)
-	{
+		break;
+	case 135:
+		// Note that, the 45 texture is inner angle, this we are using the outter angle
+		// So we choose 45 sprite
 		NewSprite->SetSprite(Corner_45_Sprite);
-		if (inAngle < inLastAngle)
+		break;
+	default:
+		UE_LOG(LogSGame, Warning, TEXT("Invalid angle, returning null sprite!"));
+		return nullptr;
+	}
+
+	// Rotate to the last angle
+	NewSprite->SetRelativeRotation(FRotator(inLastAngle, 0, 0));
+
+	// Flip the sprite if needed
+	if (inLastAngle == 0)
+	{
+		if (inAngle == AngleDiff)
 		{
-			// FlipY
-			NewSprite->SetRelativeScale3D(FVector(1, -1, 1));
+			NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
 		}
 	}
-	/*
-	else if (abs(inAngle - inLastAngle) == 225)
+	else
 	{
-		NewSprite = CCSprite::createWithSpriteFrameName(Link_Line_45_FRAME_NAME);
-		NewSprite->setFlipY(inAngle > inLastAngle);
+		if (inLastAngle < inAngle)
+		{
+			NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
+		}
 	}
 
-	
-	if (abs(inAngle - inLastAngle) == 45)
-	{
-		NewSprite->
-		NewSprite = CCSprite::createWithSpriteFrameName(Link_Line_135_FRAME_NAME);
-		NewSprite->setFlipY(inAngle < inLastAngle);
-	}
-	else if (abs(inAngle - inLastAngle) == 90)
-	{
-		NewSprite = CCSprite::createWithSpriteFrameName(Link_Line_90_FRAME_NAME);
-		NewSprite->setFlipY(inAngle < inLastAngle);
-	}
-	else if (abs(inAngle - inLastAngle) == 135)
-	{
-		NewSprite = CCSprite::createWithSpriteFrameName(Link_Line_45_FRAME_NAME);
-		NewSprite->setFlipY(inAngle < inLastAngle);
-	}
-	else if (abs(inAngle - inLastAngle) == 225)
-	{
-		NewSprite = CCSprite::createWithSpriteFrameName(Link_Line_45_FRAME_NAME);
-		NewSprite->setFlipY(inAngle > inLastAngle);
-	}
-	else if (abs(inAngle - inLastAngle) == 270)
-	{
-		NewSprite = CCSprite::createWithSpriteFrameName(Link_Line_90_FRAME_NAME);
-		NewSprite->setFlipY(inAngle > inLastAngle);
-	}
-	else if (abs(inAngle - inLastAngle) == 315)
-	{
-		NewSprite = CCSprite::createWithSpriteFrameName(Link_Line_135_FRAME_NAME);
-		NewSprite->setFlipY(inAngle > inLastAngle);
-	}
+	// Add to the body sprite array
+	BodySpriteRenderComponentsArray.Add(NewSprite);
 
-	// 使用上一次的旋转作为旋转
-	NewSprite->setRotation(inLastAngle);
-
-	// 设置缩放
-	NewSprite->setScale(ARROW_THICKNESS);
-
-	// 保存当前的Sprite
-	m_pCurrentArrowSprites[m_CurrentSpriteNum++] = NewSprite;
-	*/
 	return NewSprite;
 }
 
 UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead, bool inIsTail)
 {
-	return nullptr;
-	/*
-	CCSprite* NewSprite = NULL;
+	UPaperSpriteComponent* NewSprite = NULL;
 	if (inIsTail == true)
 	{
-		NewSprite = CCSprite::createWithSpriteFrameName(Link_Line_TAIL_FRAME_NAME);
+		NewSprite = TailSpriteRenderComponent;
 	}
 	else
 	{
-		NewSprite = CCSprite::createWithSpriteFrameName(Link_Line_BODY_FRAME_NAME);
+		NewSprite = NewObject<UPaperSpriteComponent>(this);
+		NewSprite->Mobility = EComponentMobility::Movable;
+		NewSprite->SetSprite(BodySprite);
+		NewSprite->RegisterComponent();
+		NewSprite->AttachParent = RootComponent;
+
+		// Add to the body sprite array
+		BodySpriteRenderComponentsArray.Add(NewSprite);
 	}
 
-	if (NewSprite == NULL)
-	{
-		LOG("Cannot create new arrow body sprite");
-		return NULL;
-	}
+	checkSlow(NewSprite != nullptr);
 
-	// 设置在左侧居中，因为好对位
-	NewSprite->setAnchorPoint(CCPointMake(0, 0.5f));
-
-	// 设置Scale
-	if (inAngle % 90 == 0)
+	if (inAngle % 90 != 0)
 	{
-		// 直线就直接是Griz Size
-		NewSprite->setScaleX(GRID_COLUMN_SIZE / NewSprite->getContentSize().width);
-		NewSprite->setScaleY(ARROW_THICKNESS);
+		// Set Scale to 1.414 if it is cross line
+		NewSprite->SetRelativeScale3D(FVector(1.42f, 1, 1));
 	}
 	else
 	{
-		// 对角线是根号2
-		NewSprite->setScaleX(GRID_COLUMN_SIZE * 1.42 / NewSprite->getContentSize().width);
-		NewSprite->setScaleY(ARROW_THICKNESS);
+		// Set Scale to a little bit longer than 1 to overlap
+		NewSprite->SetRelativeScale3D(FVector(1.05f, 1, 1));
 	}
 
-	// 设置旋转
-	NewSprite->setRotation(inAngle);
-
-	// 保存当前的Sprite
-	m_pCurrentArrowSprites[m_CurrentSpriteNum++] = NewSprite;
+	// Set the rotation to the new angle
+	NewSprite->SetRelativeRotation(FRotator(inAngle, 0, 0));
 
 	return NewSprite;
-	*/
 }
 
 #endif
