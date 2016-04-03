@@ -1,4 +1,7 @@
-Intermediate/
+Intermediate/Build
+Intermediate/Config
+Intermediate/ReimportCache
+Intermediate/CachedAssetRegistry.bin
 SGame.sdf
 Saved/
 Build/

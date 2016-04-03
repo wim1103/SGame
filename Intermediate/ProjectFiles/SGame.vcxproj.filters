@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="..\..\SGame.uproject" />
+    <Filter Include="Source">
+      <UniqueIdentifier>{A841F8BF-5197-451D-AB37-92A9FFD2270C}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\SGame.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\Source\SGameEditor.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <Filter Include="Config">
+      <UniqueIdentifier>{005DC205-387C-47FB-B62E-14D9D97430F1}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Config\DefaultEditor.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultEngine.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultGame.ini">
+      <Filter>Config</Filter>
+    </None>
+    <Filter Include="Source\SGame">
+      <UniqueIdentifier>{A3A94266-CEFC-403C-AB6D-795146C3E755}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\SGame\SGame.Build.cs">
+      <Filter>Source\SGame</Filter>
+    </None>
+    <ClCompile Include="..\..\Source\SGame\SGame.cpp">
+      <Filter>Source\SGame</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\SGame\SGame.h">
+      <Filter>Source\SGame</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\SGame\SGameGameMode.cpp">
+      <Filter>Source\SGame</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\SGame\SGameGameMode.h">
+      <Filter>Source\SGame</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Source\SGame\SGGameMode.h">
+      <Filter>Source\SGame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\SGame\SGGrid.h">
+      <Filter>Source\SGame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\SGame\SGPlayerController.h">
+      <Filter>Source\SGame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\SGame\SGTileBase.h">
+      <Filter>Source\SGame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\SGame\SGLinkLine.h">
+      <Filter>Source\SGame</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Source\SGame\SGGrid.cpp">
+      <Filter>Source\SGame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\SGame\SGPlayerController.cpp">
+      <Filter>Source\SGame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\SGame\SGTileBase.cpp">
+      <Filter>Source\SGame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\SGame\SGGameMode.cpp">
+      <Filter>Source\SGame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\SGame\SGLinkLine.cpp">
+      <Filter>Source\SGame</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
