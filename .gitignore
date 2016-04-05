@@ -1,9 +1,8 @@
-Intermediate/Build
-Intermediate/Config
-Intermediate/ReimportCache
-Intermediate/CachedAssetRegistry.bin
+Intermediate/
 SGame.sdf
 Saved/
 Build/
 ArtSource/
 SGame.VC.opendb
+SGame.VC.VC.opendb
+SGame.VC.db
