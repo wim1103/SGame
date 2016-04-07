@@ -11,4 +11,6 @@ ASGPlayerController::ASGPlayerController(const FObjectInitializer& ObjectInitial
 	// We need click/touch events to interact with our tiles.
 	bEnableTouchEvents = bEnableClickEvents = true;
 	bEnableTouchOverEvents = bEnableMouseOverEvents = true;
+
+	MessageEndpoint = FMessageEndpoint::Builder("PlayerController");
 }

@@ -3,29 +3,18 @@
 #pragma once
 
 #include "GameFramework/GameMode.h"
+#include "Messaging.h"
+
+#include "SGameMessages.h"
 #include "SGLinkLine.h"
 #include "SGGrid.h"
 
 #include "SGGameMode.generated.h"
 
-/** Types of tile base type. */
-UENUM()
-namespace ESGGameStatus
-{
-	enum Type
-	{
-		EGS_Init = 0,					// Initial value
-		EGS_GameStart = 1,				// Shield
-		ETT_Potion = 2,					// Potion
-		ETT_Coin = 3,					// Coin
-		ETT_Mana = 4,					// Mana
-		ETT_Arrow = 5,					// Arrow
-		ETT_Soldier = 6					// Soldier
-	};
-}
+
 
 /**
- * 
+ * The Gameplay mode
  */
 UCLASS()
 class SGAME_API ASGGameMode : public AGameMode
@@ -38,6 +27,32 @@ public:
 	/** Called when the game starts. */
 	virtual void BeginPlay() override;
 
+	/** Initialize the tiles on the grid*/
+	UFUNCTION(BlueprintCallable, Category = Game)
+	void SetNextStatus(ESGGameStatus::Type inNewStatus);
+
+	/** Initialize the tiles on the grid*/
+	UFUNCTION(BlueprintCallable, Category = Game)
+	ESGGameStatus::Type GetCurrentGameStatus();
+
+	/** Begin the new round */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	void OnBeginRound();
+
+	/** Override the parent tick to do some customized tick operations*/
+	virtual void Tick(float DeltaSeconds) override;
+
 private:
-	
+	/** Handles Game start messages. */
+	void HandleGameStart(const FMessage_Gameplay_GameStart& Message, const IMessageContextRef& Context);
+
+	/** Handles the game status update messages. */
+	void HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdate& Message, const IMessageContextRef& Context);
+
+
+	ESGGameStatus::Type CurrentGameGameStatus;
+	ESGGameStatus::Type NextGameStatus;
+
+	// Holds the messaging endpoint.
+	FMessageEndpointPtr MessageEndpoint;
 };
