@@ -3,8 +3,9 @@
 #pragma once
 
 #include "PaperSpriteActor.h"
-
 #include "GameFramework/Actor.h"
+
+#include "SGGrid.h"
 #include "SGTileBase.generated.h"
 
 /** Types of tile base type. */

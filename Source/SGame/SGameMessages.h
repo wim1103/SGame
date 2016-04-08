@@ -37,6 +37,20 @@ struct FMessage_Gameplay_PlayerEndInput
 	GENERATED_USTRUCT_BODY()
 };
 
+/**
+* Player end input event
+*/
+USTRUCT()
+struct FMessage_Gameplay_NewTilePicked
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** The picked tile address */
+	UPROPERTY()
+	int32 TileAddress;
+};
+
+
 /** Defines the game state */
 UENUM()
 namespace ESGGameStatus

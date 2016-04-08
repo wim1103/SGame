@@ -17,7 +17,13 @@ ASGTileBase::ASGTileBase()
 void ASGTileBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// Set our class up to handle clicks and touches.
+	OnClicked.AddUniqueDynamic(this, &ASGTileBase::TilePress_Mouse);
+	OnBeginCursorOver.AddUniqueDynamic(this, &ASGTileBase::TileEnter_Mouse);
+
+	OnInputTouchBegin.AddUniqueDynamic(this, &ASGTileBase::TilePress);
+	OnInputTouchEnter.AddUniqueDynamic(this, &ASGTileBase::TileEnter);
 }
 
 // Called every frame
@@ -29,25 +35,12 @@ void ASGTileBase::Tick( float DeltaTime )
 
 void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex)
 {
-	// We clicked or touched the tile.
-// 	if (!UGameplayStatics::IsGamePaused(this) && Grid)
-// 	{
-// 		// Grid->OnTileWasSelected(this);
-// 	}
+	UE_LOG(LogSGame, Log, TEXT("Tile %s was pressed, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
 }
 
 void ASGTileBase::TileEnter(ETouchIndex::Type FingerIndex)
 {
-	// We have moved into the tile's space while we had a different tile selected. This is the same as pressing the tile directly.
-	// Note that we need to make sure it's a different actual tile (i.e. not NULL) because deselecting a tile by touching it twice will then trigger the TileEnter event and re-select it.
-	// if (!UGameplayStatics::IsGamePaused(this) && Grid)
-	{
-		// ATile* CurrentlySelectedTile = Grid->GetCurrentlySelectedTile();
-// 		if (CurrentlySelectedTile && (CurrentlySelectedTile != this))
-// 		{
-// 			TilePress(FingerIndex);
-// 		}
-	}
+	UE_LOG(LogSGame, Log, TEXT("Tile %s was entered, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
 }
 
 void ASGTileBase::TilePress_Mouse()
