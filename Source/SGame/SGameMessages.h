@@ -11,11 +11,28 @@ struct FMessage_Gameplay_GameStart
 	GENERATED_USTRUCT_BODY()
 };
 
-
 /**
 */
 USTRUCT()
 struct FMessage_Gameplay_GameOver
+{
+	GENERATED_USTRUCT_BODY()
+};
+
+/**
+ * Player begin input event
+*/
+USTRUCT()
+struct FMessage_Gameplay_PlayerBeginInput
+{
+	GENERATED_USTRUCT_BODY()
+};
+
+/**
+ * Player end input event
+*/
+USTRUCT()
+struct FMessage_Gameplay_PlayerEndInput
 {
 	GENERATED_USTRUCT_BODY()
 };
@@ -29,7 +46,10 @@ namespace ESGGameStatus
 		EGS_Init,					// Initial value
 		EGS_GameStart,				// Shield
 		EGS_RondBegin,				// New round begin
-		EGS_PlayerTurnBegin,		// Player Turn begin
+		EGS_PlayerTurnBegin,		// Player turn begin
+		EGS_PlayerRegengerate,		// Player regenerate
+		EGS_PlayerSkillCD,			// Player regenerate
+		EGS_PlayerInput,			// Player input, can link line or use the skill
 		EGS_RoundEnd,				// End of the round
 		EGS_GameOver,				// Game over
 	};

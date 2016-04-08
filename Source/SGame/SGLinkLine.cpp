@@ -50,11 +50,6 @@ bool ASGLinkLine::UpdateLinkLine()
 		return UpdateLinkLine(StaticLinePoints);
 	}
 
-	if (LinkLinePoints.Num() < 2)
-	{
-		return false;
-	}
-
 	return UpdateLinkLine(LinkLinePoints);
 }
 
@@ -69,6 +64,12 @@ bool ASGLinkLine::UpdateLinkLine(const TArray<int32>& LinePoints)
 		BodySpriteRenderComponentsArray[i]->UnregisterComponent();
 	}
 	BodySpriteRenderComponentsArray.Empty();
+
+	if (LinkLinePoints.Num() < 2)
+	{
+		// Only one point cannot become a link line
+		return true;
+	}
 
 	// The link line should scale to 1.5 to fit the grid
 	RootComponent->SetWorldScale3D(FVector(1.5f, 1.5f, 1.5f));
@@ -328,6 +329,15 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead
 	NewSprite->SetRelativeRotation(FRotator(inAngle, 0, 0));
 
 	return NewSprite;
+}
+
+void ASGLinkLine::ResetLinkState()
+{
+	// Cleaer the current link
+	LinkLinePoints.Empty();
+
+	// Update the link line using the empty points array
+	UpdateLinkLine(LinkLinePoints);
 }
 
 #endif

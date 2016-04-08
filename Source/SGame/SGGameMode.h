@@ -39,6 +39,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Game)
 	void OnBeginRound();
 
+	/** Player turn begin */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	void OnPlayerTurnBegin();
+
+	/** Player regenerate */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	void OnPlayerRegenerate();
+
+	/** Player skil CD */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	void OnPlayerSkillCD();
+
+	/** Player input */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	void OnPlayerInput();
+
 	/** Override the parent tick to do some customized tick operations*/
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -55,4 +71,10 @@ private:
 
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
+
+	/** Current round number*/
+	uint32				CurrentRound;
+
+	/** Current link line */
+	ASGLinkLine*		CurrentLinkLine;
 };

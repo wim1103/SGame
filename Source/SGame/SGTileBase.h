@@ -90,6 +90,22 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
+	/** When a tile is touched. */
+	UFUNCTION()
+	void TilePress(ETouchIndex::Type FingerIndex);
+
+	/** When the user's finger moves over a tile. */
+	UFUNCTION()
+	void TileEnter(ETouchIndex::Type FingerIndex);
+
+	/** Mouse surrogate for TilePress. */
+	UFUNCTION()
+	void TilePress_Mouse();
+
+	/** Mouse surrogate for TileEnter. */
+	UFUNCTION()
+	void TileEnter_Mouse();
+
 	void SetGridAddress(int32 NewLocation);
 	int32 GetGridAddress() const;
 

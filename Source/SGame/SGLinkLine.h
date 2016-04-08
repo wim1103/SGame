@@ -91,4 +91,6 @@ private:
 
 	int								m_CurrentSpriteNum;
 	int								m_LastAngle;
+public:
+	void ResetLinkState();
 };

@@ -11,6 +11,21 @@ ASGPlayerController::ASGPlayerController(const FObjectInitializer& ObjectInitial
 	// We need click/touch events to interact with our tiles.
 	bEnableTouchEvents = bEnableClickEvents = true;
 	bEnableTouchOverEvents = bEnableMouseOverEvents = true;
+}
 
-	MessageEndpoint = FMessageEndpoint::Builder("PlayerController");
+void ASGPlayerController::BeginPlay()
+{
+	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_PC")
+		.Handling<FMessage_Gameplay_PlayerBeginInput>(this, &ASGPlayerController::HandlePlayerBeginInput);
+	
+	if (MessageEndpoint.IsValid() == true)
+	{
+		// Subscribe the begin input event to allow the player input
+		MessageEndpoint->Subscribe<FMessage_Gameplay_PlayerBeginInput>();
+	}
+}
+
+void ASGPlayerController::HandlePlayerBeginInput(const FMessage_Gameplay_PlayerBeginInput& Message, const IMessageContextRef& Context)
+{
+	UE_LOG(LogSGame, Log, TEXT("Player begin input"));
 }
