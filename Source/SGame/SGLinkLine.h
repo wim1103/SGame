@@ -5,6 +5,9 @@
 #include "GameFramework/Actor.h"
 #include "PaperSprite.h"
 #include "PaperSpriteComponent.h"
+#include "Messaging.h"
+#include "SGameMessages.h"
+#include "SGTileBase.h"
 
 #include "SGLinkLine.generated.h"
 
@@ -32,9 +35,13 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	/** Update Link Line */
+	/** Update link line sprites*/
 	UFUNCTION(BlueprintCallable, Category = Update)
-	bool UpdateLinkLine();
+	bool UpdateLinkLineSprites();
+
+	/** Update the link line*/
+	UFUNCTION(BlueprintCallable, Category = Update)
+	bool Update();
 
 	// AActor interface
 #if WITH_EDITOR
@@ -49,9 +56,6 @@ public:
 	/** Static line points. Test only, for static link lines.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int32> StaticLinePoints;
-
-	/** Link line points */
-	TArray<int32> LinkLinePoints;
 
 protected:
 	// The sprite asset for link corners 45 degree
@@ -75,7 +79,19 @@ protected:
 	TArray<UPaperSpriteComponent*> BodySpriteRenderComponentsArray;
 
 	/** Update link line using the line points */
-	bool UpdateLinkLine(const TArray<int32>& LinePoints);
+	bool UpdateLinkLineSprites(const TArray<int32>& LinePoints);
+
+	/** Update the tile select info*/
+	void UpdateTileSelectInfo();
+
+	/** Update the tile select info*/
+	void UpdateMatchableTileInfo();
+
+	/** Link line points, for drawing the sprites*/
+	TArray<int32> LinkLinePoints;
+
+	/** Current tiles in the link line*/
+	TArray<const ASGTileBase*> LinkLineTiles;
 
 private:
 	/** Head sprite for render the link line head */
@@ -91,6 +107,10 @@ private:
 
 	int								m_CurrentSpriteNum;
 	int								m_LastAngle;
+
+	// Holds the messaging endpoint.
+	FMessageEndpointPtr MessageEndpoint;
 public:
 	void ResetLinkState();
+	void BuildPath(const ASGTileBase* inNewTile);
 };

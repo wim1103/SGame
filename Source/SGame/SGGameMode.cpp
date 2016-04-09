@@ -19,12 +19,50 @@ void ASGGameMode::BeginPlay()
 	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_GameMode")
 		.Handling<FMessage_Gameplay_GameStart>(this, &ASGGameMode::HandleGameStart)
 		.Handling<FMessage_Gameplay_GameStatusUpdate>(this, &ASGGameMode::HandleGameStatusUpdate)
+		.Handling<FMessage_Gameplay_NewTilePicked>(this, &ASGGameMode::HandleNewTileIsPicked)
 		.WithInbox();
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the game mode needed messages
 		MessageEndpoint->Subscribe<FMessage_Gameplay_GameStart>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_GameStatusUpdate>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_NewTilePicked>();
+	}
+
+	// Find the grid actor in the world
+	CurrentGrid = nullptr;
+	for (TActorIterator<ASGGrid> It(GetWorld()); It; ++It)
+	{
+		if (CurrentGrid == nullptr)
+		{
+			CurrentGrid = *It;
+		}
+		else
+		{
+			UE_LOG(LogSGame, Warning, TEXT("There is more than more grid object in the level!"));
+		}
+	}
+	if (CurrentGrid == nullptr)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("There is no grid object in the level!"));
+	}
+
+	// Find the link line actor in the world
+	CurrentLinkLine = nullptr;
+	for (TActorIterator<ASGLinkLine> It(GetWorld()); It; ++It)
+	{
+		if (CurrentLinkLine == nullptr)
+		{
+			CurrentLinkLine = *It;
+		}
+		else
+		{
+			UE_LOG(LogSGame, Warning, TEXT("There is more than more link line object in the level!"));
+		}
+	}
+	if (CurrentLinkLine == nullptr)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("There is no link line object in the level!"));
 	}
 }
 
@@ -95,16 +133,16 @@ void ASGGameMode::OnPlayerInput()
 {
 	UE_LOG(LogSGame, Log, TEXT("Player input!"));
 
-	if (CurrentLinkLine != nullptr)
-	{
-		// Reset the link line.
-		CurrentLinkLine->ResetLinkState();
-	}
-	
 	// Tell the player, he begin input now
 	if (MessageEndpoint.IsValid())
 	{
 		MessageEndpoint->Publish(new FMessage_Gameplay_PlayerBeginInput(), EMessageScope::Process);
+	}
+
+	// Reset the link line.
+	if (CurrentLinkLine != nullptr)
+	{
+		CurrentLinkLine->ResetLinkState();
 	}
 }
 
@@ -148,5 +186,36 @@ void ASGGameMode::HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdat
 	default:
 		UE_LOG(LogSGame, Error, TEXT("Unhandled game status!"));
 		break;
+	}
+}
+
+void ASGGameMode::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context)
+{
+	UE_LOG(LogSGame, Log, TEXT("Player Build Path with TileID: %d"), Message.TileAddress);
+
+	if (CurrentGrid == nullptr || CurrentLinkLine == nullptr)
+	{
+		// Grid or the link line object is invalid
+		return;
+	}
+
+	// fixme by reiwang: turn off the game status control
+// 	if (CurrentGameGameStatus != ESGGameStatus::EGS_PlayerInput)
+// 	{
+// 		// Not in the player input state, return
+// 		return;
+// 	}
+
+	const ASGTileBase* CurrentTile = CurrentGrid->GetTileFromGridAddress(Message.TileAddress);
+	if (CurrentTile == nullptr)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("Cannot get tile from the tile adderss %d"), Message.TileAddress);
+		return;
+	}
+
+	// Tell the link line to build the path
+	if (CurrentLinkLine != nullptr)
+	{
+		CurrentLinkLine->BuildPath(CurrentTile);
 	}
 }

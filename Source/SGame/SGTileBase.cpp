@@ -24,6 +24,15 @@ void ASGTileBase::BeginPlay()
 
 	OnInputTouchBegin.AddUniqueDynamic(this, &ASGTileBase::TilePress);
 	OnInputTouchEnter.AddUniqueDynamic(this, &ASGTileBase::TileEnter);
+
+	FString EndPointName = FString::Printf(TEXT("Gameplay_Tile_%d"), GridAddress);
+	MessageEndpoint = FMessageEndpoint::Builder(*EndPointName)
+		.Handling<FMessage_Gameplay_TileBecomeSelectable>(this, &ASGTileBase::HandleBecomeSelectable);
+	if (MessageEndpoint.IsValid() == true)
+	{
+		// Subscribe the tile need events
+		MessageEndpoint->Subscribe<FMessage_Gameplay_TileBecomeSelectable>();
+	}
 }
 
 // Called every frame
@@ -36,6 +45,14 @@ void ASGTileBase::Tick( float DeltaTime )
 void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex)
 {
 	UE_LOG(LogSGame, Log, TEXT("Tile %s was pressed, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
+
+	// Tell the game logic, the new tile is picked
+	FMessage_Gameplay_NewTilePicked* TilePickedMessage = new FMessage_Gameplay_NewTilePicked();
+	TilePickedMessage->TileAddress = GridAddress;
+	if (MessageEndpoint.IsValid() == true)
+	{
+		MessageEndpoint->Publish(TilePickedMessage, EMessageScope::Process);
+	}
 }
 
 void ASGTileBase::TileEnter(ETouchIndex::Type FingerIndex)
@@ -60,6 +77,11 @@ void ASGTileBase::TileEnter_Mouse()
 	}
 }
 
+bool ASGTileBase::IsSelectable() const
+{
+	return TileData.TileStatusArray.Contains(ESGTileStatusFlag::ESF_SELECTABLE);
+}
+
 void ASGTileBase::SetGridAddress(int32 NewLocation)
 {
 	GridAddress = NewLocation;
@@ -68,5 +90,19 @@ void ASGTileBase::SetGridAddress(int32 NewLocation)
 int32 ASGTileBase::GetGridAddress() const
 {
 	return GridAddress;
+}
+
+void ASGTileBase::HandleBecomeSelectable(const FMessage_Gameplay_TileBecomeSelectable& Message, const IMessageContextRef& Context)
+{
+	if (Message.bFroceAllTileCanBeSelected == false && Message.TileAddress != GridAddress)
+	{
+		// Selectable event is not sent to this tile
+		return;
+	}
+
+	UE_LOG(LogSGame, Log, TEXT("Tile %d become selectable"), GridAddress);
+
+	// Push the selectable flag to the status array
+	TileData.TileStatusArray.Push(ESGTileStatusFlag::ESF_SELECTABLE);
 }
 

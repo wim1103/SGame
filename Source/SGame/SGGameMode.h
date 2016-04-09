@@ -58,12 +58,18 @@ public:
 	/** Override the parent tick to do some customized tick operations*/
 	virtual void Tick(float DeltaSeconds) override;
 
+	ASGGrid* GetCurrentGrid() const { return CurrentGrid; }
+	void SetCurrentGrid(ASGGrid* val) { checkSlow(val != nullptr);  CurrentGrid = val; }
+
 private:
 	/** Handles Game start messages. */
 	void HandleGameStart(const FMessage_Gameplay_GameStart& Message, const IMessageContextRef& Context);
 
 	/** Handles the game status update messages. */
 	void HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdate& Message, const IMessageContextRef& Context);
+
+	/** Handles the player picked new tile*/
+	void HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context);
 
 
 	ESGGameStatus::Type CurrentGameGameStatus;
@@ -77,4 +83,7 @@ private:
 
 	/** Current link line */
 	ASGLinkLine*		CurrentLinkLine;
+
+	/** Current grid */
+	ASGGrid*			CurrentGrid;
 };

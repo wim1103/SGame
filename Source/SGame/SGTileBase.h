@@ -4,8 +4,9 @@
 
 #include "PaperSpriteActor.h"
 #include "GameFramework/Actor.h"
+#include "Messaging.h"
+#include "SGameMessages.h"
 
-#include "SGGrid.h"
 #include "SGTileBase.generated.h"
 
 /** Types of tile base type. */
@@ -73,7 +74,7 @@ public:
 
 	/** The current tile status flag, should not be accessed anywhere, for test convenient now*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TEnumAsByte<ESGTileStatusFlag::Type> TileStatus;
+	TArray<TEnumAsByte<ESGTileStatusFlag::Type>> TileStatusArray;
 };
 
 UCLASS()
@@ -107,6 +108,10 @@ public:
 	UFUNCTION()
 	void TileEnter_Mouse();
 
+	/** Is current tile selecatable*/
+	UFUNCTION()
+	bool IsSelectable() const;
+
 	void SetGridAddress(int32 NewLocation);
 	int32 GetGridAddress() const;
 
@@ -126,4 +131,11 @@ protected:
 
 	/** Location where we will land on the grid as a 1D key/value. Used while falling. */
 	int32 LandingGridAddress;
+
+private:
+	/** Handles tile become selectalbe */
+	void HandleBecomeSelectable(const FMessage_Gameplay_TileBecomeSelectable& Message, const IMessageContextRef& Context);
+
+	// Holds the messaging endpoint.
+	FMessageEndpointPtr MessageEndpoint;
 };

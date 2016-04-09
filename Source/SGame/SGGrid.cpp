@@ -19,6 +19,11 @@ void ASGGrid::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_Grid");
+	if (MessageEndpoint.IsValid() == true)
+	{
+		// Subscribe the grid needed messages
+	}
 }
 
 // Called every frame
@@ -106,6 +111,19 @@ void ASGGrid::InitGrid()
 	}
 }
 
+const ASGTileBase* ASGGrid::GetTileFromGridAddress(int32 GridAddress)
+{
+	if (GridAddress < GameTiles.Num())
+	{
+		return GameTiles[GridAddress];
+	}
+	else
+	{
+		UE_LOG(LogSGame, Log, TEXT("Invalid grid address, will return null tile"));
+		return nullptr;
+	}
+}
+
 FVector ASGGrid::GetLocationFromGridAddress(int32 GridAddress)
 {
 	checkSlow(TileSize.X > 0.0f);
@@ -178,4 +196,3 @@ bool ASGGrid::AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB)
 
 	return false;
 }
-

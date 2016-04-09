@@ -50,6 +50,23 @@ struct FMessage_Gameplay_NewTilePicked
 	int32 TileAddress;
 };
 
+/**
+* The tile can be selected event
+*/
+USTRUCT()
+struct FMessage_Gameplay_TileBecomeSelectable
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** The picked tile address */
+	UPROPERTY()
+	int32 TileAddress;
+	
+	/** The picked tile address */
+	UPROPERTY()
+	bool bFroceAllTileCanBeSelected;
+};
+
 
 /** Defines the game state */
 UENUM()

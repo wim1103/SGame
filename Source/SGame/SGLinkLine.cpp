@@ -26,9 +26,9 @@ ASGLinkLine::ASGLinkLine()
 void ASGLinkLine::BeginPlay()
 {
 	Super::BeginPlay();
-	if (bIsStaticLine == true)
-	{
-	}
+	
+	// Build the link line message endpoint
+	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_LinkLine");
 }
 
 // Called every frame
@@ -38,7 +38,7 @@ void ASGLinkLine::Tick( float DeltaTime )
 
 }
 
-bool ASGLinkLine::UpdateLinkLine()
+bool ASGLinkLine::UpdateLinkLineSprites()
 {
 	if (bIsStaticLine == true)
 	{
@@ -47,13 +47,13 @@ bool ASGLinkLine::UpdateLinkLine()
 			return false;
 		}
 
-		return UpdateLinkLine(StaticLinePoints);
+		return UpdateLinkLineSprites(StaticLinePoints);
 	}
 
-	return UpdateLinkLine(LinkLinePoints);
+	return UpdateLinkLineSprites(LinkLinePoints);
 }
 
-bool ASGLinkLine::UpdateLinkLine(const TArray<int32>& LinePoints)
+bool ASGLinkLine::UpdateLinkLineSprites(const TArray<int32>& LinePoints)
 {
 	// Clean the body sprites
 	for (int32 i = 0; i < BodySpriteRenderComponentsArray.Num(); i++)
@@ -76,14 +76,14 @@ bool ASGLinkLine::UpdateLinkLine(const TArray<int32>& LinePoints)
 
 	// Iterate all points, and generate line between the two points
 	ELinkDirection LastDirection = ELD_Begin;
-	for (int32 i = 0; i < StaticLinePoints.Num(); i++)
+	for (int32 i = 0; i < LinePoints.Num(); i++)
 	{
 		// For the first point, we just mark down the initial position
 		FVector InitialTileCorrds;
 		if (i == 0)
 		{
-			InitialTileCorrds.X = StaticLinePoints[0] % 6;
-			InitialTileCorrds.Y = StaticLinePoints[0] / 6;
+			InitialTileCorrds.X = LinePoints[0] % 6;
+			InitialTileCorrds.Y = LinePoints[0] / 6;
 
 			// Set the link line at the head position
 			FVector LinkLineWorldLocation = RootComponent->GetComponentLocation();
@@ -95,8 +95,8 @@ bool ASGLinkLine::UpdateLinkLine(const TArray<int32>& LinePoints)
 			continue;
 		}
 
-		auto CurrentTileID = StaticLinePoints[i];
-		auto LastTileID = StaticLinePoints[i - 1];
+		auto CurrentTileID = LinePoints[i];
+		auto LastTileID = LinePoints[i - 1];
 		FVector CurrentTileCoords, LastTileCorrds;
 		CurrentTileCoords.X = CurrentTileID % 6;
 		CurrentTileCoords.Y = CurrentTileID / 6;
@@ -176,7 +176,7 @@ bool ASGLinkLine::UpdateLinkLine(const TArray<int32>& LinePoints)
 		}
 
 		// For the line head
-		if (i == StaticLinePoints.Num() - 1)
+		if (i == LinePoints.Num() - 1)
 		{
 			// Set to the current point location
 			FVector HeadPosition;
@@ -192,7 +192,7 @@ bool ASGLinkLine::UpdateLinkLine(const TArray<int32>& LinePoints)
 		}
 
 		// Create the line segment
-		NewLineSegmentSprite = CreateLineSegment(NewSpriteAngle, i == StaticLinePoints.Num() - 1, i == 1);
+		NewLineSegmentSprite = CreateLineSegment(NewSpriteAngle, i == LinePoints.Num() - 1, i == 1);
 		if (NewLineSegmentSprite == NULL)
 		{
 			UE_LOG(LogSGame, Warning, TEXT("New sprite create failed."));
@@ -211,6 +211,96 @@ bool ASGLinkLine::UpdateLinkLine(const TArray<int32>& LinePoints)
 	}
 
 	return true;
+}
+
+bool ASGLinkLine::Update()
+{
+	UpdateTileSelectInfo();
+	UpdateLinkLineSprites(LinkLinePoints);
+
+	return true;
+}
+
+void ASGLinkLine::UpdateTileSelectInfo()
+{
+	// If is is the head of the link line
+	if (LinkLinePoints.Num() == 0)
+	{
+		// Tell all the tiles that they can be selected
+		if (MessageEndpoint.IsValid() == true)
+		{
+			FMessage_Gameplay_TileBecomeSelectable* SelectableMessage = new FMessage_Gameplay_TileBecomeSelectable{ 0 };
+			SelectableMessage->bFroceAllTileCanBeSelected = true;
+			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+		}
+	}
+
+	/*
+	const CTile* pFirstTile = m_pField->GetTile(m_stPathVec.front());
+	if (NULL == pFirstTile)
+	{
+		LOG_ERR("m_pField->GetTile(%u) returns NULL\n"
+			, m_stPathVec.front()
+		);
+		return;
+	}
+
+	const CTile* pLastTile = m_pField->GetTile(m_stPathVec.back());
+	if (NULL == pLastTile)
+	{
+		LOG_ERR("m_pField->GetTile(%u) returns NULL\n"
+			, m_stPathVec.back()
+		);
+		return;
+	}
+
+
+	ENMTILELINKTYPE eLinkType = pFirstTile->GetLinkType();
+
+	for (uint8 uCol = 0; uCol < MAX_FIELD_COL_NUM; ++uCol)
+	{
+		for (uint8 uRow = 0; uRow < MAX_FIELD_ROW_NUM; ++uRow)
+		{
+			CTile* pTile = m_pField->GetTile(uCol, uRow);
+			if (NULL == pTile)
+			{
+				continue;
+			}
+
+			pTile->ResetSelected();
+
+			if (uCol + 1 >= pLastTile->GetCol()
+				&& uCol <= pLastTile->GetCol() + 1
+				&& uRow + 1 >= pLastTile->GetRow()
+				&& uRow <= pLastTile->GetRow() + 1
+				&& (CTileManager::IsLinkableType(eLinkType, pTile->GetLinkType()) || ETT_ARROW == pLastTile->GetType())
+				)
+			{
+				pTile->SetSelectable();
+			}
+			else
+			{
+				pTile->ResetSelectable();
+			}
+		}
+	}
+
+	for (Uint16Vec::iterator iter = m_stPathVec.begin()
+		; iter != m_stPathVec.end()
+		; ++iter
+		)
+	{
+		uint16 uTileID = *iter;
+		CTile* pTile = m_pField->GetTile(uTileID);
+		if (NULL == pTile)
+		{
+			assert(0);
+			continue;
+		}
+
+		pTile->SetSelected();
+	}
+	*/
 }
 
 #if WITH_EDITOR
@@ -245,7 +335,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngl
 	NewSprite = NewObject<UPaperSpriteComponent>(this);
 	NewSprite->Mobility = EComponentMobility::Movable;
 	NewSprite->RegisterComponent();
-	NewSprite->AttachParent = RootComponent;
+	NewSprite->AttachTo(RootComponent);
 	
 	int32 AngleDiff = FMath::Abs(inAngle - inLastAngle);
 	switch (AngleDiff)
@@ -306,7 +396,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead
 		NewSprite->Mobility = EComponentMobility::Movable;
 		NewSprite->SetSprite(BodySprite);
 		NewSprite->RegisterComponent();
-		NewSprite->AttachParent = RootComponent;
+		NewSprite->AttachTo(RootComponent);
 
 		// Add to the body sprite array
 		BodySpriteRenderComponentsArray.Add(NewSprite);
@@ -336,8 +426,41 @@ void ASGLinkLine::ResetLinkState()
 	// Cleaer the current link
 	LinkLinePoints.Empty();
 
-	// Update the link line using the empty points array
-	UpdateLinkLine(LinkLinePoints);
+	// Update the link line
+	Update();
+}
+
+void ASGLinkLine::BuildPath(const ASGTileBase* inNewTile)
+{
+	checkSlow(inNewTile);
+	UE_LOG(LogSGame, Log, TEXT("Linkline build path using tile %d"), inNewTile->GetGridAddress());
+
+	if (inNewTile->IsSelectable() == false)
+	{
+		// Current tile cannot be as the head of the link line
+		return;
+	}
+
+	// Check if the new address already exists in the points array
+	int32 ExistTileAddress = INDEX_NONE;
+	if (LinkLineTiles.Find(inNewTile, ExistTileAddress) == true)
+	{
+		// Pop out all the points after the address
+		for (int i = LinkLinePoints.Num() - 1; i > ExistTileAddress; i--)
+		{
+			LinkLinePoints.Pop();
+			LinkLineTiles.Pop();
+		}
+	}
+
+	// Add the tile to the link line
+	LinkLineTiles.Add(inNewTile);
+
+	// Add the points to the link line points for drawing the sprites
+	LinkLinePoints.Add(inNewTile->GetGridAddress());
+
+	// Do a link line update
+	Update();
 }
 
 #endif

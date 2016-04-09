@@ -4,6 +4,8 @@
 
 #include "GameFramework/Actor.h"
 #include "SGTileBase.h"
+#include "Messaging.h"
+#include "SGameMessages.h"
 
 #include "SGGrid.generated.h"
 
@@ -46,9 +48,6 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<ASGTileBase*> GameTiles;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FSGTileType> TileLibrary;
 
@@ -71,6 +70,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Initialization)
 	void InitGrid();
 
+	/** Get the tile by the address*/
+	const ASGTileBase* GetTileFromGridAddress(int32 GridAddress);
+
 	/** Get the world location for a given grid address. */
 	UFUNCTION(BlueprintCallable, Category = Tile)
 	FVector GetLocationFromGridAddress(int32 GridAddress);
@@ -82,4 +84,12 @@ public:
 
 	/** Calculate if the two address are neighbor, the link is 8 directions*/
 	bool AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB);
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<ASGTileBase*> GameTiles;
+
+private:
+	// Holds the messaging endpoint.
+	FMessageEndpointPtr MessageEndpoint;
 };
