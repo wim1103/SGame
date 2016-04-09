@@ -119,7 +119,7 @@ bool ASGLinkLine::UpdateLinkLineSprites(const TArray<int32>& LinePoints)
 			}
 			else if (CurrentTileCoords.Y - LastTileCorrds.Y == -1)
 			{
-				NewSpriteAngle = -45;
+				NewSpriteAngle = 315;
 			}
 		}
 		else if (CurrentTileCoords.X - LastTileCorrds.X == 0)
@@ -130,7 +130,7 @@ bool ASGLinkLine::UpdateLinkLineSprites(const TArray<int32>& LinePoints)
 			}
 			if (CurrentTileCoords.Y - LastTileCorrds.Y == -1)
 			{
-				NewSpriteAngle = -90;
+				NewSpriteAngle = 270;
 			}
 		}
 		else if (CurrentTileCoords.X - LastTileCorrds.X == -1)
@@ -337,7 +337,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngl
 	NewSprite->RegisterComponent();
 	NewSprite->AttachTo(RootComponent);
 	
-	int32 AngleDiff = FMath::Abs(inAngle - inLastAngle);
+	int32 AngleDiff = FMath::Abs(inAngle - inLastAngle) % 180;
 	switch (AngleDiff)
 	{
 	case 45:
