@@ -337,22 +337,30 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngl
 	NewSprite->RegisterComponent();
 	NewSprite->AttachTo(RootComponent);
 	
-	int32 AngleDiff = FMath::Abs(inAngle - inLastAngle) % 180;
+	// Choose the sprite texture
+	int32 AngleDiff = FMath::Abs(inAngle - inLastAngle);
 	switch (AngleDiff)
 	{
 	case 45:
-		// Note that, the 135 texture is inner angle, currently we are using the outter angle
-		// So we choose 135 sprite
+	case 315:
+	{
 		NewSprite->SetSprite(Corner_135_Sprite);
 		break;
+	}
+
 	case 90:
+	case 270:
+	{
 		NewSprite->SetSprite(Corner_90_Sprite);
 		break;
+	}
+
 	case 135:
-		// Note that, the 45 texture is inner angle, this we are using the outter angle
-		// So we choose 45 sprite
+	case 225:
+	{
 		NewSprite->SetSprite(Corner_45_Sprite);
 		break;
+	}
 	default:
 		UE_LOG(LogSGame, Warning, TEXT("Invalid angle, returning null sprite!"));
 		return nullptr;
@@ -364,7 +372,14 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngl
 	// Flip the sprite if needed
 	if (inLastAngle == 0)
 	{
-		if (inAngle == AngleDiff)
+		if (AngleDiff < 180)
+		{
+			NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
+		}
+	}
+	else if (inAngle == 0)
+	{
+		if (AngleDiff > 180)
 		{
 			NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
 		}
