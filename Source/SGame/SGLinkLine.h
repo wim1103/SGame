@@ -49,6 +49,10 @@ public:
 #endif
 	// End of AActor interface
 
+	/** Return whether the current link line contains the tile*/
+	UFUNCTION(BlueprintCallable, Category = Visitor)
+	bool ContainsTileAddress(int32 inTileAddress);
+
 	/** Whether it is a static line. Test only, for static link lines.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsStaticLine;
@@ -56,6 +60,9 @@ public:
 	/** Static line points. Test only, for static link lines.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int32> StaticLinePoints;
+
+	/** Current tiles in the link line*/
+	TArray<const ASGTileBase*> LinkLineTiles;
 
 protected:
 	// The sprite asset for link corners 45 degree
@@ -89,9 +96,6 @@ protected:
 
 	/** Link line points, for drawing the sprites*/
 	TArray<int32> LinkLinePoints;
-
-	/** Current tiles in the link line*/
-	TArray<const ASGTileBase*> LinkLineTiles;
 
 private:
 	/** Head sprite for render the link line head */

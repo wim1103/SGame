@@ -51,22 +51,38 @@ struct FMessage_Gameplay_NewTilePicked
 };
 
 /**
-* The tile can be selected event
+* The tile selected status change event
 */
 USTRUCT()
-struct FMessage_Gameplay_TileBecomeSelectable
+struct FMessage_Gameplay_TileSelectableStatusChange
 {
 	GENERATED_USTRUCT_BODY()
 
-	/** The picked tile address */
+	/** The picked tile address, if the address is -1, then all apply to all tiles*/
 	UPROPERTY()
 	int32 TileAddress;
-	
-	/** The picked tile address */
+
+	/** The new selectable status, it can be override by the tile logic itself*/
 	UPROPERTY()
-	bool bFroceAllTileCanBeSelected;
+	bool NewSelectableStatus;
 };
 
+/**
+* The tile linked status change event
+*/
+USTRUCT()
+struct FMessage_Gameplay_TileLinkedStatusChange
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** The picked tile address, if the address is -1, then all apply to all tiles*/
+	UPROPERTY()
+	int32 TileAddress;
+
+	/** The new selectable status, it can be override by the tile logic itself*/
+	UPROPERTY()
+	bool NewLinkStatus;
+};
 
 /** Defines the game state */
 UENUM()

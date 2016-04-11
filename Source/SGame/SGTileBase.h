@@ -40,7 +40,7 @@ namespace ESGTileStatusFlag
 		ESF_MATCHABLE,			// Tile is matchable to the current path
 		ESF_BROKEN,				// Tile is broken
 		ESF_FROZEN,				// Tile is frozen
-		ESF_SELECTED,			// Tile is selected
+		ESF_LINKED,				// Tile is linked
 	};
 }
 
@@ -132,9 +132,20 @@ protected:
 	/** Location where we will land on the grid as a 1D key/value. Used while falling. */
 	int32 LandingGridAddress;
 
+	// The sprite asset for link corners 45 degree
+	UPROPERTY(Category = Sprite, EditAnywhere, BlueprintReadOnly, meta = (DisplayThumbnail = "true"))
+	UPaperSprite* Sprite_Selected;
+
+	// The sprite asset for link corners 45 degree
+	UPROPERTY(Category = Sprite, EditAnywhere, BlueprintReadOnly, meta = (DisplayThumbnail = "true"))
+	UPaperSprite* Sprite_Normal;
+
 private:
 	/** Handles tile become selectalbe */
-	void HandleBecomeSelectable(const FMessage_Gameplay_TileBecomeSelectable& Message, const IMessageContextRef& Context);
+	void HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context);
+
+	/** Handles tile become selectalbe */
+	void HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatusChange& Message, const IMessageContextRef& Context);
 
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;

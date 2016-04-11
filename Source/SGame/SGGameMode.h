@@ -86,4 +86,8 @@ private:
 
 	/** Current grid */
 	ASGGrid*			CurrentGrid;
+
+	void UpdateTileSelectState();
+	void ResetTileSelectInfo();
+	void UpdateTileLinkState();
 };

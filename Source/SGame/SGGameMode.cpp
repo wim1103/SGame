@@ -94,6 +94,15 @@ void ASGGameMode::OnPlayerTurnBegin()
 {
 	UE_LOG(LogSGame, Log, TEXT("Player turn begin!"));
 
+	// Reset the link line 
+	if (CurrentLinkLine != nullptr)
+	{
+		CurrentLinkLine->ResetLinkState();
+	}
+
+	// Reset the tile select info
+	ResetTileSelectInfo();
+
 	// Change the next status to player regenerate
 	if (MessageEndpoint.IsValid())
 	{
@@ -199,12 +208,12 @@ void ASGGameMode::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& M
 		return;
 	}
 
-	// fixme by reiwang: turn off the game status control
-// 	if (CurrentGameGameStatus != ESGGameStatus::EGS_PlayerInput)
-// 	{
-// 		// Not in the player input state, return
-// 		return;
-// 	}
+	// Player's link line input should only valid in playerinput stage
+	if (CurrentGameGameStatus != ESGGameStatus::EGS_PlayerInput)
+	{
+		// Not in the player input state, return
+		return;
+	}
 
 	const ASGTileBase* CurrentTile = CurrentGrid->GetTileFromGridAddress(Message.TileAddress);
 	if (CurrentTile == nullptr)
@@ -214,8 +223,99 @@ void ASGGameMode::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& M
 	}
 
 	// Tell the link line to build the path
-	if (CurrentLinkLine != nullptr)
+	checkSlow(CurrentLinkLine != nullptr);
+	CurrentLinkLine->BuildPath(CurrentTile);
+
+	// Update the tile select state 
+	UpdateTileSelectState();
+
+	// Update the tile link state
+	UpdateTileLinkState();
+}
+
+void ASGGameMode::UpdateTileSelectState()
+{
+	checkSlow(CurrentLinkLine != nullptr);
+	const ASGTileBase* HeadTile = CurrentLinkLine->LinkLineTiles.Last();
+	if (HeadTile == nullptr)
 	{
-		CurrentLinkLine->BuildPath(CurrentTile);
+		UE_LOG(LogSGame, Error, TEXT("The head tile data corrupt!"));
+		return;
+	}
+
+	const ASGTileBase* TailTile = CurrentLinkLine->LinkLineTiles[0];
+	if (TailTile == nullptr)
+	{
+		UE_LOG(LogSGame, Error, TEXT("The tail tile data corrupt!"));
+		return;
+	}
+
+	// Iterator all the grid tiles, only the negihbor tile between the head can be selected
+	checkSlow(CurrentGrid != nullptr);
+	for (int32 i = 0; i < 36; i++)
+	{
+		if (i == HeadTile->GetGridAddress())
+		{
+			// Ignore the head tile
+			continue;
+		}
+
+		if (CurrentGrid->AreAddressesNeighbors(HeadTile->GetGridAddress(), i) == true)
+		{
+			// The neighbor tile become selectable
+			FMessage_Gameplay_TileSelectableStatusChange* SelectableMessage = new FMessage_Gameplay_TileSelectableStatusChange{ 0 };
+			SelectableMessage->TileAddress = i;
+			SelectableMessage->NewSelectableStatus = true;
+			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+		}
+		else
+		{
+			// The other tile become unselectable
+			FMessage_Gameplay_TileSelectableStatusChange* SelectableMessage = new FMessage_Gameplay_TileSelectableStatusChange{ 0 };
+			SelectableMessage->TileAddress = i;
+			SelectableMessage->NewSelectableStatus = false;
+			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+		}
+	}
+}
+
+void ASGGameMode::ResetTileSelectInfo()
+{
+	// Tell all the tiles that they can be selected
+	if (MessageEndpoint.IsValid() == true)
+	{
+		FMessage_Gameplay_TileSelectableStatusChange* SelectableMessage = new FMessage_Gameplay_TileSelectableStatusChange{ 0 };
+		
+		// Set the target address to all
+		SelectableMessage->TileAddress = -1;
+		SelectableMessage->NewSelectableStatus = true;
+		MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+	}
+}
+
+void ASGGameMode::UpdateTileLinkState()
+{
+	checkSlow(CurrentLinkLine != nullptr);
+
+	// Iterator all the grid tiles, only the negihbor tile between the head can be selected
+	checkSlow(CurrentGrid != nullptr);
+	for (int32 i = 0; i < 36; i++)
+	{
+		if (CurrentLinkLine->ContainsTileAddress(i) == true)
+		{
+			// Current line is linked
+			FMessage_Gameplay_TileLinkedStatusChange* SelectableMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+			SelectableMessage->TileAddress = i;
+			SelectableMessage->NewLinkStatus = true;
+			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+		}
+		else
+		{
+			// Current line is not linked
+			FMessage_Gameplay_TileLinkedStatusChange* SelectableMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+			SelectableMessage->TileAddress = i;
+			SelectableMessage->NewLinkStatus = false;
+			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+		}
 	}
 }

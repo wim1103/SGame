@@ -215,92 +215,9 @@ bool ASGLinkLine::UpdateLinkLineSprites(const TArray<int32>& LinePoints)
 
 bool ASGLinkLine::Update()
 {
-	UpdateTileSelectInfo();
 	UpdateLinkLineSprites(LinkLinePoints);
 
 	return true;
-}
-
-void ASGLinkLine::UpdateTileSelectInfo()
-{
-	// If is is the head of the link line
-	if (LinkLinePoints.Num() == 0)
-	{
-		// Tell all the tiles that they can be selected
-		if (MessageEndpoint.IsValid() == true)
-		{
-			FMessage_Gameplay_TileBecomeSelectable* SelectableMessage = new FMessage_Gameplay_TileBecomeSelectable{ 0 };
-			SelectableMessage->bFroceAllTileCanBeSelected = true;
-			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
-		}
-	}
-
-	/*
-	const CTile* pFirstTile = m_pField->GetTile(m_stPathVec.front());
-	if (NULL == pFirstTile)
-	{
-		LOG_ERR("m_pField->GetTile(%u) returns NULL\n"
-			, m_stPathVec.front()
-		);
-		return;
-	}
-
-	const CTile* pLastTile = m_pField->GetTile(m_stPathVec.back());
-	if (NULL == pLastTile)
-	{
-		LOG_ERR("m_pField->GetTile(%u) returns NULL\n"
-			, m_stPathVec.back()
-		);
-		return;
-	}
-
-
-	ENMTILELINKTYPE eLinkType = pFirstTile->GetLinkType();
-
-	for (uint8 uCol = 0; uCol < MAX_FIELD_COL_NUM; ++uCol)
-	{
-		for (uint8 uRow = 0; uRow < MAX_FIELD_ROW_NUM; ++uRow)
-		{
-			CTile* pTile = m_pField->GetTile(uCol, uRow);
-			if (NULL == pTile)
-			{
-				continue;
-			}
-
-			pTile->ResetSelected();
-
-			if (uCol + 1 >= pLastTile->GetCol()
-				&& uCol <= pLastTile->GetCol() + 1
-				&& uRow + 1 >= pLastTile->GetRow()
-				&& uRow <= pLastTile->GetRow() + 1
-				&& (CTileManager::IsLinkableType(eLinkType, pTile->GetLinkType()) || ETT_ARROW == pLastTile->GetType())
-				)
-			{
-				pTile->SetSelectable();
-			}
-			else
-			{
-				pTile->ResetSelectable();
-			}
-		}
-	}
-
-	for (Uint16Vec::iterator iter = m_stPathVec.begin()
-		; iter != m_stPathVec.end()
-		; ++iter
-		)
-	{
-		uint16 uTileID = *iter;
-		CTile* pTile = m_pField->GetTile(uTileID);
-		if (NULL == pTile)
-		{
-			assert(0);
-			continue;
-		}
-
-		pTile->SetSelected();
-	}
-	*/
 }
 
 #if WITH_EDITOR
@@ -328,6 +245,11 @@ bool ASGLinkLine::GetReferencedContentObjects(TArray<UObject*>& Objects) const
 	return true;
 }
 
+bool ASGLinkLine::ContainsTileAddress(int32 inTileAddress)
+{
+	return LinkLinePoints.Contains(inTileAddress);
+}
+
 UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngle)
 {
 	// Create the base sprite and initialize
@@ -336,60 +258,52 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngl
 	NewSprite->Mobility = EComponentMobility::Movable;
 	NewSprite->RegisterComponent();
 	NewSprite->AttachTo(RootComponent);
+
+	// Rotate to the last angle
+	NewSprite->SetRelativeRotation(FRotator(inLastAngle, 0, 0));
 	
 	// Choose the sprite texture
-	int32 AngleDiff = FMath::Abs(inAngle - inLastAngle);
+	int32 AngleDiff = (inAngle - inLastAngle + 360) % 360;
 	switch (AngleDiff)
 	{
 	case 45:
-	case 315:
 	{
+		NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
 		NewSprite->SetSprite(Corner_135_Sprite);
 		break;
 	}
-
-	case 90:
-	case 270:
-	{
-		NewSprite->SetSprite(Corner_90_Sprite);
-		break;
-	}
-
-	case 135:
 	case 225:
 	{
 		NewSprite->SetSprite(Corner_45_Sprite);
 		break;
 	}
+	case 90:
+	{
+		NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
+		NewSprite->SetSprite(Corner_90_Sprite);
+		break;
+	}
+	case 270:
+	{
+		NewSprite->SetSprite(Corner_90_Sprite);
+		break;
+	}
+	case 135:
+	{
+		NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
+		NewSprite->SetSprite(Corner_45_Sprite);
+		break;
+	}
+	case 315:
+	{
+		NewSprite->SetSprite(Corner_135_Sprite);
+		break;
+	}
 	default:
+	{
 		UE_LOG(LogSGame, Warning, TEXT("Invalid angle, returning null sprite!"));
 		return nullptr;
 	}
-
-	// Rotate to the last angle
-	NewSprite->SetRelativeRotation(FRotator(inLastAngle, 0, 0));
-
-	// Flip the sprite if needed
-	if (inLastAngle == 0)
-	{
-		if (AngleDiff < 180)
-		{
-			NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
-		}
-	}
-	else if (inAngle == 0)
-	{
-		if (AngleDiff > 180)
-		{
-			NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
-		}
-	}
-	else
-	{
-		if (inLastAngle < inAngle)
-		{
-			NewSprite->SetRelativeScale3D(FVector(1, 1, -1));
-		}
 	}
 
 	// Add to the body sprite array

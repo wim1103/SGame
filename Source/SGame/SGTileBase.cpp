@@ -27,11 +27,13 @@ void ASGTileBase::BeginPlay()
 
 	FString EndPointName = FString::Printf(TEXT("Gameplay_Tile_%d"), GridAddress);
 	MessageEndpoint = FMessageEndpoint::Builder(*EndPointName)
-		.Handling<FMessage_Gameplay_TileBecomeSelectable>(this, &ASGTileBase::HandleBecomeSelectable);
+		.Handling<FMessage_Gameplay_TileSelectableStatusChange>(this, &ASGTileBase::HandleSelectableStatusChange)
+		.Handling<FMessage_Gameplay_TileLinkedStatusChange>(this, &ASGTileBase::HandleLinkStatusChange);
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the tile need events
-		MessageEndpoint->Subscribe<FMessage_Gameplay_TileBecomeSelectable>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_TileSelectableStatusChange>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_TileLinkedStatusChange>();
 	}
 }
 
@@ -92,17 +94,59 @@ int32 ASGTileBase::GetGridAddress() const
 	return GridAddress;
 }
 
-void ASGTileBase::HandleBecomeSelectable(const FMessage_Gameplay_TileBecomeSelectable& Message, const IMessageContextRef& Context)
+void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context)
 {
-	if (Message.bFroceAllTileCanBeSelected == false && Message.TileAddress != GridAddress)
+	if (Message.TileAddress != -1 && Message.TileAddress != GridAddress)
 	{
 		// Selectable event is not sent to this tile
 		return;
 	}
 
-	UE_LOG(LogSGame, Log, TEXT("Tile %d become selectable"), GridAddress);
+	UE_LOG(LogSGame, Log, TEXT("Tile %d selectable flag changed to %d"), GridAddress, Message.NewSelectableStatus);
 
-	// Push the selectable flag to the status array
-	TileData.TileStatusArray.Push(ESGTileStatusFlag::ESF_SELECTABLE);
+	if (Message.NewSelectableStatus == true)
+	{
+		// Add the selectable flag to the status array
+		TileData.TileStatusArray.AddUnique(ESGTileStatusFlag::ESF_SELECTABLE);
+
+		// Set the white color 
+		GetRenderComponent()->SetSpriteColor(FLinearColor::White);
+	}
+	else
+	{
+		// Remove the selectable flag
+		TileData.TileStatusArray.Remove(ESGTileStatusFlag::ESF_SELECTABLE);
+
+		// Dim the sprite
+		GetRenderComponent()->SetSpriteColor(FLinearColor(0.2f, 0.2f, 0.2f));
+	}
+}
+
+void ASGTileBase::HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatusChange& Message, const IMessageContextRef& Context)
+{
+	if (Message.TileAddress != -1 && Message.TileAddress != GridAddress)
+	{
+		// Selectable event is not sent to this tile
+		return;
+	}
+
+	UE_LOG(LogSGame, Log, TEXT("Tile %d link status changed to %d"), GridAddress, Message.NewLinkStatus);
+
+	if (Message.NewLinkStatus == true)
+	{
+		// Add the selectable flag to the status array
+		TileData.TileStatusArray.AddUnique(ESGTileStatusFlag::ESF_LINKED);
+
+		// Set the linked sprite
+		GetRenderComponent()->SetSprite(Sprite_Selected);
+	}
+	else
+	{
+		// Remove the selectable flag
+		TileData.TileStatusArray.Remove(ESGTileStatusFlag::ESF_LINKED);
+
+		// Set the normal sprite
+		GetRenderComponent()->SetSprite(Sprite_Normal);
+	}
 }
 
