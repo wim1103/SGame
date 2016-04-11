@@ -68,7 +68,18 @@ bool ASGLinkLine::UpdateLinkLineSprites(const TArray<int32>& LinePoints)
 	if (LinkLinePoints.Num() < 2)
 	{
 		// Only one point cannot become a link line
+
+		// Hide the head and tail component
+		HeadSpriteRenderComponent->SetVisibility(false);
+		TailSpriteRenderComponent->SetVisibility(false);
+
 		return true;
+	}
+	else
+	{
+		// Unhide the head and tail component
+		HeadSpriteRenderComponent->SetVisibility(true);
+		TailSpriteRenderComponent->SetVisibility(true);
 	}
 
 	// The link line should scale to 1.5 to fit the grid
@@ -353,6 +364,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead
 void ASGLinkLine::ResetLinkState()
 {
 	// Cleaer the current link
+	LinkLineTiles.Empty();
 	LinkLinePoints.Empty();
 
 	// Update the link line

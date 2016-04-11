@@ -103,6 +103,9 @@ void ASGGameMode::OnPlayerTurnBegin()
 	// Reset the tile select info
 	ResetTileSelectInfo();
 
+	// Reset the tile link info
+	ResetTileLinkInfo();
+
 	// Change the next status to player regenerate
 	if (MessageEndpoint.IsValid())
 	{
@@ -317,5 +320,19 @@ void ASGGameMode::UpdateTileLinkState()
 			SelectableMessage->NewLinkStatus = false;
 			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
 		}
+	}
+}
+
+void ASGGameMode::ResetTileLinkInfo()
+{
+	// Tell all the tiles that they can be selected
+	if (MessageEndpoint.IsValid() == true)
+	{
+		FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+
+		// Set the target address to all
+		LinkStatusChangeMessage->TileAddress = -1;
+		LinkStatusChangeMessage->NewLinkStatus = false;
+		MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
 	}
 }

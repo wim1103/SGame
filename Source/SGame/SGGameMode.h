@@ -89,5 +89,7 @@ private:
 
 	void UpdateTileSelectState();
 	void ResetTileSelectInfo();
+
 	void UpdateTileLinkState();
+	void ResetTileLinkInfo();
 };
