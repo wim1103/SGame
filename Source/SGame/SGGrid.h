@@ -48,9 +48,6 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FSGTileType> TileLibrary;
-
 	/** The size of a space on the grid. Does not include borders or spacing between tiles. */
 	UPROPERTY(EditAnywhere, Category = Tile)
 	FVector2D TileSize;
@@ -62,9 +59,6 @@ public:
 	/** The height of the grid. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
 	int32 GridHeight;
-
-	ASGTileBase* CreateTile(TSubclassOf<class ASGTileBase> TileToSpawn, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID);
-	int32 SelectTileFromLibrary();
 
 	/** Initialize the tiles on the grid*/
 	UFUNCTION(BlueprintCallable, Category = Initialization)

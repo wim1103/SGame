@@ -8,10 +8,9 @@
 #include "SGameMessages.h"
 #include "SGLinkLine.h"
 #include "SGGrid.h"
+#include "SGTileManager.h"
 
 #include "SGGameMode.generated.h"
-
-
 
 /**
  * The Gameplay mode
@@ -60,6 +59,11 @@ public:
 
 	ASGGrid* GetCurrentGrid() const { return CurrentGrid; }
 	void SetCurrentGrid(ASGGrid* val) { checkSlow(val != nullptr);  CurrentGrid = val; }
+
+protected:
+	/** Tile Manager */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
+	USGTileManager*		TileManager;
 
 private:
 	/** Handles Game start messages. */

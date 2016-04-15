@@ -10,6 +10,9 @@ ASGGameMode::ASGGameMode(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bCanEverTick = true;
 	DefaultPawnClass = nullptr;
 	PlayerControllerClass = ASGPlayerController::StaticClass();
+
+	// Create the tile manager
+	TileManager = ObjectInitializer.CreateDefaultSubobject<USGTileManager>(this, TEXT("TileManager"));
 }
 
 void ASGGameMode::BeginPlay()
@@ -64,6 +67,10 @@ void ASGGameMode::BeginPlay()
 	{
 		UE_LOG(LogSGame, Warning, TEXT("There is no link line object in the level!"));
 	}
+
+	// Tell the tile manager to initialize the grid
+	checkSlow(TileManager);
+	TileManager->InitGridTiles();
 }
 
 void ASGGameMode::SetNextStatus(ESGGameStatus::Type inNewStatus)
