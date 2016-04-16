@@ -115,6 +115,9 @@ public:
 	void SetGridAddress(int32 NewLocation);
 	int32 GetGridAddress() const;
 
+	int32 GetTileID() const { return TileID; }
+	void SetTileID(int32 val) { TileID = val; }
+
 	UPROPERTY(BlueprintReadOnly)
 	int32 TileTypeID;
 
@@ -149,4 +152,7 @@ private:
 
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
+
+	/** Current tile's Id */
+	int32 TileID;
 };

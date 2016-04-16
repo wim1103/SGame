@@ -51,6 +51,27 @@ struct FMessage_Gameplay_NewTilePicked
 };
 
 /**
+* Tile moved message
+*/
+USTRUCT()
+struct FMessage_Gameplay_TileMoved
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** The tile id */
+	UPROPERTY()
+	int32 TileID;
+
+	/** The old grid address */
+	UPROPERTY()
+	int32 OldTileAddress;
+
+	/** The old grid address */
+	UPROPERTY()
+	int32 NewTileAddress;
+};
+
+/**
 * The tile selected status change event
 */
 USTRUCT()

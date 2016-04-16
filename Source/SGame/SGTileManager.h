@@ -45,4 +45,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
 	TArray<FSGTileType> TileLibrary;
+
+private:
+	int32 NextTileID;
 };

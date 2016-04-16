@@ -72,8 +72,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Tile)
 	USGTileManager*		TileManager;
 
+	/** Contains the tile only on the grid */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<ASGTileBase*> GameTiles;
+	TArray<ASGTileBase*> GridTiles;
+
+	/** Contains all the tiles in the game, including the disappering tiles */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<ASGTileBase*> AllTiles;
 
 private:
 	// Holds the messaging endpoint.

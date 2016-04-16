@@ -27,8 +27,8 @@ void ASGGrid::BeginPlay()
 	}
 
 	// Initialize the grid
-	GameTiles.Empty(GridWidth * GridHeight);
-	GameTiles.AddZeroed(GridWidth * GridHeight);
+	GridTiles.Empty(GridWidth * GridHeight);
+	GridTiles.AddZeroed(GridWidth * GridHeight);
 }
 
 // Called every frame
@@ -41,7 +41,7 @@ void ASGGrid::RefillGrid()
 {
 	for (int32 Col = 0; Col < GridWidth; ++Col)
 	{
-		const ASGTileBase* CurrentColumnTopTile = GameTiles[Col];
+		const ASGTileBase* CurrentColumnTopTile = GridTiles[Col];
 		if (CurrentColumnTopTile != nullptr)
 		{
 			// There is tile on top row, so no need to refill
@@ -94,17 +94,17 @@ void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
 
 void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, ASGTileBase* inTile)
 {
-	checkSlow(GameTiles.IsValidIndex(inGridAddress));
+	checkSlow(GridTiles.IsValidIndex(inGridAddress));
 	checkSlow(inTile != nullptr);
 
-	GameTiles[inGridAddress] = inTile;
+	GridTiles[inGridAddress] = inTile;
 }
 
 const ASGTileBase* ASGGrid::GetTileFromGridAddress(int32 GridAddress)
 {
-	if (GridAddress < GameTiles.Num())
+	if (GridAddress < GridTiles.Num())
 	{
-		return GameTiles[GridAddress];
+		return GridTiles[GridAddress];
 	}
 	else
 	{
