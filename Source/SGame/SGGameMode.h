@@ -61,9 +61,7 @@ public:
 	void SetCurrentGrid(ASGGrid* val) { checkSlow(val != nullptr);  CurrentGrid = val; }
 
 protected:
-	/** Tile Manager */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
-	USGTileManager*		TileManager;
+	
 
 private:
 	/** Handles Game start messages. */

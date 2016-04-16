@@ -6,41 +6,16 @@
 #include "SGTileBase.h"
 #include "Messaging.h"
 #include "SGameMessages.h"
+#include "SGTileManager.h"
 
 #include "SGGrid.generated.h"
-
-USTRUCT(BlueprintType)
-struct FSGTileType
-{
-	GENERATED_USTRUCT_BODY();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Probability;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class ASGTileBase> TileClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FSGTileAbilities Abilities;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FSGTileData TileData;
-
-	FSGTileType()
-	{
-		Probability = 1;
-		TileClass = nullptr;
-	}
-};
 
 UCLASS()
 class SGAME_API ASGGrid : public AActor
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
-	ASGGrid(const FObjectInitializer& ObjectInitializer);
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -80,6 +55,10 @@ public:
 	bool AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB);
 
 protected:
+	/** Tile Manager */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Tile)
+	USGTileManager*		TileManager;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<ASGTileBase*> GameTiles;
 

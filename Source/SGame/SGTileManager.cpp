@@ -1,40 +1,33 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SGame.h"
-#include "TileManager.h"
+#include "SGTileManager.h"
 
-USGTileManager::USGTileManager()
+USGTileManager::USGTileManager(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 }
 
-USGTileManager::~USGTileManager()
+ASGTileBase* USGTileManager::CreateTile(AActor* inOwner, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID)
 {
-}
-
-ASGTileBase* USGTileManager::CreateTile(TSubclassOf<class ASGTileBase> TileToSpawn, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID)
-{
-	if (TileToSpawn == nullptr)
-	{
-		return nullptr;
-	}
-
+	checkSlow(inOwner);
 	checkSlow(TileLibrary.IsValidIndex(TileTypeID));
 	checkSlow(TileLibrary[TileTypeID]);
+	checkSlow(TileLibrary[TileTypeID].TileClass);
 
 	// Check for a valid World:
-	UWorld* const World = GetWorld();
+	UWorld* const World = inOwner->GetWorld();
 	if (World)
 	{
 		// Set the spawn parameters.
 		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = Instigator;
+		SpawnParams.Owner = inOwner;
+		SpawnParams.Instigator = nullptr;
 
 		// Tiles never rotate
 		FRotator SpawnRotation = FRotator(0.0f, 0.0f, 0.0f);
 
 		// Spawn the tile.
-		ASGTileBase* const NewTile = World->SpawnActor<ASGTileBase>(TileToSpawn, SpawnLocation, SpawnRotation, SpawnParams);
+		ASGTileBase* const NewTile = World->SpawnActor<ASGTileBase>(TileLibrary[TileTypeID].TileClass, SpawnLocation, SpawnRotation, SpawnParams);
 		// Of course we want to move the tile
 		NewTile->GetRenderComponent()->SetMobility(EComponentMobility::Movable);
 
@@ -42,7 +35,6 @@ ASGTileBase* USGTileManager::CreateTile(TSubclassOf<class ASGTileBase> TileToSpa
 		NewTile->Abilities = TileLibrary[TileTypeID].Abilities;
 		NewTile->TileData = TileLibrary[TileTypeID].TileData;
 		NewTile->SetGridAddress(SpawnGridAddress);
-		GameTiles[SpawnGridAddress] = NewTile;
 		return NewTile;
 	}
 
@@ -68,24 +60,3 @@ int32 USGTileManager::SelectTileFromLibrary()
 	}
 	return 0;
 }
-
-void USGTileManager::InitGridTiles()
-{
-	GameTiles.Empty(GridWidth * GridHeight);
-	GameTiles.AddUninitialized(GameTiles.Max());
-	FVector SpawnLocation;
-	for (int32 column = 0; column < GridWidth; ++column)
-	{
-		for (int32 row = 0; row < GridHeight; ++row)
-		{
-			int32 TileID = SelectTileFromLibrary();
-			int32 GridAddress;
-			GetGridAddressWithOffset(0, column, row, GridAddress);
-			SpawnLocation = GetLocationFromGridAddress(GridAddress);
-
-			// Creathe the tile at the specified location
-			CreateTile(TileLibrary[TileID].TileClass, SpawnLocation, GridAddress, TileID);
-		}
-	}
-}
-

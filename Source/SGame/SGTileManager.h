@@ -5,6 +5,32 @@
 #include "SGame.h"
 #include "SGTileBase.h"
 
+#include "SGTileManager.generated.h"
+
+USTRUCT(BlueprintType)
+struct FSGTileType
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Probability;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class ASGTileBase> TileClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FSGTileAbilities Abilities;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FSGTileData TileData;
+
+	FSGTileType()
+	{
+		Probability = 1;
+		TileClass = nullptr;
+	}
+};
+
 /**
 * Tile Manager for create and destroy tiles
 */
@@ -14,16 +40,9 @@ class SGAME_API USGTileManager : public UObject
 	GENERATED_UCLASS_BODY()
 
 public:
-	USGTileManager();
-	~USGTileManager();
-
-	ASGTileBase* CreateTile(TSubclassOf<class ASGTileBase> TileToSpawn, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID);
+	ASGTileBase* CreateTile(AActor* inOwner, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID);
 	int32 SelectTileFromLibrary();
-	
-	/** Initialize the grid tiles */
-	UFUNCTION(BlueprintCallable, Category = Tile)
-	void InitGridTiles();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
 	TArray<FSGTileType> TileLibrary;
 };
