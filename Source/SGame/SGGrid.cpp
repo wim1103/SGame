@@ -25,6 +25,10 @@ void ASGGrid::BeginPlay()
 	{
 		// Subscribe the grid needed messages
 	}
+
+	// Initialize the grid
+	GameTiles.Empty(GridWidth * GridHeight);
+	GameTiles.AddZeroed(GridWidth * GridHeight);
 }
 
 // Called every frame
@@ -33,30 +37,67 @@ void ASGGrid::Tick( float DeltaTime )
 	Super::Tick( DeltaTime );
 }
 
-void ASGGrid::InitGrid()
+void ASGGrid::RefillGrid()
 {
-	GameTiles.Empty(GridWidth * GridHeight);
-	GameTiles.AddUninitialized(GameTiles.Max());
-
-	checkSlow(TileManager);
-	FVector SpawnLocation;
-	for (int32 column = 0; column < GridWidth; ++column)
+	for (int32 Col = 0; Col < GridWidth; ++Col)
 	{
-		for (int32 row = 0; row < GridHeight; ++row)
+		const ASGTileBase* CurrentColumnTopTile = GameTiles[Col];
+		if (CurrentColumnTopTile != nullptr)
 		{
-			int32 TileID = TileManager->SelectTileFromLibrary();
-			int32 GridAddress;
-			GetGridAddressWithOffset(0, column, row, GridAddress);
-			SpawnLocation = GetLocationFromGridAddress(GridAddress);
+			// There is tile on top row, so no need to refill
+			continue;
+		}
 
-			// create the tile at the specified location
-			GameTiles[GridAddress] = TileManager->CreateTile(this, SpawnLocation, GridAddress, TileID);
-			if (GameTiles[GridAddress] == nullptr)
+		// Find how many empty space we have
+		int32 RowNum = 0;
+		while (RowNum < GridHeight)
+		{
+			int32 NewGridAddress = Col + RowNum * GridWidth;
+			const ASGTileBase* CurrentTile = GetTileFromGridAddress(NewGridAddress);
+			if (CurrentTile == nullptr)
 			{
-				UE_LOG(LogSGame, Error, TEXT("Cannot create tile at location %d, %d"), column, row);
+				++RowNum;
+			}
+			else
+			{
+				break;
 			}
 		}
+
+		RefillColumn(Col, RowNum);
 	}
+}
+
+void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
+{
+	// We always start fill the first row [0 index row]
+	for (int startRow = 0; startRow < inNum; startRow++)
+	{
+		// Calculate the new grid address
+		int32 TileID = TileManager->SelectTileFromLibrary();
+		int32 GridAddress;
+		FVector SpawnLocation;
+		GetGridAddressWithOffset(0, inColumnIndex, startRow, GridAddress);
+		SpawnLocation = GetLocationFromGridAddress(GridAddress);
+
+		// create the tile at the specified location
+		ASGTileBase* NewTile = TileManager->CreateTile(this, SpawnLocation, GridAddress, TileID);
+		if (NewTile == nullptr)
+		{
+			UE_LOG(LogSGame, Error, TEXT("Cannot create tile at location %d, %d"), inColumnIndex, startRow);
+		}
+
+		// Refill the grid with tile
+		RefillGridAddressWithTile(GridAddress, NewTile);
+	}
+}
+
+void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, ASGTileBase* inTile)
+{
+	checkSlow(GameTiles.IsValidIndex(inGridAddress));
+	checkSlow(inTile != nullptr);
+
+	GameTiles[inGridAddress] = inTile;
 }
 
 const ASGTileBase* ASGGrid::GetTileFromGridAddress(int32 GridAddress)

@@ -35,9 +35,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
 	int32 GridHeight;
 
-	/** Initialize the tiles on the grid*/
-	UFUNCTION(BlueprintCallable, Category = Initialization)
-	void InitGrid();
+	/** Refill all the tiles on the grid*/
+	UFUNCTION(BlueprintCallable, Category = Refill)
+	void RefillGrid();
+
+	/** Refill one column on the grid
+	*
+	* @param inColumnIndex columnIndex to fill
+	* @param inNum		   how many rows to fill	
+	* 
+	*/
+	UFUNCTION(BlueprintCallable, Category = Refill)
+	void RefillColumn(int32 inColumnIndex, int32 inNum);
+
+	/** Refill a specific grid address with the tile */
+	UFUNCTION(BlueprintCallable, Category = Refill)
+	void RefillGridAddressWithTile(int32 inGridAddress, ASGTileBase* inTile);
 
 	/** Get the tile by the address*/
 	const ASGTileBase* GetTileFromGridAddress(int32 GridAddress);

@@ -17,6 +17,9 @@ void USGGlobalGameInstance::StartGame()
 		MessageEndpoint->Publish(new FMessage_Gameplay_GameStart(), EMessageScope::Process
 		);
 	}
+
+	// Start the new round
+	NewRound();
 }
 
 void USGGlobalGameInstance::NewRound()

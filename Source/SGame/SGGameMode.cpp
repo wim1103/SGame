@@ -64,10 +64,6 @@ void ASGGameMode::BeginPlay()
 	{
 		UE_LOG(LogSGame, Warning, TEXT("There is no link line object in the level!"));
 	}
-
-	// Tell the tile manager to initialize the grid
-	checkSlow(CurrentGrid);
-	CurrentGrid->InitGrid();
 }
 
 void ASGGameMode::SetNextStatus(ESGGameStatus::Type inNewStatus)
@@ -176,6 +172,10 @@ void ASGGameMode::Tick(float DeltaSeconds)
 void ASGGameMode::HandleGameStart(const FMessage_Gameplay_GameStart& Message, const IMessageContextRef& Context)
 {
 	UE_LOG(LogSGame, Log, TEXT("Game start!"));
+
+	// Tell the grid to initialize the grid
+	checkSlow(CurrentGrid);
+	CurrentGrid->RefillGrid();
 }
 
 void ASGGameMode::HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdate& Message, const IMessageContextRef& Context)
