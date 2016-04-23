@@ -9,6 +9,8 @@
 
 #include "SGTileBase.generated.h"
 
+class ASGGrid;
+
 /** Types of tile base type. */
 UENUM()
 namespace ESGTileType
@@ -127,10 +129,20 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FSGTileData TileData;
 
+	// Falling functions
+	void StartFalling();
+	
+	UFUNCTION()
+	void TickFalling(float DeltaTime);
+
 protected:
 	/** Location on the grid as a 1D key/value. To find neighbors, ask the grid. */
 	UPROPERTY(BlueprintReadOnly, Category = Tile)
 	int32 GridAddress;
+
+	/** How quickly tiles slide into place. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
+	float FallingSpeed;
 
 	/** Location where we will land on the grid as a 1D key/value. Used while falling. */
 	int32 LandingGridAddress;
@@ -143,6 +155,12 @@ protected:
 	UPROPERTY(Category = Sprite, EditAnywhere, BlueprintReadOnly, meta = (DisplayThumbnail = "true"))
 	UPaperSprite* Sprite_Normal;
 
+	// Handle falling
+	float TotalFallingTime;
+	float FallingStartTime;
+	FVector FallingStartLocation;
+	FVector FallingEndLocation;
+
 private:
 	/** Handles tile become selectalbe */
 	void HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context);
@@ -150,9 +168,15 @@ private:
 	/** Handles tile become selectalbe */
 	void HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatusChange& Message, const IMessageContextRef& Context);
 
+	/** Handles tile become selectalbe */
+	void HandleTileMove(const FMessage_Gameplay_TileMoved& Message, const IMessageContextRef& Context);
+
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
 
 	/** Current tile's Id */
 	int32 TileID;
+
+	/** Keep a weak reference to the owner*/
+	ASGGrid* Grid;
 };
