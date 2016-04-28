@@ -17,6 +17,10 @@ ASGTileBase::ASGTileBase()
 
 	// We want the tile can be moved (falling), so we need a root component
 	SetRootComponent(GetRenderComponent());
+
+	// Indicate there is no falling happend now
+	TotalFallingTime = -1;
+	FallingElapsedTime = 0;
 }
 
 // Called when the game starts or when spawned
@@ -35,13 +39,15 @@ void ASGTileBase::BeginPlay()
 	MessageEndpoint = FMessageEndpoint::Builder(*EndPointName)
 		.Handling<FMessage_Gameplay_TileSelectableStatusChange>(this, &ASGTileBase::HandleSelectableStatusChange)
 		.Handling<FMessage_Gameplay_TileLinkedStatusChange>(this, &ASGTileBase::HandleLinkStatusChange)
-		.Handling<FMessage_Gameplay_TileMoved>(this, &ASGTileBase::HandleTileMove);
+		.Handling<FMessage_Gameplay_TileMoved>(this, &ASGTileBase::HandleTileMove)
+		.Handling<FMessage_Gameplay_TileCollect>(this, &ASGTileBase::HandleTileCollected);
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the tile need events
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileSelectableStatusChange>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileLinkedStatusChange>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileMoved>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_TileCollect>();
 	}
 
 	Grid = Cast<ASGGrid>(GetOwner());
@@ -107,75 +113,42 @@ int32 ASGTileBase::GetGridAddress() const
 
 void ASGTileBase::StartFalling()
 {
-	/*
-	if (!bUseCurrentWorldLocation)
-	{
-		// Fall from where we are on the grid to where we are supposed to be on the grid.
-		int32 YOffset = 0;
-		int32 HeightAboveBottom = 1;
-		while (true)
-		{
-			++YOffset;
 
-			// Try to move down 1 tile distance
-			if (Grid->GetGridAddressWithOffset(GetGridAddress(), 0, -YOffset, LandingGridAddress))
-			{
-				if (ASGTileBase* TileBelow = Grid->GetTileFromGridAddress(LandingGridAddress))
-				{
-					// We're not off the grid, so check to see what is in this space and react to it.
-					if (TileBelow->TileState == ETileState::ETS_Falling)
-					{
-						// This space contains a falling tile, so continue to fall through it, but note that the tile will land underneath us, so we need to leave a gap for it.
-						++HeightAboveBottom;
-						continue;
-					}
-					else if (TileBelow->TileState == ETileState::ETS_PendingDelete)
-					{
-						// This space contains a tile that is about to be deleted. We can fall through this space freely.
-						continue;
-					}
-				}
-				else
-				{
-					// The space below is empty, but is on the grid. We can fall through this space freely.
-					continue;
-				}
-			}
-
-			// This space is off the grid or contains a tile that is staying. Go back one space and stop.
-			YOffset -= HeightAboveBottom;
-			Grid->GetGridAddressWithOffset(GetGridAddress(), 0, -YOffset, LandingGridAddress);
-			break;
-		}
-		FallDistance = Grid->TileSize.Y * YOffset;
-		FallingEndLocation = FallingStartLocation;
-		FallingEndLocation.Z -= FallDistance;
-	}
-	else
-	{
-		// Fall from where we are physically to where we are supposed to be on the grid.
-		LandingGridAddress = GetGridAddress();
-		FallingEndLocation = Grid->GetLocationFromGridAddress(LandingGridAddress);
-		FallDistance = FallingStartLocation.Z - FallingEndLocation.Z;
-	}
-
-	AMatch3GameMode* CurrentGameMode = Cast<AMatch3GameMode>(UGameplayStatics::GetGameMode(this));
-	TotalFallingTime = 0.0f;
-	if (CurrentGameMode && (CurrentGameMode->TileMoveSpeed > 0.0f))
-	{
-		TotalFallingTime = FallDistance / CurrentGameMode->TileMoveSpeed;
-	}
-	if (TotalFallingTime <= 0.0f)
-	{
-		TotalFallingTime = 0.75f;
-	}
-	StartFallingEffect();
-	*/
 }
 
 void ASGTileBase::TickFalling(float DeltaTime)
 {
+	if (TotalFallingTime < 0)
+	{
+		// Indicate no falling will happen
+		return;
+	}
 
+	if (FallingElapsedTime < TotalFallingTime)
+	{
+		FallingElapsedTime += DeltaTime;
+	}
+
+	float Ratio = FallingElapsedTime / TotalFallingTime;
+	if (Ratio >= 1.0f)
+	{
+		FinishFalling();
+	}
+	else
+	{
+		FVector NewLocation = FMath::Lerp(FallingStartLocation, FallingEndLocation, Ratio);
+		SetActorLocation(NewLocation);
+	}
+}
+
+void ASGTileBase::HandleTileCollected(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context)
+{
+	FILTER_MESSAGE;
+
+	// Do some collect animation
+
+	// Then destroy itself
+	Destroy();
 }
 
 void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context)
@@ -233,7 +206,6 @@ void ASGTileBase::HandleTileMove(const FMessage_Gameplay_TileMoved& Message, con
 	UE_LOG(LogSGame, Log, TEXT("Tile ID: %d, at old address: %d will move to the new address %d"), Message.TileID, Message.OldTileAddress, Message.NewTileAddress);
 
 	float FallDistance = 0;
-	FallingStartTime = GetWorld()->GetTimeSeconds();
 	FallingStartLocation = GetActorLocation();
 
 	check(Grid);
@@ -242,4 +214,10 @@ void ASGTileBase::HandleTileMove(const FMessage_Gameplay_TileMoved& Message, con
 	TotalFallingTime = FallDistance / FallingSpeed;
 }
 
+void ASGTileBase::FinishFalling()
+{
+	SetActorLocation(FallingEndLocation);
+	TotalFallingTime = -1;
+	FallingElapsedTime = 0;
+}
 

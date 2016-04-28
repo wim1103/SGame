@@ -21,11 +21,11 @@ void ASGGrid::BeginPlay()
 	Super::BeginPlay();
 	
 	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_Grid")
-		.Handling<FMessage_Gameplay_TileDisappear>(this, &ASGGrid::HandleTileDisappear);
+		.Handling<FMessage_Gameplay_LinkedTilesCollect>(this, &ASGGrid::HandleTileArrayCollect);
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the grid needed messages
-		MessageEndpoint->Subscribe<FMessage_Gameplay_TileDisappear>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_LinkedTilesCollect>();
 	}
 
 	// Initialize the grid
@@ -275,14 +275,20 @@ bool ASGGrid::AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB)
 	return false;
 }
 
-void ASGGrid::HandleTileDisappear(const FMessage_Gameplay_TileDisappear& Message, const IMessageContextRef& Context)
+void ASGGrid::HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect& Message, const IMessageContextRef& Context)
 {
-	for (int i = 0; i < Message.TilesAddressToDisappear.Num(); i++)
+	for (int i = 0; i < Message.TilesAddressToCollect.Num(); i++)
 	{
-		int32 disappearTileAddress = Message.TilesAddressToDisappear[i];
+		int32 disappearTileAddress = Message.TilesAddressToCollect[i];
 		checkSlow(GridTiles[disappearTileAddress] != nullptr);
 
 		// Tell the tiles, it was collected
+		FMessage_Gameplay_TileCollect* CollectMessage = new FMessage_Gameplay_TileCollect{ 0 };
+		CollectMessage->TileID = GridTiles[disappearTileAddress]->GetTileID();
+		if (MessageEndpoint.IsValid() == true)
+		{
+			MessageEndpoint->Publish(CollectMessage, EMessageScope::Process);
+		}
 
 		// Set null to the grid tiles array
 		GridTiles[disappearTileAddress] = nullptr;

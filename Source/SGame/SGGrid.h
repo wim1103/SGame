@@ -89,8 +89,7 @@ protected:
 	TArray<const ASGTileBase*> GridTiles;
 
 private:
-
-	void HandleTileDisappear(const FMessage_Gameplay_TileDisappear& Message, const IMessageContextRef& Context);
+	void HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect& Message, const IMessageContextRef& Context);
 
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;

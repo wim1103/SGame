@@ -131,9 +131,12 @@ public:
 
 	// Falling functions
 	void StartFalling();
+	void FinishFalling();
 	
 	UFUNCTION()
 	void TickFalling(float DeltaTime);
+
+	
 
 protected:
 	/** Location on the grid as a 1D key/value. To find neighbors, ask the grid. */
@@ -157,7 +160,7 @@ protected:
 
 	// Handle falling
 	float TotalFallingTime;
-	float FallingStartTime;
+	float FallingElapsedTime;
 	FVector FallingStartLocation;
 	FVector FallingEndLocation;
 
@@ -170,6 +173,9 @@ private:
 
 	/** Handles tile become selectalbe */
 	void HandleTileMove(const FMessage_Gameplay_TileMoved& Message, const IMessageContextRef& Context);
+
+	/** Handle tile collect */
+	void HandleTileCollected(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context);
 
 	/** If the Message send to me */
 	bool FilterMessage(int32 inTileID)
@@ -191,4 +197,5 @@ private:
 
 	/** Keep a weak reference to the owner*/
 	ASGGrid* Grid;
+	
 };

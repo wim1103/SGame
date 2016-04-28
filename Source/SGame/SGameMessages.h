@@ -63,14 +63,28 @@ struct FMessage_Gameplay_NewTilePicked
 * Player collect link line
 */
 USTRUCT()
-struct FMessage_Gameplay_TileDisappear
+struct FMessage_Gameplay_LinkedTilesCollect
 {
 	GENERATED_USTRUCT_BODY()
 
 	/** The picked tile address */
 	UPROPERTY()
-	TArray<int32> TilesAddressToDisappear;
+	TArray<int32> TilesAddressToCollect;
 };
+
+/**
+* Player collect link line
+*/
+USTRUCT()
+struct FMessage_Gameplay_TileCollect
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** The tile id */
+	UPROPERTY()
+	int32 TileID;
+};
+
 
 /**
 * Tile moved message

@@ -256,11 +256,11 @@ void ASGGameMode::HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine&
 	}
 
 	// Post a tile disappear message
-	FMessage_Gameplay_TileDisappear* DisappearMessage = new FMessage_Gameplay_TileDisappear();
+	FMessage_Gameplay_LinkedTilesCollect* DisappearMessage = new FMessage_Gameplay_LinkedTilesCollect();
 	for (int i = 0; i < CurrentLinkLine->LinkLineTiles.Num(); i++)
 	{
 		checkSlow(CurrentLinkLine->LinkLineTiles[i]);
-		DisappearMessage->TilesAddressToDisappear.Push(CurrentLinkLine->LinkLineTiles[i]->GetGridAddress());
+		DisappearMessage->TilesAddressToCollect.Push(CurrentLinkLine->LinkLineTiles[i]->GetGridAddress());
 	}
 
 	if (MessageEndpoint.IsValid() == true)
