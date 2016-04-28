@@ -2,6 +2,7 @@
 
 #include "SGame.h"
 #include "SGTileManager.h"
+#include "SGGameMode.h"
 
 USGTileManager::USGTileManager(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -39,6 +40,14 @@ ASGTileBase* USGTileManager::CreateTile(AActor* inOwner, FVector SpawnLocation, 
 
 		check(NextTileID < MAXINT32 - 1);
 		NextTileID++;
+
+		// Add the gamemode to the global tile array
+		ASGGameMode* GameMode = Cast<ASGGameMode>(World->GetAuthGameMode());
+		if (GameMode != nullptr)
+		{
+			GameMode->AddTiles(NewTile);
+		}
+
 		return NewTile;
 	}
 

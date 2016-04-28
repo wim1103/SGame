@@ -171,6 +171,18 @@ private:
 	/** Handles tile become selectalbe */
 	void HandleTileMove(const FMessage_Gameplay_TileMoved& Message, const IMessageContextRef& Context);
 
+	/** If the Message send to me */
+	bool FilterMessage(int32 inTileID)
+	{
+		if (inTileID == -1)
+		{
+			// It send to all tiles
+			return true;
+		}
+
+		return inTileID == TileID;	
+	}
+
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
 

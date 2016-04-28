@@ -20,10 +20,12 @@ void ASGGrid::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_Grid");
+	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_Grid")
+		.Handling<FMessage_Gameplay_TileDisappear>(this, &ASGGrid::HandleTileDisappear);
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the grid needed messages
+		MessageEndpoint->Subscribe<FMessage_Gameplay_TileDisappear>();
 	}
 
 	// Initialize the grid
@@ -35,6 +37,80 @@ void ASGGrid::BeginPlay()
 void ASGGrid::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
+}
+
+void ASGGrid::Condense()
+{
+	TMap<int32, int32> GridHoleNumMap;
+
+	// Iterate the each colum of grid tiles arry, find the holes
+	for (int columnIndex = 0; columnIndex < GridWidth; columnIndex++)
+	{
+		for (int rowIndex = 0; rowIndex < GridHeight; rowIndex++)
+		{
+			// If it is hole already, pass it
+			int gridAddress = GridCorrdsToAddress(columnIndex, rowIndex);
+			if (GridTiles[gridAddress] == nullptr)
+			{
+				continue;
+			}
+
+			int currentGridHoleNum = 0;
+			// Search below, to find if there is any NULL tiles
+			for (int j = rowIndex + 1; j < GridHeight; j++)
+			{
+				int testAddress = GridCorrdsToAddress(columnIndex, j);
+				if (GridTiles[testAddress] == nullptr)
+				{
+					currentGridHoleNum++;
+				}
+			}
+
+			if (currentGridHoleNum > 0)
+			{
+				// Insert it into the map
+				GridHoleNumMap.Add(GridCorrdsToAddress(columnIndex, rowIndex), currentGridHoleNum);
+
+				UE_LOG(LogSGame, Log, TEXT("Tile Address: %d will move down %d"), GridCorrdsToAddress(columnIndex, rowIndex), currentGridHoleNum);
+			}
+		}
+	}
+
+	// Iterate the each column of grid tiles arry, move down the tiles
+	for (int columnIndex = 0; columnIndex < GridWidth; columnIndex++)
+	{
+		// From down to up
+		for (int rowIndex = GridHeight - 1; rowIndex >= 0; rowIndex--)
+		{
+			int testAddress = GridCorrdsToAddress(columnIndex, rowIndex);
+			if (GridHoleNumMap.Find(testAddress) == nullptr)
+			{
+				// No holes below, continue,
+				continue;
+			}
+
+			int MoveDownNum = GridHoleNumMap[testAddress];
+
+			// Send tile move message to the tile
+			const ASGTileBase* testTile = GridTiles[testAddress];
+			checkSlow(testTile != nullptr);
+
+			// Update the tile new address
+			FMessage_Gameplay_TileMoved* TileMoveMessage = new FMessage_Gameplay_TileMoved();
+			TileMoveMessage->TileID = testTile->GetTileID();
+			TileMoveMessage->OldTileAddress = testTile->GetGridAddress();
+			TileMoveMessage->NewTileAddress = GridCorrdsToAddress(columnIndex, rowIndex + MoveDownNum);
+
+			// Publish the message
+			if (MessageEndpoint.IsValid() == true)
+			{
+				MessageEndpoint->Publish(TileMoveMessage, EMessageScope::Process);
+			}
+			
+			// Set the tile to the new tile address
+			GridTiles[TileMoveMessage->NewTileAddress] = testTile;
+		}
+	}
 }
 
 void ASGGrid::RefillGrid()
@@ -113,6 +189,19 @@ const ASGTileBase* ASGGrid::GetTileFromGridAddress(int32 GridAddress)
 	}
 }
 
+const ASGTileBase* ASGGrid::GetTileFromTileID(int32 inTileID)
+{
+	for (int i = 0; i < GridTiles.Num(); i++)
+	{
+		if (GridTiles[i] != nullptr && GridTiles[i]->GetTileID() == inTileID)
+		{
+			return GridTiles[i];
+		}
+	}
+
+	return nullptr;
+}
+
 FVector ASGGrid::GetLocationFromGridAddress(int32 GridAddress)
 {
 	checkSlow(TileSize.X > 0.0f);
@@ -184,4 +273,21 @@ bool ASGGrid::AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB)
 	}
 
 	return false;
+}
+
+void ASGGrid::HandleTileDisappear(const FMessage_Gameplay_TileDisappear& Message, const IMessageContextRef& Context)
+{
+	for (int i = 0; i < Message.TilesAddressToDisappear.Num(); i++)
+	{
+		int32 disappearTileAddress = Message.TilesAddressToDisappear[i];
+		checkSlow(GridTiles[disappearTileAddress] != nullptr);
+
+		// Tell the tiles, it was collected
+
+		// Set null to the grid tiles array
+		GridTiles[disappearTileAddress] = nullptr;
+	}
+
+	// Conden the grid
+	Condense();
 }

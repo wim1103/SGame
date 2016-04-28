@@ -4,6 +4,11 @@
 #include "SGTileBase.h"
 #include "SGGrid.h"
 
+#define  FILTER_MESSAGE \
+	if (FilterMessage(Message.TileID) == false) \
+	return;
+
+
 // Sets default values
 ASGTileBase::ASGTileBase()
 {
@@ -56,7 +61,7 @@ void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex)
 
 	// Tell the game logic, the new tile is picked
 	FMessage_Gameplay_NewTilePicked* TilePickedMessage = new FMessage_Gameplay_NewTilePicked();
-	TilePickedMessage->TileAddress = GridAddress;
+	TilePickedMessage->TileID = TileID;
 	if (MessageEndpoint.IsValid() == true)
 	{
 		MessageEndpoint->Publish(TilePickedMessage, EMessageScope::Process);
@@ -175,11 +180,7 @@ void ASGTileBase::TickFalling(float DeltaTime)
 
 void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context)
 {
-	if (Message.TileAddress != -1 && Message.TileAddress != GridAddress)
-	{
-		// Selectable event is not sent to this tile
-		return;
-	}
+	FILTER_MESSAGE;
 
 	UE_LOG(LogSGame, Log, TEXT("Tile %d selectable flag changed to %d"), GridAddress, Message.NewSelectableStatus);
 
@@ -203,11 +204,7 @@ void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelec
 
 void ASGTileBase::HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatusChange& Message, const IMessageContextRef& Context)
 {
-	if (Message.TileAddress != -1 && Message.TileAddress != GridAddress)
-	{
-		// Selectable event is not sent to this tile
-		return;
-	}
+	FILTER_MESSAGE;
 
 	UE_LOG(LogSGame, Log, TEXT("Tile %d link status changed to %d"), GridAddress, Message.NewLinkStatus);
 
@@ -231,6 +228,10 @@ void ASGTileBase::HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatu
 
 void ASGTileBase::HandleTileMove(const FMessage_Gameplay_TileMoved& Message, const IMessageContextRef& Context)
 {
+	FILTER_MESSAGE;
+
+	UE_LOG(LogSGame, Log, TEXT("Tile ID: %d, at old address: %d will move to the new address %d"), Message.TileID, Message.OldTileAddress, Message.NewTileAddress);
+
 	float FallDistance = 0;
 	FallingStartTime = GetWorld()->GetTimeSeconds();
 	FallingStartLocation = GetActorLocation();
@@ -240,4 +241,5 @@ void ASGTileBase::HandleTileMove(const FMessage_Gameplay_TileMoved& Message, con
 	FallDistance = FallingStartLocation.Z - FallingEndLocation.Z;
 	TotalFallingTime = FallDistance / FallingSpeed;
 }
+
 

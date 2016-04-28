@@ -38,6 +38,15 @@ struct FMessage_Gameplay_PlayerEndInput
 };
 
 /**
+* Player collect link line
+*/
+USTRUCT()
+struct FMessage_Gameplay_CollectLinkLine
+{
+	GENERATED_USTRUCT_BODY()
+};
+
+/**
 * Player end input event
 */
 USTRUCT()
@@ -47,7 +56,20 @@ struct FMessage_Gameplay_NewTilePicked
 
 	/** The picked tile address */
 	UPROPERTY()
-	int32 TileAddress;
+	int32 TileID;
+};
+
+/**
+* Player collect link line
+*/
+USTRUCT()
+struct FMessage_Gameplay_TileDisappear
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** The picked tile address */
+	UPROPERTY()
+	TArray<int32> TilesAddressToDisappear;
 };
 
 /**
@@ -81,7 +103,7 @@ struct FMessage_Gameplay_TileSelectableStatusChange
 
 	/** The picked tile address, if the address is -1, then all apply to all tiles*/
 	UPROPERTY()
-	int32 TileAddress;
+	int32 TileID;
 
 	/** The new selectable status, it can be override by the tile logic itself*/
 	UPROPERTY()
@@ -98,7 +120,7 @@ struct FMessage_Gameplay_TileLinkedStatusChange
 
 	/** The picked tile address, if the address is -1, then all apply to all tiles*/
 	UPROPERTY()
-	int32 TileAddress;
+	int32 TileID;
 
 	/** The new selectable status, it can be override by the tile logic itself*/
 	UPROPERTY()

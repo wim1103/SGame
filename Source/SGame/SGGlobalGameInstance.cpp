@@ -32,3 +32,13 @@ void USGGlobalGameInstance::NewRound()
 		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
 	}
 }
+
+void USGGlobalGameInstance::ForceCollect()
+{
+	if (MessageEndpoint.IsValid() == true)
+	{
+		// Test: Send game start message
+		FMessage_Gameplay_CollectLinkLine* CollectLinkLineMessage = new FMessage_Gameplay_CollectLinkLine();
+		MessageEndpoint->Publish(CollectLinkLineMessage, EMessageScope::Process);
+	}
+}

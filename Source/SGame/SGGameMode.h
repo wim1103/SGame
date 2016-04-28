@@ -60,8 +60,15 @@ public:
 	ASGGrid* GetCurrentGrid() const { return CurrentGrid; }
 	void SetCurrentGrid(ASGGrid* val) { checkSlow(val != nullptr);  CurrentGrid = val; }
 
+	void AddTiles(ASGTileBase* TileToAdded)
+	{
+		AllTiles.AddUnique(TileToAdded);
+	}
+
 protected:
-	
+	/** Contains all the tiles in the game, including the disappering tiles */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<ASGTileBase*> AllTiles;
 
 private:
 	/** Handles Game start messages. */
@@ -73,6 +80,8 @@ private:
 	/** Handles the player picked new tile*/
 	void HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context);
 
+	/** Handle collect the link line*/
+	void HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context);
 
 	ESGGameStatus::Type CurrentGameGameStatus;
 	ESGGameStatus::Type NextGameStatus;

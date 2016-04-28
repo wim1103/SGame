@@ -35,6 +35,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
 	int32 GridHeight;
 
+	/** Condense the grid, fill the holes*/
+	UFUNCTION(BlueprintCallable, Category = Refill)
+	void Condense();
+
 	/** Refill all the tiles on the grid*/
 	UFUNCTION(BlueprintCallable, Category = Refill)
 	void RefillGrid();
@@ -54,11 +58,12 @@ public:
 
 	/** Get the tile by the address*/
 	const ASGTileBase* GetTileFromGridAddress(int32 GridAddress);
+	/** Get the tile by the tile id*/
+	const ASGTileBase* GetTileFromTileID(int32 inTileID);
 
 	/** Get the world location for a given grid address. */
 	UFUNCTION(BlueprintCallable, Category = Tile)
 	FVector GetLocationFromGridAddress(int32 GridAddress);
-	FVector GetLocationFromGridAddressWithOffset(int32 GridAddress, int32 XOffsetInTiles, int32 YOffsetInTiles);
 
 	/** Get a grid address relative to another grid address. Offset between addresses is measured in tiles. */
 	UFUNCTION(BlueprintCallable, Category = Tile)
@@ -67,6 +72,13 @@ public:
 	/** Calculate if the two address are neighbor, the link is 8 directions*/
 	bool AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB);
 
+	/** Take into the corrds, return the grid adderss*/
+	int32 GridCorrdsToAddress(int columnIndex, int32 rowIndex)
+	{
+		checkSlow(columnIndex < GridWidth && rowIndex < GridHeight);
+		return GridWidth * GridHeight - (rowIndex * GridWidth + columnIndex) - 1;
+	}
+
 protected:
 	/** Tile Manager */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Tile)
@@ -74,13 +86,12 @@ protected:
 
 	/** Contains the tile only on the grid */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<ASGTileBase*> GridTiles;
-
-	/** Contains all the tiles in the game, including the disappering tiles */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<ASGTileBase*> AllTiles;
+	TArray<const ASGTileBase*> GridTiles;
 
 private:
+
+	void HandleTileDisappear(const FMessage_Gameplay_TileDisappear& Message, const IMessageContextRef& Context);
+
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
 };

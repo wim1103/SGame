@@ -27,6 +27,10 @@ public:
 	UFUNCTION(exec)
 	void NewRound();
 
+	// Force collect the link line
+	UFUNCTION(exec)
+	void ForceCollect();
+
 private:
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
