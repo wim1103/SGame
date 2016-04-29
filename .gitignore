@@ -7,3 +7,5 @@ SGame.VC.opendb
 SGame.VC.VC.opendb
 SGame.VC.db
 /.vs/config
+Binaries/
+.vs/SGame/v14/.suo
