@@ -234,9 +234,12 @@ void ASGGameMode::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& M
 		return;
 	}
 
-	// Tell the link line to build the path
-	checkSlow(CurrentLinkLine != nullptr);
-	CurrentLinkLine->BuildPath(CurrentTile);
+	// If can link to the last tile, then we build the path
+	if (CanLinkToLastTile(CurrentTile) == true)
+	{
+		checkSlow(CurrentLinkLine);
+		CurrentLinkLine->BuildPath(CurrentTile);
+	}
 
 	// Update the tile select state 
 	UpdateTileSelectState();
@@ -370,4 +373,34 @@ void ASGGameMode::ResetTileLinkInfo()
 		LinkStatusChangeMessage->NewLinkStatus = false;
 		MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
 	}
+}
+
+bool ASGGameMode::CanLinkToLastTile(const ASGTileBase* inCurrentTile)
+{
+	checkSlow(inCurrentTile);
+	checkSlow(CurrentLinkLine != nullptr);
+	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
+	{
+		// First tile, can always be linked
+		return true;
+	}
+
+	// Check the current tile can be linked with the last tile
+	const ASGTileBase* LastTile = CurrentLinkLine->LinkLineTiles.Last();
+	checkSlow(LastTile != nullptr);
+	
+	// Same tile type can always link together
+	if (LastTile->TileData.TileType == inCurrentTile->TileData.TileType)
+	{
+		return true;
+	}
+
+	// Enemy links 
+	if ((LastTile->Abilities.bCanLinkEnemy == true && inCurrentTile->Abilities.bEnemyTile == true) ||
+		(LastTile->Abilities.bEnemyTile == true && inCurrentTile->Abilities.bCanLinkEnemy == true))
+	{
+		return true;
+	}
+
+	return false;
 }

@@ -5,6 +5,7 @@
 #include "GameFramework/GameMode.h"
 #include "Messaging.h"
 
+#include "SGTileBase.h"
 #include "SGameMessages.h"
 #include "SGLinkLine.h"
 #include "SGGrid.h"
@@ -53,6 +54,10 @@ public:
 	/** Player input */
 	UFUNCTION(BlueprintCallable, Category = Game)
 	void OnPlayerInput();
+
+	/** Return the tile can link to the linkline */
+	UFUNCTION(BlueprintCallable, Category = LinkLine)
+	bool CanLinkToLastTile(const ASGTileBase* inCurrentTile);
 
 	/** Override the parent tick to do some customized tick operations*/
 	virtual void Tick(float DeltaSeconds) override;

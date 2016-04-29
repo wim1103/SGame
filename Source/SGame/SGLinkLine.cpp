@@ -1,6 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SGame.h"
+#include "SGGameMode.h"
 #include "SGLinkLine.h"
 #include "Math/UnrealMathUtility.h"
 
@@ -393,12 +394,24 @@ void ASGLinkLine::BuildPath(const ASGTileBase* inNewTile)
 			LinkLineTiles.Pop();
 		}
 	}
+	else
+	{
+		// Make sure the new tile can be linked
+		ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
+		if (GameMode != nullptr)
+		{
+			if (GameMode->CanLinkToLastTile(inNewTile) == false)
+			{
+				return;
+			}
+		}
 
-	// Add the tile to the link line
-	LinkLineTiles.Add(inNewTile);
+		// Add the tile to the link line
+		LinkLineTiles.Add(inNewTile);
 
-	// Add the points to the link line points for drawing the sprites
-	LinkLinePoints.Add(inNewTile->GetGridAddress());
+		// Add the points to the link line points for drawing the sprites
+		LinkLinePoints.Add(inNewTile->GetGridAddress());
+	}
 
 	// Do a link line update
 	Update();

@@ -46,22 +46,22 @@ namespace ESGTileStatusFlag
 	};
 }
 
-UENUM()
-namespace ESGTileLinkType
-{
-	enum Type
-	{
-		ETLT_Weapon = 0,					// Sword, Arrow...
-		ETLT_Enemy = 1,						// Soldier, Boss... 
-		ETLT_Potion = 2,					// HP Potion, Mana Potion, Posion Potion
-		ETT_Coin = 3,						// Money
-	};
-}
-
 USTRUCT()
 struct FSGTileAbilities
 {
 	GENERATED_USTRUCT_BODY();
+
+	/** Whether can link enemy - (e.g sword or arrow)*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanLinkEnemy;
+
+	/** Whether can be collected - (resource tile) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanBeCollected;
+
+	/** Enemy tile which can cause damage */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnemyTile;
 };
 
 USTRUCT()
@@ -70,7 +70,7 @@ struct FSGTileData
 	GENERATED_USTRUCT_BODY();
 
 public:
-	/** The base type of the curernt tile*/
+	/** The base type of the current tile*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<ESGTileType::Type> TileType;
 
