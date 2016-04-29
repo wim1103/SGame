@@ -31,6 +31,9 @@ void ASGGrid::BeginPlay()
 	// Initialize the grid
 	GridTiles.Empty(GridWidth * GridHeight);
 	GridTiles.AddZeroed(GridWidth * GridHeight);
+
+	checkSlow(TileManager);
+	TileManager->Initialize();
 }
 
 // Called every frame
@@ -49,7 +52,7 @@ void ASGGrid::Condense()
 		for (int rowIndex = 0; rowIndex < GridHeight; rowIndex++)
 		{
 			// If it is hole already, pass it
-			int gridAddress = GridCorrdsToAddress(columnIndex, rowIndex);
+			int gridAddress = ColumnRowToGridAddress(columnIndex, rowIndex);
 			if (GridTiles[gridAddress] == nullptr)
 			{
 				continue;
@@ -59,7 +62,7 @@ void ASGGrid::Condense()
 			// Search below, to find if there is any NULL tiles
 			for (int j = rowIndex + 1; j < GridHeight; j++)
 			{
-				int testAddress = GridCorrdsToAddress(columnIndex, j);
+				int testAddress = ColumnRowToGridAddress(columnIndex, j);
 				if (GridTiles[testAddress] == nullptr)
 				{
 					currentGridHoleNum++;
@@ -69,9 +72,9 @@ void ASGGrid::Condense()
 			if (currentGridHoleNum > 0)
 			{
 				// Insert it into the map
-				GridHoleNumMap.Add(GridCorrdsToAddress(columnIndex, rowIndex), currentGridHoleNum);
+				GridHoleNumMap.Add(ColumnRowToGridAddress(columnIndex, rowIndex), currentGridHoleNum);
 
-				UE_LOG(LogSGame, Log, TEXT("Tile Address: %d will move down %d"), GridCorrdsToAddress(columnIndex, rowIndex), currentGridHoleNum);
+				UE_LOG(LogSGame, Log, TEXT("Tile Address: %d will move down %d"), ColumnRowToGridAddress(columnIndex, rowIndex), currentGridHoleNum);
 			}
 		}
 	}
@@ -82,7 +85,7 @@ void ASGGrid::Condense()
 		// From down to up
 		for (int rowIndex = GridHeight - 1; rowIndex >= 0; rowIndex--)
 		{
-			int testAddress = GridCorrdsToAddress(columnIndex, rowIndex);
+			int testAddress = ColumnRowToGridAddress(columnIndex, rowIndex);
 			if (GridHoleNumMap.Find(testAddress) == nullptr)
 			{
 				// No holes below, continue,
@@ -99,7 +102,7 @@ void ASGGrid::Condense()
 			FMessage_Gameplay_TileMoved* TileMoveMessage = new FMessage_Gameplay_TileMoved();
 			TileMoveMessage->TileID = testTile->GetTileID();
 			TileMoveMessage->OldTileAddress = testTile->GetGridAddress();
-			TileMoveMessage->NewTileAddress = GridCorrdsToAddress(columnIndex, rowIndex + MoveDownNum);
+			TileMoveMessage->NewTileAddress = ColumnRowToGridAddress(columnIndex, rowIndex + MoveDownNum);
 
 			// Publish the message
 			if (MessageEndpoint.IsValid() == true)
@@ -107,17 +110,22 @@ void ASGGrid::Condense()
 				MessageEndpoint->Publish(TileMoveMessage, EMessageScope::Process);
 			}
 			
-			// Set the tile to the new tile address
+			// Upate the grid address
 			GridTiles[TileMoveMessage->NewTileAddress] = testTile;
+			GridTiles[TileMoveMessage->OldTileAddress] = nullptr;
 		}
 	}
+
+	// Refill the top empty holes
+	RefillGrid();
 }
 
 void ASGGrid::RefillGrid()
 {
 	for (int32 Col = 0; Col < GridWidth; ++Col)
 	{
-		const ASGTileBase* CurrentColumnTopTile = GridTiles[Col];
+		int TopGridAddress = ColumnRowToGridAddress(Col, 0);
+		const ASGTileBase* CurrentColumnTopTile = GridTiles[TopGridAddress];
 		if (CurrentColumnTopTile != nullptr)
 		{
 			// There is tile on top row, so no need to refill
@@ -128,7 +136,7 @@ void ASGGrid::RefillGrid()
 		int32 RowNum = 0;
 		while (RowNum < GridHeight)
 		{
-			int32 NewGridAddress = Col + RowNum * GridWidth;
+			int32 NewGridAddress = ColumnRowToGridAddress(Col, RowNum);
 			const ASGTileBase* CurrentTile = GetTileFromGridAddress(NewGridAddress);
 			if (CurrentTile == nullptr)
 			{
@@ -153,11 +161,14 @@ void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
 		int32 TileID = TileManager->SelectTileFromLibrary();
 		int32 GridAddress;
 		FVector SpawnLocation;
-		GetGridAddressWithOffset(0, inColumnIndex, startRow, GridAddress);
+		GridAddress = ColumnRowToGridAddress(inColumnIndex, startRow);
 		SpawnLocation = GetLocationFromGridAddress(GridAddress);
 
+		// Spawn location should be moved upper
+		SpawnLocation.Z += TileSize.Y * inNum;
+
 		// create the tile at the specified location
-		ASGTileBase* NewTile = TileManager->CreateTile(this, SpawnLocation, GridAddress, TileID);
+		const ASGTileBase* NewTile = TileManager->CreateTile(this, SpawnLocation, GridAddress, TileID);
 		if (NewTile == nullptr)
 		{
 			UE_LOG(LogSGame, Error, TEXT("Cannot create tile at location %d, %d"), inColumnIndex, startRow);
@@ -168,10 +179,22 @@ void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
 	}
 }
 
-void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, ASGTileBase* inTile)
+void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, const ASGTileBase* inTile)
 {
 	checkSlow(GridTiles.IsValidIndex(inGridAddress));
 	checkSlow(inTile != nullptr);
+
+	// Send the tile move message to the tile
+	FMessage_Gameplay_TileMoved* TileMoveMessage = new FMessage_Gameplay_TileMoved();
+	TileMoveMessage->TileID = inTile->GetTileID();
+	TileMoveMessage->OldTileAddress = -1;
+	TileMoveMessage->NewTileAddress = inGridAddress;
+
+	// Publish the message
+	if (MessageEndpoint.IsValid() == true)
+	{
+		MessageEndpoint->Publish(TileMoveMessage, EMessageScope::Process);
+	}
 
 	GridTiles[inGridAddress] = inTile;
 }

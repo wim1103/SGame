@@ -6,6 +6,7 @@
 
 USGTileManager::USGTileManager(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	AllTiles.Empty();
 }
 
 ASGTileBase* USGTileManager::CreateTile(AActor* inOwner, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID)
@@ -42,11 +43,10 @@ ASGTileBase* USGTileManager::CreateTile(AActor* inOwner, FVector SpawnLocation, 
 		NextTileID++;
 
 		// Add the gamemode to the global tile array
-		ASGGameMode* GameMode = Cast<ASGGameMode>(World->GetAuthGameMode());
-		if (GameMode != nullptr)
-		{
-			GameMode->AddTiles(NewTile);
-		}
+		AllTiles.AddUnique(NewTile);
+
+		// Cache the world pointter for delete the tile
+		CachedWorld = World;
 
 		return NewTile;
 	}
@@ -73,3 +73,38 @@ int32 USGTileManager::SelectTileFromLibrary()
 	}
 	return 0;
 }
+
+bool USGTileManager::DestroyTileWithID(int32 TileIDToDelete)
+{
+	checkSlow(CachedWorld);
+
+	ASGTileBase* TileToDelete = nullptr;
+	for (int i = 0; i < AllTiles.Num(); i++)
+	{
+		checkSlow(AllTiles[i] != nullptr);
+		if (AllTiles[i]->GetTileID() == TileIDToDelete)
+		{
+			TileToDelete = AllTiles[i];
+			break;
+		}
+	}
+	if (TileToDelete == nullptr)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("Cannot find tile id %d in the global tile array"), TileIDToDelete);
+		return false;
+	}
+	
+	// Destroy the tile actor
+	CachedWorld->DestroyActor(TileToDelete);
+
+	// Move it out of global tile array
+	AllTiles.Remove(TileToDelete);
+
+	return true;
+}
+
+void USGTileManager::Initialize()
+{
+	AllTiles.Empty();
+}
+

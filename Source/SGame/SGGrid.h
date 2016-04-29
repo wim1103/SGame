@@ -54,7 +54,7 @@ public:
 
 	/** Refill a specific grid address with the tile */
 	UFUNCTION(BlueprintCallable, Category = Refill)
-	void RefillGridAddressWithTile(int32 inGridAddress, ASGTileBase* inTile);
+	void RefillGridAddressWithTile(int32 inGridAddress, const ASGTileBase* inTile);
 
 	/** Get the tile by the address*/
 	const ASGTileBase* GetTileFromGridAddress(int32 GridAddress);
@@ -72,18 +72,18 @@ public:
 	/** Calculate if the two address are neighbor, the link is 8 directions*/
 	bool AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB);
 
-	/** Take into the corrds, return the grid adderss*/
-	int32 GridCorrdsToAddress(int columnIndex, int32 rowIndex)
+	/** Take into the column and row, return the grid address*/
+	int32 ColumnRowToGridAddress(int columnIndex, int32 rowIndex)
 	{
 		checkSlow(columnIndex < GridWidth && rowIndex < GridHeight);
-		return GridWidth * GridHeight - (rowIndex * GridWidth + columnIndex) - 1;
+		return (GridHeight - rowIndex - 1) * GridWidth + columnIndex;
 	}
 
-protected:
-	/** Tile Manager */
+	/** Tile Manager for this grid*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Tile)
 	USGTileManager*		TileManager;
 
+protected:
 	/** Contains the tile only on the grid */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<const ASGTileBase*> GridTiles;

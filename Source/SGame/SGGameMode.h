@@ -65,15 +65,7 @@ public:
 	ASGGrid* GetCurrentGrid() const { return CurrentGrid; }
 	void SetCurrentGrid(ASGGrid* val) { checkSlow(val != nullptr);  CurrentGrid = val; }
 
-	void AddTiles(ASGTileBase* TileToAdded)
-	{
-		AllTiles.AddUnique(TileToAdded);
-	}
-
 protected:
-	/** Contains all the tiles in the game, including the disappering tiles */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<ASGTileBase*> AllTiles;
 
 private:
 	/** Handles Game start messages. */

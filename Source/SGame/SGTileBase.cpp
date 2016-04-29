@@ -147,8 +147,12 @@ void ASGTileBase::HandleTileCollected(const FMessage_Gameplay_TileCollect& Messa
 
 	// Do some collect animation
 
-	// Then destroy itself
-	Destroy();
+	// After all, tell the game mode to remove it
+	check(Grid && Grid->TileManager);
+	if (Grid->TileManager->DestroyTileWithID(TileID) == false)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("Tile delete failed!"));
+	}
 }
 
 void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context)
@@ -212,6 +216,9 @@ void ASGTileBase::HandleTileMove(const FMessage_Gameplay_TileMoved& Message, con
 	FallingEndLocation = Grid->GetLocationFromGridAddress(Message.NewTileAddress);
 	FallDistance = FallingStartLocation.Z - FallingEndLocation.Z;
 	TotalFallingTime = FallDistance / FallingSpeed;
+
+	// Set the new grid address
+	SetGridAddress(Message.NewTileAddress);
 }
 
 void ASGTileBase::FinishFalling()
