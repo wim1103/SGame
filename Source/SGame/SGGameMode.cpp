@@ -149,19 +149,17 @@ void ASGGameMode::OnPlayerInput()
 	}
 
 	// Reset the link line.
-	if (CurrentLinkLine != nullptr)
-	{
-		CurrentLinkLine->ResetLinkState();
-	}
+	checkSlow(CurrentLinkLine);
+	CurrentLinkLine->ResetLinkState();
 }
 
 void ASGGameMode::OnPlayerEndBuildPath()
 {
-	// Reset the link line.
-	if (CurrentLinkLine != nullptr)
-	{
-		CurrentLinkLine->OnPlayerFinishBuildPath();
-	}
+	// First we need to forward to linkline for collect some tiles
+	checkSlow(CurrentLinkLine);
+	CurrentLinkLine->OnPlayerFinishBuildPath();
+
+	// 
 }
 
 void ASGGameMode::Tick(float DeltaSeconds)

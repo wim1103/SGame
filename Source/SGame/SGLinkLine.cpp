@@ -389,23 +389,23 @@ void ASGLinkLine::CollectTileResource(TArray<const ASGTileBase*> TilesToCollect)
 	TMap<ESGResourceType::Type, float> SummmpResource;
 
 	// Iterate the link tiles, retrieve their resources
-	for (int i = 0; i < LinkLineTiles.Num(); i++)
+	for (int i = 0; i < TilesToCollect.Num(); i++)
 	{
-		const ASGTileBase* Tile = LinkLineTiles[i];
+		const ASGTileBase* Tile = TilesToCollect[i];
 		checkSlow(Tile);
 
 		TArray<FTileResourceUnit> TileResource = Tile->GetTileResource();
 		for (int j = 0; j < TileResource.Num(); j++)
 		{
-			if (SummmpResource.Find(TileResource[i].ResourceType) == nullptr)
+			if (SummmpResource.Find(TileResource[j].ResourceType) == nullptr)
 			{
 				// Insert the type to the summup result
-				SummmpResource.Add(TileResource[i].ResourceType, TileResource[i].ResourceAmount);
+				SummmpResource.Add(TileResource[j].ResourceType, TileResource[j].ResourceAmount);
 			}
 			else
 			{
 				// Sumup the resource
-				SummmpResource[TileResource[i].ResourceType] += TileResource[i].ResourceAmount;
+				SummmpResource[TileResource[j].ResourceType] += TileResource[j].ResourceAmount;
 			}
 		}
 	}
@@ -502,7 +502,7 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 		{
 			checkSlow(LinkLineTiles[i]);
 			const ASGTileBase* Tile = LinkLineTiles[i];
-			if (Tile->Abilities.bCanTakeDamage == true)
+			if (Tile->Abilities.bCanCauseDamage == true && Tile->Abilities.bEnemyTile == false)
 			{
 				CauseDamageTiles.Add(Tile);
 			}
