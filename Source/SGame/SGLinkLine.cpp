@@ -482,7 +482,7 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 	{
 		checkSlow(LinkLineTiles[i]);
 		const ASGTileBase* Tile = LinkLineTiles[i];
-		if (Tile->Abilities.bCanTakeDamage == true)
+		if (Tile->Abilities.bCanTakeDamage == true && Tile->Abilities.bEnemyTile)
 		{
 			TakeDamageTiles.Add(Tile);
 		}

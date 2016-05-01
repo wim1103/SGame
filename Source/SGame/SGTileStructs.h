@@ -38,7 +38,9 @@ struct FTileResourceUnit
 {
 	GENERATED_USTRUCT_BODY();
 
-	ESGResourceType::Type	ResourceType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<ESGResourceType::Type> ResourceType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float					ResourceAmount;
 };
 
@@ -48,7 +50,9 @@ struct FTileDamageInfo
 {
 	GENERATED_USTRUCT_BODY();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float					InitialDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float					PiercingArmorRatio;
 };
 
@@ -58,10 +62,36 @@ struct FTileLifeArmorInfo
 {
 	GENERATED_USTRUCT_BODY();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float					LifeMax;			// The tile's life may regenerate too
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float					CurrentLife;		// Current life of this tile
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float					ArmorMax;			// The tile's armor may regenerate too
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float					CurrentArmor;		// Current armor of this tile
+};
+
+USTRUCT()
+struct FSGTileAbilities
+{
+	GENERATED_USTRUCT_BODY();
+
+	/** Whether can link enemy - (e.g sword or arrow)*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanLinkEnemy;
+
+	/** Enemy tile which can cause damage to the player */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnemyTile;
+
+	/** Whether the enemy can take damage */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanTakeDamage;
+
+	/** Whether the enemy can take damage */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanCauseDamage;
 };
 
 /** Types of every possible tile state flag that the tile will be in, note it can be in multiple state */

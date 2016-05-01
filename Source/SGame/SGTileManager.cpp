@@ -30,12 +30,21 @@ ASGTileBase* USGTileManager::CreateTile(AActor* inOwner, FVector SpawnLocation, 
 
 		// Spawn the tile.
 		ASGTileBase* const NewTile = World->SpawnActor<ASGTileBase>(TileLibrary[TileTypeID].TileClass, SpawnLocation, SpawnRotation, SpawnParams);
+		
+		// Override the base tile data and abilities
+		if (TileLibrary[TileTypeID].OverrideBaseAbilities == true)
+		{
+			NewTile->Abilities = TileLibrary[TileTypeID].Abilities;
+		}
+		if (TileLibrary[TileTypeID].OverrideBaseData == true)
+		{
+			NewTile->Data = TileLibrary[TileTypeID].Data;
+		}
+
 		// Of course we want to move the tile
 		NewTile->GetRenderComponent()->SetMobility(EComponentMobility::Movable);
 
 		NewTile->TileTypeID = TileTypeID;
-		NewTile->Abilities = TileLibrary[TileTypeID].Abilities;
-		NewTile->Data = TileLibrary[TileTypeID].TileData;
 		NewTile->SetGridAddress(SpawnGridAddress);
 		NewTile->SetTileID(NextTileID);
 

@@ -19,10 +19,16 @@ struct FSGTileType
 	TSubclassOf<class ASGTileBase> TileClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool OverrideBaseAbilities;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FSGTileAbilities Abilities;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FSGTileData TileData;
+	bool OverrideBaseData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FSGTileData Data;
 
 	FSGTileType()
 	{
@@ -34,7 +40,7 @@ struct FSGTileType
 /**
 * Tile Manager for create and destroy tiles
 */
-UCLASS(config = Game, Blueprintable)
+UCLASS(BlueprintType)
 class SGAME_API USGTileManager : public UObject
 {
 	GENERATED_UCLASS_BODY()
@@ -44,7 +50,7 @@ public:
 	int32 SelectTileFromLibrary();
 	bool DestroyTileWithID(int32 TileIDToDelete);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TileManager)
 	TArray<FSGTileType> TileLibrary;
 
 	void Initialize();

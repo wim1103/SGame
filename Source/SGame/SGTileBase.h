@@ -12,32 +12,6 @@
 class ASGGrid;
 
 USTRUCT()
-struct FSGTileAbilities
-{
-	GENERATED_USTRUCT_BODY();
-
-	/** Whether can link enemy - (e.g sword or arrow)*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanLinkEnemy;
-
-	/** Whether can be collected - (resource tile) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanBeCollected;
-
-	/** Enemy tile which can cause damage to the player */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bEnemyTile;
-
-	/** Whether the enemy can take damage */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanTakeDamage;
-
-	/** Whether the enemy can take damage */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanCauseDamage;
-};
-
-USTRUCT()
 struct FSGTileData
 {
 	GENERATED_USTRUCT_BODY();
@@ -108,10 +82,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	int32 TileTypeID;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FSGTileAbilities Abilities;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FSGTileData Data;
 
 	// Falling functions
