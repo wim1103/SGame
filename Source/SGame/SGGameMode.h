@@ -55,9 +55,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Game)
 	void OnPlayerInput();
 
-	/** Return the tile can link to the linkline */
-	UFUNCTION(BlueprintCallable, Category = LinkLine)
-	bool CanLinkToLastTile(const ASGTileBase* inCurrentTile);
+	/** Player end build path */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	void OnPlayerEndBuildPath();
 
 	/** Override the parent tick to do some customized tick operations*/
 	virtual void Tick(float DeltaSeconds) override;
@@ -74,12 +74,6 @@ private:
 	/** Handles the game status update messages. */
 	void HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdate& Message, const IMessageContextRef& Context);
 
-	/** Handles the player picked new tile*/
-	void HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context);
-
-	/** Handle collect the link line*/
-	void HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context);
-
 	ESGGameStatus::Type CurrentGameGameStatus;
 	ESGGameStatus::Type NextGameStatus;
 
@@ -94,10 +88,4 @@ private:
 
 	/** Current grid */
 	ASGGrid*			CurrentGrid;
-
-	void UpdateTileSelectState();
-	void ResetTileSelectInfo();
-
-	void UpdateTileLinkState();
-	void ResetTileLinkInfo();
 };

@@ -4,6 +4,7 @@
 #include "Math/UnrealMathUtility.h"
 
 #include "SGGrid.h"
+#include "SGGameMode.h"
 
 // Sets default values
 ASGGrid::ASGGrid(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -21,11 +22,15 @@ void ASGGrid::BeginPlay()
 	Super::BeginPlay();
 	
 	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_Grid")
-		.Handling<FMessage_Gameplay_LinkedTilesCollect>(this, &ASGGrid::HandleTileArrayCollect);
+		.Handling<FMessage_Gameplay_LinkedTilesCollect>(this, &ASGGrid::HandleTileArrayCollect)
+		.Handling<FMessage_Gameplay_NewTilePicked>(this, &ASGGrid::HandleNewTileIsPicked)
+		.Handling<FMessage_Gameplay_CollectLinkLine>(this, &ASGGrid::HandleCollectLinkLine);
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the grid needed messages
 		MessageEndpoint->Subscribe<FMessage_Gameplay_LinkedTilesCollect>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_NewTilePicked>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_CollectLinkLine>();
 	}
 
 	// Initialize the grid
@@ -34,6 +39,24 @@ void ASGGrid::BeginPlay()
 
 	checkSlow(TileManager);
 	TileManager->Initialize();
+
+	// Find the link line actor in the world
+	CurrentLinkLine = nullptr;
+	for (TActorIterator<ASGLinkLine> It(GetWorld()); It; ++It)
+	{
+		if (CurrentLinkLine == nullptr)
+		{
+			CurrentLinkLine = *It;
+		}
+		else
+		{
+			UE_LOG(LogSGame, Warning, TEXT("There is more than more link line object in the level!"));
+		}
+	}
+	if (CurrentLinkLine == nullptr)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("There is no link line object in the level!"));
+	}
 }
 
 // Called every frame
@@ -275,9 +298,10 @@ bool ASGGrid::AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB)
 {
 	if (GridAddressA == GridAddressB)
 	{
-		UE_LOG(LogSGame, Warning, TEXT("Pass in the same addresses"));
-		return false;
+		// Same grid address should be the neighbors
+		return true;
 	}
+
 	else if ((FMath::Min(GridAddressA, GridAddressB) < 0) || (FMath::Max(GridAddressA, GridAddressB) >= (GridWidth * GridHeight)))
 	{
 		UE_LOG(LogSGame, Warning, TEXT("Pass in the invalid addresses"));
@@ -319,4 +343,189 @@ void ASGGrid::HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect&
 
 	// Conden the grid
 	Condense();
+}
+
+void ASGGrid::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context)
+{
+	UE_LOG(LogSGame, Log, TEXT("Player Build Path with TileID: %d"), Message.TileID);
+
+	checkSlow(CurrentLinkLine);
+
+	// Player's link line input should only valid in playerinput stage
+	ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
+	checkSlow(GameMode);
+	if (GameMode->GetCurrentGameStatus() != ESGGameStatus::EGS_PlayerBeginInput)
+	{
+		// Not in the player input state, return
+		return;
+	}
+
+	const ASGTileBase* CurrentTile = GetTileFromTileID(Message.TileID);
+	if (CurrentTile == nullptr)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("Cannot get tile from the tile ID %d"), Message.TileID);
+		return;
+	}
+
+	// If can link to the last tile, then we build the path
+	if (CanLinkToLastTile(CurrentTile) == true)
+	{
+		checkSlow(CurrentLinkLine);
+		CurrentLinkLine->BuildPath(CurrentTile);
+	}
+
+	// Update the tile select state 
+	UpdateTileSelectState();
+
+	// Update the tile link state
+	UpdateTileLinkState();
+}
+
+void ASGGrid::HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context)
+{
+	checkSlow(CurrentLinkLine != nullptr);
+
+	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("No tiles in the link line, nothing to collect"));
+		return;
+	}
+
+	// Post a tile disappear message
+	FMessage_Gameplay_LinkedTilesCollect* DisappearMessage = new FMessage_Gameplay_LinkedTilesCollect();
+	for (int i = 0; i < CurrentLinkLine->LinkLineTiles.Num(); i++)
+	{
+		checkSlow(CurrentLinkLine->LinkLineTiles[i]);
+		DisappearMessage->TilesAddressToCollect.Push(CurrentLinkLine->LinkLineTiles[i]->GetGridAddress());
+	}
+
+	if (MessageEndpoint.IsValid() == true)
+	{
+		MessageEndpoint->Publish(DisappearMessage, EMessageScope::Process);
+	}
+}
+
+void ASGGrid::UpdateTileSelectState()
+{
+	checkSlow(CurrentLinkLine != nullptr);
+
+	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
+	{
+		// No tile in the link line, so all the tiles become selectable
+		ResetTileSelectInfo();
+		return;
+	}
+
+	// Iterator all the grid tiles, update the tile selectable status
+	for (int32 i = 0; i < 36; i++)
+	{
+		const ASGTileBase* testTile = GetTileFromGridAddress(i);
+		checkSlow(testTile);
+
+		FMessage_Gameplay_TileSelectableStatusChange* SelectableMessage = new FMessage_Gameplay_TileSelectableStatusChange{ 0 };
+		SelectableMessage->TileID = testTile->GetTileID();
+		if (CanLinkToLastTile(testTile) == true)
+		{
+			// The neighbor tile become selectable
+			SelectableMessage->NewSelectableStatus = true;
+			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+		}
+		else
+		{
+			// The other tile become unselectable
+			SelectableMessage->NewSelectableStatus = false;
+			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+		}
+	}
+}
+
+void ASGGrid::ResetTileSelectInfo()
+{
+	// Tell all the tiles that they can be selected
+	if (MessageEndpoint.IsValid() == true)
+	{
+		FMessage_Gameplay_TileSelectableStatusChange* SelectableMessage = new FMessage_Gameplay_TileSelectableStatusChange{ 0 };
+
+		// Set the target address to all
+		SelectableMessage->TileID = -1;
+		SelectableMessage->NewSelectableStatus = true;
+		MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+	}
+}
+
+void ASGGrid::UpdateTileLinkState()
+{
+	checkSlow(CurrentLinkLine != nullptr);
+
+	// Iterator all the grid tiles, only the negihbor tile between the head can be selected
+	checkSlow(CurrentGrid != nullptr);
+	for (int32 i = 0; i < 36; i++)
+	{
+		const ASGTileBase* testTile = GetTileFromGridAddress(i);
+		checkSlow(testTile);
+		FMessage_Gameplay_TileLinkedStatusChange* SelectableMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+		SelectableMessage->TileID = testTile->GetTileID();
+		if (CurrentLinkLine->ContainsTileAddress(i) == true)
+		{
+			// Current line is linked
+			SelectableMessage->NewLinkStatus = true;
+			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+		}
+		else
+		{
+			// Current line is not linked
+			SelectableMessage->NewLinkStatus = false;
+			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+		}
+	}
+}
+
+void ASGGrid::ResetTileLinkInfo()
+{
+	// Tell all the tiles that they can be selected
+	if (MessageEndpoint.IsValid() == true)
+	{
+		FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+
+		// Set the target address to all
+		LinkStatusChangeMessage->TileID = -1;
+		LinkStatusChangeMessage->NewLinkStatus = false;
+		MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
+	}
+}
+
+bool ASGGrid::CanLinkToLastTile(const ASGTileBase* inCurrentTile)
+{
+	checkSlow(inCurrentTile);
+	checkSlow(CurrentLinkLine != nullptr);
+	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
+	{
+		// First tile, can always be linked
+		return true;
+	}
+
+	// Check the current tile can be linked with the last tile
+	const ASGTileBase* LastTile = CurrentLinkLine->LinkLineTiles.Last();
+	checkSlow(LastTile != nullptr);
+
+	// Currently only the neighbor tiles can be selected
+	if (AreAddressesNeighbors(inCurrentTile->GetGridAddress(), LastTile->GetGridAddress()) == false)
+	{
+		return false;
+	}
+
+	// Same tile type can always link together
+	if (LastTile->Data.TileType == inCurrentTile->Data.TileType)
+	{
+		return true;
+	}
+
+	// Enemy links 
+	if ((LastTile->Abilities.bCanLinkEnemy == true && inCurrentTile->Abilities.bEnemyTile == true) ||
+		(LastTile->Abilities.bEnemyTile == true && inCurrentTile->Abilities.bCanLinkEnemy == true))
+	{
+		return true;
+	}
+
+	return false;
 }

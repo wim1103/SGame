@@ -1,6 +1,8 @@
 #pragma once
 
 #include "SGame.h"
+#include "SGTileStructs.h"
+
 #include "SGameMessages.generated.h"
 
 /**
@@ -85,6 +87,35 @@ struct FMessage_Gameplay_TileCollect
 	int32 TileID;
 };
 
+/**
+* Player link the tile
+*/
+USTRUCT()
+struct FMessage_Gameplay_TileLink
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** The tile id */
+	UPROPERTY()
+	int32 TileID;
+};
+
+/**
+* Damage to the tile
+*/
+USTRUCT()
+struct FMessage_Gameplay_DamageToTile
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** The target tile id */
+	UPROPERTY()
+	int32 TileID;
+
+	/** The damage info */
+	UPROPERTY()
+	TArray<FTileDamageInfo> DamageInfos;
+};
 
 /**
 * Tile moved message
@@ -153,7 +184,9 @@ namespace ESGGameStatus
 		EGS_PlayerTurnBegin,		// Player turn begin
 		EGS_PlayerRegengerate,		// Player regenerate
 		EGS_PlayerSkillCD,			// Player regenerate
-		EGS_PlayerInput,			// Player input, can link line or use the skill
+		EGS_PlayerBeginInput,		// Player begin input, can link line or use the skill
+		EGS_PlayerEndBuildPath,		// Player end build the path, but he can still use skill or buy some thing
+		EGS_PlayerEndInput,			// Player end input, his turn end
 		EGS_RoundEnd,				// End of the round
 		EGS_GameOver,				// Game over
 	};

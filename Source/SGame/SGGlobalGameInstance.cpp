@@ -42,3 +42,14 @@ void USGGlobalGameInstance::ForceCollect()
 		MessageEndpoint->Publish(CollectLinkLineMessage, EMessageScope::Process);
 	}
 }
+
+void USGGlobalGameInstance::PlayerEndBuildPath()
+{
+	if (MessageEndpoint.IsValid() == true)
+	{
+		// Test: Send game start message
+		FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
+		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_PlayerEndBuildPath;
+		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
+	}
+}

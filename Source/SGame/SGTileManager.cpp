@@ -35,7 +35,7 @@ ASGTileBase* USGTileManager::CreateTile(AActor* inOwner, FVector SpawnLocation, 
 
 		NewTile->TileTypeID = TileTypeID;
 		NewTile->Abilities = TileLibrary[TileTypeID].Abilities;
-		NewTile->TileData = TileLibrary[TileTypeID].TileData;
+		NewTile->Data = TileLibrary[TileTypeID].TileData;
 		NewTile->SetGridAddress(SpawnGridAddress);
 		NewTile->SetTileID(NextTileID);
 

@@ -17,10 +17,12 @@ ASGLinkLine::ASGLinkLine()
 	HeadSpriteRenderComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("LinkLineSpriteComponent-Head"));
 	HeadSpriteRenderComponent->Mobility = EComponentMobility::Movable;
 	HeadSpriteRenderComponent->AttachParent = RootComponent;
+	HeadSpriteRenderComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	TailSpriteRenderComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("LinkLineSpriteComponent-Tail"));
 	TailSpriteRenderComponent->Mobility = EComponentMobility::Movable;
 	TailSpriteRenderComponent->AttachParent = RootComponent;
+	TailSpriteRenderComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 // Called when the game starts or when spawned
@@ -30,6 +32,24 @@ void ASGLinkLine::BeginPlay()
 	
 	// Build the link line message endpoint
 	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_LinkLine");
+
+	// Find the grid actor in the world
+	ParentGrid = nullptr;
+	for (TActorIterator<ASGGrid> It(GetWorld()); It; ++It)
+	{
+		if (ParentGrid == nullptr)
+		{
+			ParentGrid = *It;
+		}
+		else
+		{
+			UE_LOG(LogSGame, Warning, TEXT("There is more than more grid object in the level!"));
+		}
+	}
+	if (ParentGrid == nullptr)
+	{
+		UE_LOG(LogSGame, Error, TEXT("There is no grid object in the level!"));
+	}
 }
 
 // Called every frame
@@ -270,6 +290,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngl
 	NewSprite->Mobility = EComponentMobility::Movable;
 	NewSprite->RegisterComponent();
 	NewSprite->AttachTo(RootComponent);
+	NewSprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Rotate to the last angle
 	NewSprite->SetRelativeRotation(FRotator(inLastAngle, 0, 0));
@@ -338,6 +359,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead
 		NewSprite->SetSprite(BodySprite);
 		NewSprite->RegisterComponent();
 		NewSprite->AttachTo(RootComponent);
+		NewSprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 		// Add to the body sprite array
 		BodySpriteRenderComponentsArray.Add(NewSprite);
@@ -360,6 +382,49 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead
 	NewSprite->SetRelativeRotation(FRotator(inAngle, 0, 0));
 
 	return NewSprite;
+}
+
+void ASGLinkLine::CollectTileResource(TArray<const ASGTileBase*> TilesToCollect)
+{
+	TMap<ESGResourceType::Type, float> SummmpResource;
+
+	// Iterate the link tiles, retrieve their resources
+	for (int i = 0; i < LinkLineTiles.Num(); i++)
+	{
+		const ASGTileBase* Tile = LinkLineTiles[i];
+		checkSlow(Tile);
+
+		TArray<FTileResourceUnit> TileResource = Tile->GetTileResource();
+		for (int j = 0; j < TileResource.Num(); j++)
+		{
+			if (SummmpResource.Find(TileResource[i].ResourceType) == nullptr)
+			{
+				// Insert the type to the summup result
+				SummmpResource.Add(TileResource[i].ResourceType, TileResource[i].ResourceAmount);
+			}
+			else
+			{
+				// Sumup the resource
+				SummmpResource[TileResource[i].ResourceType] += TileResource[i].ResourceAmount;
+			}
+		}
+	}
+}
+
+TArray<FTileDamageInfo> ASGLinkLine::CaculateDamage(TArray<const ASGTileBase*>& CauseDamageTiles)
+{
+	// We can do complex damage calculation here
+	// But currently, we just simply retrieve the damage info
+	TArray<FTileDamageInfo> ResultDamageInfo;
+	for (int i = 0; i < CauseDamageTiles.Num(); i++)
+	{
+		const ASGTileBase* Tile = CauseDamageTiles[i];
+		checkSlow(Tile);
+
+		ResultDamageInfo.Add(Tile->Data.CauseDamageInfo);
+	}
+
+	return ResultDamageInfo;
 }
 
 void ASGLinkLine::ResetLinkState()
@@ -396,16 +461,6 @@ void ASGLinkLine::BuildPath(const ASGTileBase* inNewTile)
 	}
 	else
 	{
-		// Make sure the new tile can be linked
-		ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
-		if (GameMode != nullptr)
-		{
-			if (GameMode->CanLinkToLastTile(inNewTile) == false)
-			{
-				return;
-			}
-		}
-
 		// Add the tile to the link line
 		LinkLineTiles.Add(inNewTile);
 
@@ -415,6 +470,72 @@ void ASGLinkLine::BuildPath(const ASGTileBase* inNewTile)
 
 	// Do a link line update
 	Update();
+}
+
+void ASGLinkLine::OnPlayerFinishBuildPath()
+{
+	TArray<const ASGTileBase*> TakeDamageTiles;
+	TArray<const ASGTileBase*> CollectedTiles;
+
+	// First we should find the can take damage tiles in the link line
+	for (int i = 0; i < LinkLineTiles.Num(); i++)
+	{
+		checkSlow(LinkLineTiles[i]);
+		const ASGTileBase* Tile = LinkLineTiles[i];
+		if (Tile->Abilities.bCanTakeDamage == true)
+		{
+			TakeDamageTiles.Add(Tile);
+		}
+		else
+		{
+			// The other tile will be collected after the link
+			CollectedTiles.Add(Tile);
+		}
+	}
+	
+	// Cause damage to the take damage tiles
+	if (TakeDamageTiles.Num() > 0)
+	{
+		// If it contains the take damage tiles, we should calculate the damage then
+		TArray<const ASGTileBase*> CauseDamageTiles;
+		for (int i = 0; i < LinkLineTiles.Num(); i++)
+		{
+			checkSlow(LinkLineTiles[i]);
+			const ASGTileBase* Tile = LinkLineTiles[i];
+			if (Tile->Abilities.bCanTakeDamage == true)
+			{
+				CauseDamageTiles.Add(Tile);
+			}
+		}
+
+		// Calculate the linked tiles damage
+		TArray<FTileDamageInfo> DamageInfos = CaculateDamage(CauseDamageTiles);
+
+		// Then instigate the damage to the take damage tiles
+		for (int i = 0; i < TakeDamageTiles.Num(); i++)
+		{
+			checkSlow(TakeDamageTiles[i]);
+			const ASGTileBase* Tile = TakeDamageTiles[i];
+
+			// Evaluate if the tile can suirve, for add the tile to collect tile array
+			if (Tile->EvaluateDamageToTile(DamageInfos) == true)
+			{
+				CollectedTiles.Add(Tile);
+			}
+			
+			// Send the harm message to the tile
+			FMessage_Gameplay_DamageToTile* Message = new FMessage_Gameplay_DamageToTile{ 0 };
+			Message->TileID = Tile->GetTileID();
+			Message->DamageInfos = DamageInfos;
+			if (MessageEndpoint.IsValid() == true)
+			{
+				MessageEndpoint->Publish(Message, EMessageScope::Process);
+			}
+		}
+	}
+
+	// Finally collect the tile resources
+	CollectTileResource(CollectedTiles);
 }
 
 #endif

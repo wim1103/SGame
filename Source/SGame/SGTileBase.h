@@ -11,41 +11,6 @@
 
 class ASGGrid;
 
-/** Types of tile base type. */
-UENUM()
-namespace ESGTileType
-{
-	enum Type
-	{
-		ETT_Sword = 0,					// Sword
-		ETT_Shield = 1,					// Shield
-		ETT_Potion = 2,					// Potion
-		ETT_Coin = 3,					// Coin
-		ETT_Mana = 4,					// Mana
-		ETT_Arrow = 5,					// Arrow
-		ETT_Soldier = 6					// Soldier
-	};
-}
-
-/** Types of every possible tile state flag that the tile will be in, note it can be in multiple state */
-UENUM()
-namespace ESGTileStatusFlag
-{
-	enum Type
-	{
-		ESF_STATUS_CHANGED,		// Tile status has changed
-		ESF_POISONED,			// Tile is posioned
-		ESF_BURNING,			// Tile is burning
-		ESF_PATH_TYPE,			// Tile is the same type as path
-		ESF_DEAD,				// Tile is dead
-		ESF_SELECTABLE,			// Tile is linkable
-		ESF_MATCHABLE,			// Tile is matchable to the current path
-		ESF_BROKEN,				// Tile is broken
-		ESF_FROZEN,				// Tile is frozen
-		ESF_LINKED,				// Tile is linked
-	};
-}
-
 USTRUCT()
 struct FSGTileAbilities
 {
@@ -59,9 +24,17 @@ struct FSGTileAbilities
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanBeCollected;
 
-	/** Enemy tile which can cause damage */
+	/** Enemy tile which can cause damage to the player */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEnemyTile;
+
+	/** Whether the enemy can take damage */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanTakeDamage;
+
+	/** Whether the enemy can take damage */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanCauseDamage;
 };
 
 USTRUCT()
@@ -76,7 +49,19 @@ public:
 
 	/** The current tile status flag, should not be accessed anywhere, for test convenient now*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TEnumAsByte<ESGTileStatusFlag::Type>> TileStatusArray;
+	TArray< TEnumAsByte<ESGTileStatusFlag::Type> > TileStatusArray;
+
+	/** The current tile resource info*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FTileResourceUnit> TileResourceArray;
+
+	/** The current tile damage info, only valid if the tile can cause damage*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTileDamageInfo CauseDamageInfo;
+
+	/** The current tile damage info, only valid if the tile can take damage*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTileLifeArmorInfo LifeArmorInfo;
 };
 
 UCLASS()
@@ -127,7 +112,7 @@ public:
 	FSGTileAbilities Abilities;
 
 	UPROPERTY(BlueprintReadOnly)
-	FSGTileData TileData;
+	FSGTileData Data;
 
 	// Falling functions
 	void StartFalling();
@@ -136,7 +121,15 @@ public:
 	UFUNCTION()
 	void TickFalling(float DeltaTime);
 
-	
+	// Currently all the tile can be collect, even the enemy tile, because it can 
+	// be part of the XP resouces
+	virtual void OnTileCollected();
+
+	// Currenttly only the enemy tile can take damage
+	virtual void OnTileTakeDamage();
+
+	/** Return the tile resource that can be collect */
+	virtual TArray<FTileResourceUnit> GetTileResource() const;
 
 protected:
 	/** Location on the grid as a 1D key/value. To find neighbors, ask the grid. */
@@ -174,8 +167,21 @@ private:
 	/** Handles tile become selectalbe */
 	void HandleTileMove(const FMessage_Gameplay_TileMoved& Message, const IMessageContextRef& Context);
 
-	/** Handle tile collect */
+	/** Handle tile collected */
 	void HandleTileCollected(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context);
+
+	/** Handle tile linked */
+	void HandleTileLinked(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context);
+
+	/**
+	* Called when the tile take damage
+	*
+	* @param DamageInfos	all the damage infos caused to the tiles
+	* @param LifeArmorInfo	the life armor info to take damage
+	*
+	* @return return true means that the tile is dead (life reduce to 0)
+	*/
+	bool OnTakeTileDamage(const TArray<FTileDamageInfo>& DamageInfos, FTileLifeArmorInfo& LifeArmorInfo) const;
 
 	/** If the Message send to me */
 	bool FilterMessage(int32 inTileID)
@@ -198,4 +204,15 @@ private:
 	/** Keep a weak reference to the owner*/
 	ASGGrid* Grid;
 	
+public:
+	
+	/** 
+	 * Evaluate the if the tile survive after this damage
+	 *
+	 * @param DamageInfos all the damage infos caused to the tiles
+	 *
+	 * @return return true means that the tile is dead (life reduce to 0)
+	 */
+	bool EvaluateDamageToTile(const TArray<FTileDamageInfo>& DamageInfos) const;
+	void HandleTakeDamage(const FMessage_Gameplay_DamageToTile& Message, const IMessageContextRef& Context);
 };

@@ -40,7 +40,9 @@ void ASGTileBase::BeginPlay()
 		.Handling<FMessage_Gameplay_TileSelectableStatusChange>(this, &ASGTileBase::HandleSelectableStatusChange)
 		.Handling<FMessage_Gameplay_TileLinkedStatusChange>(this, &ASGTileBase::HandleLinkStatusChange)
 		.Handling<FMessage_Gameplay_TileMoved>(this, &ASGTileBase::HandleTileMove)
-		.Handling<FMessage_Gameplay_TileCollect>(this, &ASGTileBase::HandleTileCollected);
+		.Handling<FMessage_Gameplay_TileCollect>(this, &ASGTileBase::HandleTileCollected)
+		.Handling<FMessage_Gameplay_DamageToTile>(this, &ASGTileBase::HandleTakeDamage);
+
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the tile need events
@@ -48,6 +50,7 @@ void ASGTileBase::BeginPlay()
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileLinkedStatusChange>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileMoved>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileCollect>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_DamageToTile>();
 	}
 
 	Grid = Cast<ASGGrid>(GetOwner());
@@ -98,7 +101,7 @@ void ASGTileBase::TileEnter_Mouse()
 
 bool ASGTileBase::IsSelectable() const
 {
-	return TileData.TileStatusArray.Contains(ESGTileStatusFlag::ESF_SELECTABLE);
+	return Data.TileStatusArray.Contains(ESGTileStatusFlag::ESF_SELECTABLE);
 }
 
 void ASGTileBase::SetGridAddress(int32 NewLocation)
@@ -141,6 +144,21 @@ void ASGTileBase::TickFalling(float DeltaTime)
 	}
 }
 
+void ASGTileBase::OnTileCollected()
+{
+
+}
+
+void ASGTileBase::OnTileTakeDamage()
+{
+
+}
+
+TArray<FTileResourceUnit> ASGTileBase::GetTileResource() const
+{
+	return Data.TileResourceArray;
+}
+
 void ASGTileBase::HandleTileCollected(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context)
 {
 	FILTER_MESSAGE;
@@ -155,6 +173,68 @@ void ASGTileBase::HandleTileCollected(const FMessage_Gameplay_TileCollect& Messa
 	}
 }
 
+bool ASGTileBase::OnTakeTileDamage(const TArray<FTileDamageInfo>& DamageInfos, FTileLifeArmorInfo& LifeArmorInfo) const
+{
+	for (int i = 0; i < DamageInfos.Num(); i++)
+	{
+		// Calculate the piercing damage first
+		LifeArmorInfo.CurrentLife -= DamageInfos[i].InitialDamage * DamageInfos[i].PiercingArmorRatio;
+		if (LifeArmorInfo.CurrentLife < 0)
+		{
+			return true;
+		}
+
+		// Reduce the tile armor value
+		float ResultDamage = DamageInfos[i].InitialDamage * (1 - DamageInfos[i].PiercingArmorRatio);
+
+		// Currently the tile armor duracity is fix to 1 (1 armor absorb = 1 damage)
+		if (LifeArmorInfo.CurrentArmor > 0)
+		{
+			float ArmorBefore = LifeArmorInfo.CurrentArmor;
+			float ArmorAfter = ArmorBefore - ResultDamage;
+			LifeArmorInfo.CurrentArmor = FMath::Clamp(ArmorAfter, 0.0f, LifeArmorInfo.ArmorMax);
+			
+			ResultDamage -= ArmorBefore;
+			if (ResultDamage < 0)
+			{
+				ResultDamage = 0;
+			}
+		}
+
+		// The damage don't absorb completely 
+		if (ResultDamage > 0)
+		{
+			LifeArmorInfo.CurrentLife -= ResultDamage;
+			if (LifeArmorInfo.CurrentLife < 0)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool ASGTileBase::EvaluateDamageToTile(const TArray<FTileDamageInfo>& DamageInfos) const
+{
+	FTileLifeArmorInfo FakeInfo = Data.LifeArmorInfo;
+	return OnTakeTileDamage(DamageInfos, FakeInfo);
+}
+
+void ASGTileBase::HandleTakeDamage(const FMessage_Gameplay_DamageToTile& Message, const IMessageContextRef& Context)
+{
+	FILTER_MESSAGE;
+
+	if (Abilities.bCanTakeDamage == false)
+	{
+		UE_LOG(LogSGame, Log, TEXT("Tile cannnot take damage"));
+		return;
+	}
+
+	// Take damage first
+	bool TileDead = OnTakeTileDamage(Message.DamageInfos, Data.LifeArmorInfo);
+}
+
 void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context)
 {
 	FILTER_MESSAGE;
@@ -164,7 +244,7 @@ void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelec
 	if (Message.NewSelectableStatus == true)
 	{
 		// Add the selectable flag to the status array
-		TileData.TileStatusArray.AddUnique(ESGTileStatusFlag::ESF_SELECTABLE);
+		Data.TileStatusArray.AddUnique(ESGTileStatusFlag::ESF_SELECTABLE);
 
 		// Set the white color 
 		GetRenderComponent()->SetSpriteColor(FLinearColor::White);
@@ -172,7 +252,7 @@ void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelec
 	else
 	{
 		// Remove the selectable flag
-		TileData.TileStatusArray.Remove(ESGTileStatusFlag::ESF_SELECTABLE);
+		Data.TileStatusArray.Remove(ESGTileStatusFlag::ESF_SELECTABLE);
 
 		// Dim the sprite
 		GetRenderComponent()->SetSpriteColor(FLinearColor(0.2f, 0.2f, 0.2f));
@@ -188,7 +268,7 @@ void ASGTileBase::HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatu
 	if (Message.NewLinkStatus == true)
 	{
 		// Add the selectable flag to the status array
-		TileData.TileStatusArray.AddUnique(ESGTileStatusFlag::ESF_LINKED);
+		Data.TileStatusArray.AddUnique(ESGTileStatusFlag::ESF_LINKED);
 
 		// Set the linked sprite
 		GetRenderComponent()->SetSprite(Sprite_Selected);
@@ -196,7 +276,7 @@ void ASGTileBase::HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatu
 	else
 	{
 		// Remove the selectable flag
-		TileData.TileStatusArray.Remove(ESGTileStatusFlag::ESF_LINKED);
+		Data.TileStatusArray.Remove(ESGTileStatusFlag::ESF_LINKED);
 
 		// Set the normal sprite
 		GetRenderComponent()->SetSprite(Sprite_Normal);

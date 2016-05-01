@@ -7,6 +7,7 @@
 #include "Messaging.h"
 #include "SGameMessages.h"
 #include "SGTileManager.h"
+#include "SGLinkLine.h"
 
 #include "SGGrid.generated.h"
 
@@ -56,6 +57,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Refill)
 	void RefillGridAddressWithTile(int32 inGridAddress, const ASGTileBase* inTile);
 
+	/** Reset the tile select info */
+	UFUNCTION(BlueprintCallable, Category = Grid)
+	void ResetTileSelectInfo();
+
+	/** Reset the tile link info */
+	UFUNCTION(BlueprintCallable, Category = Grid)
+	void ResetTileLinkInfo();
+
 	/** Get the tile by the address*/
 	const ASGTileBase* GetTileFromGridAddress(int32 GridAddress);
 	/** Get the tile by the tile id*/
@@ -88,9 +97,25 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<const ASGTileBase*> GridTiles;
 
+	/** Handles the player picked new tile*/
+	void HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context);
+
+	/** Handle collect the link line*/
+	void HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context);
+
+	/** Return the tile can link to the linkline */
+	UFUNCTION(BlueprintCallable, Category = LinkLine)
+	bool CanLinkToLastTile(const ASGTileBase* inCurrentTile);
+
 private:
 	void HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect& Message, const IMessageContextRef& Context);
 
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
+
+	void UpdateTileSelectState();
+	void UpdateTileLinkState();
+	
+
+	ASGLinkLine* CurrentLinkLine;
 };

@@ -88,12 +88,6 @@ protected:
 	/** Update link line using the line points */
 	bool UpdateLinkLineSprites(const TArray<int32>& LinePoints);
 
-	/** Update the tile select info*/
-	void UpdateTileSelectInfo();
-
-	/** Update the tile select info*/
-	void UpdateMatchableTileInfo();
-
 	/** Link line points, for drawing the sprites*/
 	TArray<int32> LinkLinePoints;
 
@@ -114,7 +108,13 @@ private:
 
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
+
+	ASGGrid* ParentGrid;
+
+	void CollectTileResource(TArray<const ASGTileBase*> TilesToCollect);
+	TArray<FTileDamageInfo> CaculateDamage(TArray<const ASGTileBase*>& CauseDamageTiles);
 public:
 	void ResetLinkState();
 	void BuildPath(const ASGTileBase* inNewTile);
+	void OnPlayerFinishBuildPath();
 };

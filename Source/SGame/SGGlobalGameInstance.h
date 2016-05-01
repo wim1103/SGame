@@ -31,6 +31,10 @@ public:
 	UFUNCTION(exec)
 	void ForceCollect();
 
+	// Player finish builld the link line
+	UFUNCTION(exec)
+	void PlayerEndBuildPath();
+
 private:
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;

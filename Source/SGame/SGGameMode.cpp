@@ -19,16 +19,12 @@ void ASGGameMode::BeginPlay()
 	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_GameMode")
 		.Handling<FMessage_Gameplay_GameStart>(this, &ASGGameMode::HandleGameStart)
 		.Handling<FMessage_Gameplay_GameStatusUpdate>(this, &ASGGameMode::HandleGameStatusUpdate)
-		.Handling<FMessage_Gameplay_NewTilePicked>(this, &ASGGameMode::HandleNewTileIsPicked)
-		.Handling<FMessage_Gameplay_CollectLinkLine>(this, &ASGGameMode::HandleCollectLinkLine)
 		.WithInbox();
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the game mode needed messages
 		MessageEndpoint->Subscribe<FMessage_Gameplay_GameStart>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_GameStatusUpdate>();
-		MessageEndpoint->Subscribe<FMessage_Gameplay_NewTilePicked>();
-		MessageEndpoint->Subscribe<FMessage_Gameplay_CollectLinkLine>();
 	}
 
 	// Find the grid actor in the world
@@ -97,16 +93,15 @@ void ASGGameMode::OnPlayerTurnBegin()
 	UE_LOG(LogSGame, Log, TEXT("Player turn begin!"));
 
 	// Reset the link line 
-	if (CurrentLinkLine != nullptr)
-	{
-		CurrentLinkLine->ResetLinkState();
-	}
+	checkSlow(CurrentLinkLine);
+	CurrentLinkLine->ResetLinkState();
 
 	// Reset the tile select info
-	ResetTileSelectInfo();
+	checkSlow(CurrentGrid);
+	CurrentGrid->ResetTileSelectInfo();
 
 	// Reset the tile link info
-	ResetTileLinkInfo();
+	CurrentGrid->ResetTileLinkInfo();
 
 	// Change the next status to player regenerate
 	if (MessageEndpoint.IsValid())
@@ -138,7 +133,7 @@ void ASGGameMode::OnPlayerSkillCD()
 	if (MessageEndpoint.IsValid())
 	{
 		FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
-		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_PlayerInput;
+		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_PlayerBeginInput;
 		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
 	}
 }
@@ -157,6 +152,15 @@ void ASGGameMode::OnPlayerInput()
 	if (CurrentLinkLine != nullptr)
 	{
 		CurrentLinkLine->ResetLinkState();
+	}
+}
+
+void ASGGameMode::OnPlayerEndBuildPath()
+{
+	// Reset the link line.
+	if (CurrentLinkLine != nullptr)
+	{
+		CurrentLinkLine->OnPlayerFinishBuildPath();
 	}
 }
 
@@ -186,7 +190,6 @@ void ASGGameMode::HandleGameStart(const FMessage_Gameplay_GameStart& Message, co
 void ASGGameMode::HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdate& Message, const IMessageContextRef& Context)
 {
 	CurrentGameGameStatus = Message.NewGameStatus;
-	
 	switch (CurrentGameGameStatus)
 	{
 	case ESGGameStatus::EGS_RondBegin:
@@ -201,206 +204,14 @@ void ASGGameMode::HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdat
 	case ESGGameStatus::EGS_PlayerSkillCD:
 		OnPlayerSkillCD();
 		break;
-	case ESGGameStatus::EGS_PlayerInput:
+	case ESGGameStatus::EGS_PlayerBeginInput:
 		OnPlayerInput();
+		break;
+	case ESGGameStatus::EGS_PlayerEndBuildPath:
+		OnPlayerEndBuildPath();
 		break;
 	default:
 		UE_LOG(LogSGame, Error, TEXT("Unhandled game status!"));
 		break;
 	}
-}
-
-void ASGGameMode::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context)
-{
-	UE_LOG(LogSGame, Log, TEXT("Player Build Path with TileID: %d"), Message.TileID);
-
-	if (CurrentGrid == nullptr || CurrentLinkLine == nullptr)
-	{
-		// Grid or the link line object is invalid
-		return;
-	}
-
-	// Player's link line input should only valid in playerinput stage
-	if (CurrentGameGameStatus != ESGGameStatus::EGS_PlayerInput)
-	{
-		// Not in the player input state, return
-		return;
-	}
-
-	const ASGTileBase* CurrentTile = CurrentGrid->GetTileFromTileID(Message.TileID);
-	if (CurrentTile == nullptr)
-	{
-		UE_LOG(LogSGame, Warning, TEXT("Cannot get tile from the tile ID %d"), Message.TileID);
-		return;
-	}
-
-	// If can link to the last tile, then we build the path
-	if (CanLinkToLastTile(CurrentTile) == true)
-	{
-		checkSlow(CurrentLinkLine);
-		CurrentLinkLine->BuildPath(CurrentTile);
-	}
-
-	// Update the tile select state 
-	UpdateTileSelectState();
-
-	// Update the tile link state
-	UpdateTileLinkState();
-}
-
-void ASGGameMode::HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context)
-{
-	checkSlow(CurrentLinkLine != nullptr);
-
-	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
-	{
-		UE_LOG(LogSGame, Warning, TEXT("No tiles in the link line, nothing to collect"));
-		return;
-	}
-
-	// Post a tile disappear message
-	FMessage_Gameplay_LinkedTilesCollect* DisappearMessage = new FMessage_Gameplay_LinkedTilesCollect();
-	for (int i = 0; i < CurrentLinkLine->LinkLineTiles.Num(); i++)
-	{
-		checkSlow(CurrentLinkLine->LinkLineTiles[i]);
-		DisappearMessage->TilesAddressToCollect.Push(CurrentLinkLine->LinkLineTiles[i]->GetGridAddress());
-	}
-
-	if (MessageEndpoint.IsValid() == true)
-	{
-		MessageEndpoint->Publish(DisappearMessage, EMessageScope::Process);
-	}
-}
-
-void ASGGameMode::UpdateTileSelectState()
-{
-	checkSlow(CurrentLinkLine != nullptr);
-	const ASGTileBase* HeadTile = CurrentLinkLine->LinkLineTiles.Last();
-	if (HeadTile == nullptr)
-	{
-		UE_LOG(LogSGame, Error, TEXT("The head tile data corrupt!"));
-		return;
-	}
-
-	const ASGTileBase* TailTile = CurrentLinkLine->LinkLineTiles[0];
-	if (TailTile == nullptr)
-	{
-		UE_LOG(LogSGame, Error, TEXT("The tail tile data corrupt!"));
-		return;
-	}
-
-	// Iterator all the grid tiles, only the negihbor tile between the head can be selected
-	checkSlow(CurrentGrid != nullptr);
-	for (int32 i = 0; i < 36; i++)
-	{
-		if (i == HeadTile->GetGridAddress())
-		{
-			// Ignore the head tile
-			continue;
-		}
-
-		const ASGTileBase* testTile = CurrentGrid->GetTileFromGridAddress(i);
-		checkSlow(testTile);
-
-		FMessage_Gameplay_TileSelectableStatusChange* SelectableMessage = new FMessage_Gameplay_TileSelectableStatusChange{ 0 };
-		SelectableMessage->TileID = testTile->GetTileID();
-
-		if (CurrentGrid->AreAddressesNeighbors(HeadTile->GetGridAddress(), i) == true)
-		{
-			// The neighbor tile become selectable
-			SelectableMessage->NewSelectableStatus = true;
-			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
-		}
-		else
-		{
-			// The other tile become unselectable
-			SelectableMessage->NewSelectableStatus = false;
-			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
-		}
-	}
-}
-
-void ASGGameMode::ResetTileSelectInfo()
-{
-	// Tell all the tiles that they can be selected
-	if (MessageEndpoint.IsValid() == true)
-	{
-		FMessage_Gameplay_TileSelectableStatusChange* SelectableMessage = new FMessage_Gameplay_TileSelectableStatusChange{ 0 };
-		
-		// Set the target address to all
-		SelectableMessage->TileID = -1;
-		SelectableMessage->NewSelectableStatus = true;
-		MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
-	}
-}
-
-void ASGGameMode::UpdateTileLinkState()
-{
-	checkSlow(CurrentLinkLine != nullptr);
-
-	// Iterator all the grid tiles, only the negihbor tile between the head can be selected
-	checkSlow(CurrentGrid != nullptr);
-	for (int32 i = 0; i < 36; i++)
-	{
-		const ASGTileBase* testTile = CurrentGrid->GetTileFromGridAddress(i);
-		checkSlow(testTile);
-		FMessage_Gameplay_TileLinkedStatusChange* SelectableMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
-		SelectableMessage->TileID = testTile->GetTileID();
-		if (CurrentLinkLine->ContainsTileAddress(i) == true)
-		{
-			// Current line is linked
-			SelectableMessage->NewLinkStatus = true;
-			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
-		}
-		else
-		{
-			// Current line is not linked
-			SelectableMessage->NewLinkStatus = false;
-			MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
-		}
-	}
-}
-
-void ASGGameMode::ResetTileLinkInfo()
-{
-	// Tell all the tiles that they can be selected
-	if (MessageEndpoint.IsValid() == true)
-	{
-		FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
-
-		// Set the target address to all
-		LinkStatusChangeMessage->TileID = -1;
-		LinkStatusChangeMessage->NewLinkStatus = false;
-		MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
-	}
-}
-
-bool ASGGameMode::CanLinkToLastTile(const ASGTileBase* inCurrentTile)
-{
-	checkSlow(inCurrentTile);
-	checkSlow(CurrentLinkLine != nullptr);
-	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
-	{
-		// First tile, can always be linked
-		return true;
-	}
-
-	// Check the current tile can be linked with the last tile
-	const ASGTileBase* LastTile = CurrentLinkLine->LinkLineTiles.Last();
-	checkSlow(LastTile != nullptr);
-	
-	// Same tile type can always link together
-	if (LastTile->TileData.TileType == inCurrentTile->TileData.TileType)
-	{
-		return true;
-	}
-
-	// Enemy links 
-	if ((LastTile->Abilities.bCanLinkEnemy == true && inCurrentTile->Abilities.bEnemyTile == true) ||
-		(LastTile->Abilities.bEnemyTile == true && inCurrentTile->Abilities.bCanLinkEnemy == true))
-	{
-		return true;
-	}
-
-	return false;
 }
