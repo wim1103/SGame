@@ -53,11 +53,28 @@ public:
 
 	/** Player input */
 	UFUNCTION(BlueprintCallable, Category = Game)
-	void OnPlayerInput();
+	void OnPlayerBeginInput();
 
 	/** Player end build path */
 	UFUNCTION(BlueprintCallable, Category = Game)
 	void OnPlayerEndBuildPath();
+
+	/** Player end input */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	void OnPlayerEndInput();
+
+	/** Enemy attack stage*/
+	void OnEnemyAttack();
+
+	/** Called when this round end*/
+	void OnRoundEnd();
+
+	/** Called when game over */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	void OnGameOver();
+
+	/** Check if game over */
+	bool CheckGameOver();
 
 	/** Override the parent tick to do some customized tick operations*/
 	virtual void Tick(float DeltaSeconds) override;

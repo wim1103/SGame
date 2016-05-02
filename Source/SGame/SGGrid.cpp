@@ -173,6 +173,10 @@ void ASGGrid::RefillGrid()
 
 		RefillColumn(Col, RowNum);
 	}
+
+	// After all reset the tile state
+	ResetTileLinkInfo();
+	ResetTileSelectInfo();
 }
 
 void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)

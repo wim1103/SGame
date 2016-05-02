@@ -388,12 +388,19 @@ void ASGLinkLine::CollectTileResource(TArray<const ASGTileBase*> TilesToCollect)
 {
 	TMap<ESGResourceType::Type, float> SummmpResource;
 
+	// Array of tile address should be collected, used for condense the grid
+	TArray<int32> CollectedTileAddressArray;
+
 	// Iterate the link tiles, retrieve their resources
 	for (int i = 0; i < TilesToCollect.Num(); i++)
 	{
 		const ASGTileBase* Tile = TilesToCollect[i];
 		checkSlow(Tile);
+		
+		// Insert into the collect tile array
+		CollectedTileAddressArray.Add(Tile->GetGridAddress());
 
+		// Collecte the resouces
 		TArray<FTileResourceUnit> TileResource = Tile->GetTileResource();
 		for (int j = 0; j < TileResource.Num(); j++)
 		{
@@ -407,6 +414,17 @@ void ASGLinkLine::CollectTileResource(TArray<const ASGTileBase*> TilesToCollect)
 				// Sumup the resource
 				SummmpResource[TileResource[j].ResourceType] += TileResource[j].ResourceAmount;
 			}
+		}
+	}
+
+	// Finally, tell the grid we have finish collect resource, the tileis collected
+	if (CollectedTileAddressArray.Num() > 0)
+	{
+		FMessage_Gameplay_LinkedTilesCollect* Message = new FMessage_Gameplay_LinkedTilesCollect();
+		Message->TilesAddressToCollect = CollectedTileAddressArray;
+		if (MessageEndpoint.IsValid() == true)
+		{
+			MessageEndpoint->Publish(Message, EMessageScope::Process);
 		}
 	}
 }
@@ -536,6 +554,9 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 
 	// Finally collect the tile resources
 	CollectTileResource(CollectedTiles);
+
+	// Reset the linklin afterall
+	ResetLinkState();
 }
 
 #endif

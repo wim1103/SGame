@@ -103,13 +103,14 @@ protected:
 	/** Handle collect the link line*/
 	void HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context);
 
+	/** Handle tile grid event*/
+	void HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect& Message, const IMessageContextRef& Context);
+
 	/** Return the tile can link to the linkline */
 	UFUNCTION(BlueprintCallable, Category = LinkLine)
 	bool CanLinkToLastTile(const ASGTileBase* inCurrentTile);
 
 private:
-	void HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect& Message, const IMessageContextRef& Context);
-
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
 

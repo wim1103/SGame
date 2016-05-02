@@ -69,7 +69,7 @@ struct FMessage_Gameplay_LinkedTilesCollect
 {
 	GENERATED_USTRUCT_BODY()
 
-	/** The picked tile address */
+	/** The collected tile address */
 	UPROPERTY()
 	TArray<int32> TilesAddressToCollect;
 };
@@ -187,6 +187,7 @@ namespace ESGGameStatus
 		EGS_PlayerBeginInput,		// Player begin input, can link line or use the skill
 		EGS_PlayerEndBuildPath,		// Player end build the path, but he can still use skill or buy some thing
 		EGS_PlayerEndInput,			// Player end input, his turn end
+		EGS_EnemyAttack,			// Enemy attack player
 		EGS_RoundEnd,				// End of the round
 		EGS_GameOver,				// Game over
 	};

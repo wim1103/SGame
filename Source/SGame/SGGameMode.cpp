@@ -4,6 +4,8 @@
 #include "SGGameMode.h"
 #include "SGPlayerController.h"
 
+
+
 ASGGameMode::ASGGameMode(const FObjectInitializer& ObjectInitializer)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -76,7 +78,7 @@ ESGGameStatus::Type ASGGameMode::GetCurrentGameStatus()
 
 void ASGGameMode::OnBeginRound()
 {
-	UE_LOG(LogSGame, Log, TEXT("New round begin!"));
+	UE_LOG(LogSGameProcedure, Log, TEXT("New round begin!"));
 	CurrentRound++;
 
 	// Change the next status to new round begin
@@ -90,7 +92,7 @@ void ASGGameMode::OnBeginRound()
 
 void ASGGameMode::OnPlayerTurnBegin()
 {
-	UE_LOG(LogSGame, Log, TEXT("Player turn begin!"));
+	UE_LOG(LogSGameProcedure, Log, TEXT("Player turn begin!"));
 
 	// Reset the link line 
 	checkSlow(CurrentLinkLine);
@@ -114,7 +116,7 @@ void ASGGameMode::OnPlayerTurnBegin()
 
 void ASGGameMode::OnPlayerRegenerate()
 {
-	UE_LOG(LogSGame, Log, TEXT("Player regenerate!"));
+	UE_LOG(LogSGameProcedure, Log, TEXT("Player regenerate!"));
 
 	// Change the next status to player skill CD
 	if (MessageEndpoint.IsValid())
@@ -127,9 +129,9 @@ void ASGGameMode::OnPlayerRegenerate()
 
 void ASGGameMode::OnPlayerSkillCD()
 {
-	UE_LOG(LogSGame, Log, TEXT("Player skill CD!"));
+	UE_LOG(LogSGameProcedure, Log, TEXT("Player skill CD!"));
 
-	// Change the next status to player skill CD
+	// Change the next status to player begin input
 	if (MessageEndpoint.IsValid())
 	{
 		FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
@@ -138,9 +140,9 @@ void ASGGameMode::OnPlayerSkillCD()
 	}
 }
 
-void ASGGameMode::OnPlayerInput()
+void ASGGameMode::OnPlayerBeginInput()
 {
-	UE_LOG(LogSGame, Log, TEXT("Player input!"));
+	UE_LOG(LogSGameProcedure, Log, TEXT("Player begin input!"));
 
 	// Tell the player, he begin input now
 	if (MessageEndpoint.IsValid())
@@ -155,11 +157,19 @@ void ASGGameMode::OnPlayerInput()
 
 void ASGGameMode::OnPlayerEndBuildPath()
 {
+	UE_LOG(LogSGameProcedure, Log, TEXT("Player end build path!"));
+
 	// First we need to forward to linkline for collect some tiles
 	checkSlow(CurrentLinkLine);
 	CurrentLinkLine->OnPlayerFinishBuildPath();
 
-	// 
+	// Change the next status to player end input
+	if (MessageEndpoint.IsValid())
+	{
+		FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
+		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_PlayerEndInput;
+		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
+	}
 }
 
 void ASGGameMode::Tick(float DeltaSeconds)
@@ -175,7 +185,7 @@ void ASGGameMode::Tick(float DeltaSeconds)
 
 void ASGGameMode::HandleGameStart(const FMessage_Gameplay_GameStart& Message, const IMessageContextRef& Context)
 {
-	UE_LOG(LogSGame, Log, TEXT("Game start!"));
+	UE_LOG(LogSGameProcedure, Log, TEXT("Game start!"));
 
 	// Tell the grid to initialize the grid
 	checkSlow(CurrentGrid);
@@ -203,13 +213,86 @@ void ASGGameMode::HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdat
 		OnPlayerSkillCD();
 		break;
 	case ESGGameStatus::EGS_PlayerBeginInput:
-		OnPlayerInput();
+		OnPlayerBeginInput();
 		break;
 	case ESGGameStatus::EGS_PlayerEndBuildPath:
 		OnPlayerEndBuildPath();
 		break;
+	case ESGGameStatus::EGS_PlayerEndInput:
+		OnPlayerEndInput();
+		break;
+	case ESGGameStatus::EGS_EnemyAttack:
+		OnEnemyAttack();
+		break;
+	case ESGGameStatus::EGS_RoundEnd:
+		OnRoundEnd();
+		break;
+	case ESGGameStatus::EGS_GameOver:
+		OnGameOver();
+		break;
 	default:
-		UE_LOG(LogSGame, Error, TEXT("Unhandled game status!"));
+		UE_LOG(LogSGameProcedure, Error, TEXT("Unhandled game status!"));
 		break;
 	}
+}
+
+void ASGGameMode::OnEnemyAttack()
+{
+	UE_LOG(LogSGameProcedure, Log, TEXT("Enemy attack stage!"));
+
+	checkSlow(MessageEndpoint.IsValid());
+
+	// Enemy attack stage
+
+	// Send next stage to round end
+	FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
+	GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_RoundEnd;
+	MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
+}
+
+void ASGGameMode::OnRoundEnd()
+{
+	UE_LOG(LogSGameProcedure, Log, TEXT("Round end!"));
+
+	checkSlow(MessageEndpoint.IsValid());
+
+	// Check if game over
+	if (CheckGameOver() == true)
+	{
+		// If then, send next state to game over
+		FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
+		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_GameOver;
+		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
+	}
+	else
+	{
+		// If not, start a new round
+		FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
+		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_RondBegin;
+		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
+	}
+}
+
+bool ASGGameMode::CheckGameOver()
+{
+	return false;
+}
+
+void ASGGameMode::OnGameOver()
+{
+	UE_LOG(LogSGameProcedure, Log, TEXT("Game over!"));
+}
+
+void ASGGameMode::OnPlayerEndInput()
+{
+	UE_LOG(LogSGameProcedure, Log, TEXT("Player end input!"));
+
+	checkSlow(MessageEndpoint.IsValid());
+
+	// Do post player input thing
+
+	// Send to enemy attack stage
+	FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
+	GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_EnemyAttack;
+	MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
 }

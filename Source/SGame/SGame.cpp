@@ -5,3 +5,4 @@
 IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, SGame, "SGame" );
 
 DEFINE_LOG_CATEGORY(LogSGame);
+DEFINE_LOG_CATEGORY(LogSGameProcedure);
