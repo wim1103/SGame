@@ -2,6 +2,7 @@
 
 #include "SGame.h"
 #include "SGGlobalGameInstance.h"
+#include "SGEnemyTileBase.h"
 
 
 USGGlobalGameInstance::USGGlobalGameInstance(const FObjectInitializer& ObjectInitializer)
@@ -51,5 +52,15 @@ void USGGlobalGameInstance::PlayerEndBuildPath()
 		FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
 		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_PlayerEndBuildPath;
 		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
+	}
+}
+
+void USGGlobalGameInstance::BeginAttack()
+{
+	// Find the link line actor in the world
+	for (TActorIterator<ASGEnemyTileBase> It(GetWorld()); It; ++It)
+	{
+		ASGEnemyTileBase* Tile = *It;
+		Tile->BeginAttack();
 	}
 }

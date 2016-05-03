@@ -35,6 +35,10 @@ public:
 	UFUNCTION(exec)
 	void PlayerEndBuildPath();
 
+	// Player finish builld the link line
+	UFUNCTION(exec)
+	void BeginAttack();
+
 private:
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;

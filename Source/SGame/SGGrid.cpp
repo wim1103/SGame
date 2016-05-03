@@ -53,10 +53,10 @@ void ASGGrid::BeginPlay()
 			UE_LOG(LogSGame, Warning, TEXT("There is more than more link line object in the level!"));
 		}
 	}
-	if (CurrentLinkLine == nullptr)
-	{
-		UE_LOG(LogSGame, Warning, TEXT("There is no link line object in the level!"));
-	}
+	checkSlow(CurrentLinkLine);
+
+	// Attack fading sprite is needed to play attacking effect
+	checkSlow(AttackFadingSprite);
 }
 
 // Called every frame

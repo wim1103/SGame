@@ -97,6 +97,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<const ASGTileBase*> GridTiles;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	APaperSpriteActor*			AttackFadingSprite;
+
 	/** Handles the player picked new tile*/
 	void HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context);
 
@@ -117,6 +120,5 @@ private:
 	void UpdateTileSelectState();
 	void UpdateTileLinkState();
 	
-
 	ASGLinkLine* CurrentLinkLine;
 };
