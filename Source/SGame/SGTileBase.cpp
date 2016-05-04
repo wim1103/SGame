@@ -4,11 +4,6 @@
 #include "SGTileBase.h"
 #include "SGGrid.h"
 
-#define  FILTER_MESSAGE \
-	if (FilterMessage(Message.TileID) == false) \
-	return;
-
-
 // Sets default values
 ASGTileBase::ASGTileBase()
 {

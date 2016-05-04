@@ -31,6 +31,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
 
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
 protected:
 
 	// The sprite asset for selected state
@@ -63,4 +66,14 @@ protected:
 	/** Frequency to rotate to simulate the shake effect */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
 	int32 AttackingShakeFreq;
+
+private:
+	// Holds the messaging endpoint.
+	// Noted that this class may have two message endpoint, 
+	// one for its parent messages and handlers, and 
+	// one for itself
+	FMessageEndpointPtr MessageEndpoint;
+
+	/** Handle begin attack message */
+	void HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context);
 };

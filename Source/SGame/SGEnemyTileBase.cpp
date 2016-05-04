@@ -95,3 +95,26 @@ void ASGEnemyTileBase::Tick(float DeltaSeconds)
 	TickAttacking(DeltaSeconds);
 	Super::Tick(DeltaSeconds);
 }
+
+void ASGEnemyTileBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Create its own message endpoint, noted that this class may
+	// have two message endpoint, one for its parent messages and handlers, and 
+	// one for itself
+	FString EndPointName = FString::Printf(TEXT("Gameplay_Tile_%d_Enemylogic"), GridAddress);
+	MessageEndpoint = FMessageEndpoint::Builder(*EndPointName)
+		.Handling<FMessage_Gameplay_EnemyBeginAttack>(this, &ASGEnemyTileBase::HandleBeginAttack);
+
+	if (MessageEndpoint.IsValid() == true)
+	{
+		// Subscribe the tile need events
+		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyBeginAttack>();
+	}
+}
+
+void ASGEnemyTileBase::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
+{
+	BeginAttack();
+}

@@ -205,3 +205,12 @@ struct FMessage_Gameplay_GameStatusUpdate
 	UPROPERTY()
 	TEnumAsByte<ESGGameStatus::Type> NewGameStatus;
 };
+
+/**
+* Enemy begin attack
+*/
+USTRUCT()
+struct FMessage_Gameplay_EnemyBeginAttack
+{
+	GENERATED_USTRUCT_BODY()
+};

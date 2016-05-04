@@ -14,6 +14,7 @@ ASGGrid::ASGGrid(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	TileManager = CreateDefaultSubobject<USGTileManager>(TEXT("TileManager"));
 
 	TileSize.Set(106.67f, 106.67f);
+	IsAttacking = false;
 }
 
 // Called when the game starts or when spawned
@@ -62,6 +63,7 @@ void ASGGrid::BeginPlay()
 // Called every frame
 void ASGGrid::Tick( float DeltaTime )
 {
+	TickAttacking(DeltaTime);
 	Super::Tick( DeltaTime );
 }
 
@@ -252,6 +254,54 @@ const ASGTileBase* ASGGrid::GetTileFromTileID(int32 inTileID)
 	return nullptr;
 }
 
+void ASGGrid::TickAttacking(float DeltaSeconds)
+{
+	if (IsAttacking == false)
+	{
+		return;
+	}
+
+	float Ratio = AttackingElapsedTime / AttackingDuration;
+	if (Ratio > 1)
+	{
+		EndAttack();
+		return;
+	}
+
+	// Fade in the translucent sprite
+	if (Ratio < FadingTimeWindow)
+	{
+		checkSlow(AttackFadingSprite && AttackFadingSprite->GetRenderComponent());
+		float FinalAlpha = FMath::Lerp(0.0f, ResultFadingAlpha, Ratio / FadingTimeWindow);
+		AttackFadingSprite->GetRenderComponent()->SetSpriteColor(FLinearColor(1.0f, 1.0f, 1.0f, FinalAlpha));
+	}
+	// Fade out the translucent sprite 
+	else if (Ratio > 1 - FadingTimeWindow)
+	{
+		checkSlow(AttackFadingSprite && AttackFadingSprite->GetRenderComponent());
+		float FinalAlpha = FMath::Lerp(0.0f, ResultFadingAlpha, (1.0f - Ratio) / FadingTimeWindow);
+		AttackFadingSprite->GetRenderComponent()->SetSpriteColor(FLinearColor(1.0f, 1.0f, 1.0f, FinalAlpha));
+	}
+	// Do attacking red point animation
+	else
+	{
+
+	}
+
+	AttackingElapsedTime += DeltaSeconds;
+}
+
+void ASGGrid::BeginAttack()
+{
+	AttackingElapsedTime = 0;
+	IsAttacking = true;
+}
+
+void ASGGrid::EndAttack()
+{
+	IsAttacking = false;
+}
+
 FVector ASGGrid::GetLocationFromGridAddress(int32 GridAddress)
 {
 	checkSlow(TileSize.X > 0.0f);
@@ -347,6 +397,11 @@ void ASGGrid::HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect&
 
 	// Conden the grid
 	Condense();
+}
+
+void ASGGrid::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
+{
+
 }
 
 void ASGGrid::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context)

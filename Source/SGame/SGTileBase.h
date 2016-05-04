@@ -11,6 +11,11 @@
 
 class ASGGrid;
 
+#define  FILTER_MESSAGE \
+	if (FilterMessage(Message.TileID) == false) \
+	return;
+
+
 USTRUCT()
 struct FSGTileData
 {
@@ -105,6 +110,16 @@ public:
 	/** Return the tile resource that can be collect */
 	virtual TArray<FTileResourceUnit> GetTileResource() const;
 
+	/**
+	* Evaluate the if the tile survive after this damage
+	*
+	* @param DamageInfos all the damage infos caused to the tiles
+	*
+	* @return return true means that the tile is dead (life reduce to 0)
+	*/
+	bool EvaluateDamageToTile(const TArray<FTileDamageInfo>& DamageInfos) const;
+	
+
 protected:
 	/** Location on the grid as a 1D key/value. To find neighbors, ask the grid. */
 	UPROPERTY(BlueprintReadOnly, Category = Tile)
@@ -131,21 +146,11 @@ protected:
 	FVector FallingStartLocation;
 	FVector FallingEndLocation;
 
-private:
-	/** Handles tile become selectalbe */
-	void HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context);
+	/** Current tile's Id */
+	int32 TileID;
 
-	/** Handles tile become selectalbe */
-	void HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatusChange& Message, const IMessageContextRef& Context);
-
-	/** Handles tile become selectalbe */
-	void HandleTileMove(const FMessage_Gameplay_TileMoved& Message, const IMessageContextRef& Context);
-
-	/** Handle tile collected */
-	void HandleTileCollected(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context);
-
-	/** Handle tile linked */
-	void HandleTileLinked(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context);
+	/** Keep a weak reference to the owner*/
+	ASGGrid* Grid;
 
 	/**
 	* Called when the tile take damage
@@ -169,24 +174,28 @@ private:
 		return inTileID == TileID;	
 	}
 
+private:
+
 	// Holds the messaging endpoint.
+	// Note that we don't want the sub class inherited this member,
+	// because every message handler should explicitly handled by itself class
 	FMessageEndpointPtr MessageEndpoint;
 
-	/** Current tile's Id */
-	int32 TileID;
+	/** Handles tile become selectalbe */
+	void HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context);
 
-	/** Keep a weak reference to the owner*/
-	ASGGrid* Grid;
-	
-public:
-	
-	/** 
-	 * Evaluate the if the tile survive after this damage
-	 *
-	 * @param DamageInfos all the damage infos caused to the tiles
-	 *
-	 * @return return true means that the tile is dead (life reduce to 0)
-	 */
-	bool EvaluateDamageToTile(const TArray<FTileDamageInfo>& DamageInfos) const;
+	/** Handles tile become selectalbe */
+	void HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatusChange& Message, const IMessageContextRef& Context);
+
+	/** Handles tile become selectalbe */
+	void HandleTileMove(const FMessage_Gameplay_TileMoved& Message, const IMessageContextRef& Context);
+
+	/** Handle tile collected */
+	void HandleTileCollected(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context);
+
+	/** Handle tile linked */
+	void HandleTileLinked(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context);
+
+	/** Handle take damage message */
 	void HandleTakeDamage(const FMessage_Gameplay_DamageToTile& Message, const IMessageContextRef& Context);
 };

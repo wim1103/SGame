@@ -70,6 +70,32 @@ public:
 	/** Get the tile by the tile id*/
 	const ASGTileBase* GetTileFromTileID(int32 inTileID);
 
+	/** Tick attacking */
+	UFUNCTION()
+	void TickAttacking(float DeltaSeconds);
+
+	/** Tick attacking */
+	UFUNCTION(BlueprintCallable, Category = Attack)
+	void BeginAttack();
+
+	/** Tick attacking */
+	UFUNCTION(BlueprintCallable, Category = Attack)
+	void EndAttack();
+
+	/** How long will it takes to finish a attack */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float AttackingDuration;
+	float AttackingElapsedTime;
+	bool IsAttacking;
+
+	/** The time window to fade in and out */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float FadingTimeWindow;
+
+	/** The fading alpha */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float ResultFadingAlpha;
+
 	/** Get the world location for a given grid address. */
 	UFUNCTION(BlueprintCallable, Category = Tile)
 	FVector GetLocationFromGridAddress(int32 GridAddress);
@@ -100,6 +126,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	APaperSpriteActor*			AttackFadingSprite;
 
+	/** Return the tile can link to the linkline */
+	UFUNCTION(BlueprintCallable, Category = LinkLine)
+	bool CanLinkToLastTile(const ASGTileBase* inCurrentTile);
+
+private:
+	// Holds the messaging endpoint.
+	FMessageEndpointPtr MessageEndpoint;
+
 	/** Handles the player picked new tile*/
 	void HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context);
 
@@ -109,13 +143,8 @@ protected:
 	/** Handle tile grid event*/
 	void HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect& Message, const IMessageContextRef& Context);
 
-	/** Return the tile can link to the linkline */
-	UFUNCTION(BlueprintCallable, Category = LinkLine)
-	bool CanLinkToLastTile(const ASGTileBase* inCurrentTile);
-
-private:
-	// Holds the messaging endpoint.
-	FMessageEndpointPtr MessageEndpoint;
+	/** Handle begin attack event*/
+	void HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context);
 
 	void UpdateTileSelectState();
 	void UpdateTileLinkState();
