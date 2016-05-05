@@ -163,6 +163,13 @@ void ASGGameMode::OnPlayerEndBuildPath()
 	checkSlow(CurrentLinkLine);
 	CurrentLinkLine->OnPlayerFinishBuildPath();
 
+	// Currently, set a timer function to move to next stage
+	// to give the falling animation time
+	GetWorldTimerManager().SetTimer(PlayerEndInputTimer, this, &ASGGameMode::TimerPlayerEndInput, 5, false);
+}
+
+void ASGGameMode::TimerPlayerEndInput()
+{
 	// Change the next status to player end input
 	if (MessageEndpoint.IsValid())
 	{
@@ -243,6 +250,8 @@ void ASGGameMode::OnEnemyAttack()
 	checkSlow(MessageEndpoint.IsValid());
 
 	// Enemy attack stage
+	FMessage_Gameplay_EnemyBeginAttack* Message = new FMessage_Gameplay_EnemyBeginAttack();
+	MessageEndpoint->Publish(Message, EMessageScope::Process);
 
 	// Send next stage to round end
 	FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();

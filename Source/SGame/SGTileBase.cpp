@@ -61,7 +61,7 @@ void ASGTileBase::Tick( float DeltaTime )
 
 void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex)
 {
-	UE_LOG(LogSGame, Log, TEXT("Tile %s was pressed, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
+	UE_LOG(LogSGameTile, Log, TEXT("Tile %s was pressed, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
 
 	// Tell the game logic, the new tile is picked
 	FMessage_Gameplay_NewTilePicked* TilePickedMessage = new FMessage_Gameplay_NewTilePicked();
@@ -74,7 +74,7 @@ void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex)
 
 void ASGTileBase::TileEnter(ETouchIndex::Type FingerIndex)
 {
-	UE_LOG(LogSGame, Log, TEXT("Tile %s was entered, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
+	UE_LOG(LogSGameTile, Log, TEXT("Tile %s was entered, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
 }
 
 void ASGTileBase::TilePress_Mouse()
@@ -164,7 +164,7 @@ void ASGTileBase::HandleTileCollected(const FMessage_Gameplay_TileCollect& Messa
 	check(Grid && Grid->TileManager);
 	if (Grid->TileManager->DestroyTileWithID(TileID) == false)
 	{
-		UE_LOG(LogSGame, Warning, TEXT("Tile delete failed!"));
+		UE_LOG(LogSGameTile, Warning, TEXT("Tile delete failed!"));
 	}
 }
 
@@ -222,7 +222,7 @@ void ASGTileBase::HandleTakeDamage(const FMessage_Gameplay_DamageToTile& Message
 
 	if (Abilities.bCanTakeDamage == false)
 	{
-		UE_LOG(LogSGame, Log, TEXT("Tile cannnot take damage"));
+		UE_LOG(LogSGameTile, Log, TEXT("Tile cannnot take damage"));
 		return;
 	}
 
@@ -234,7 +234,7 @@ void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelec
 {
 	FILTER_MESSAGE;
 
-	UE_LOG(LogSGame, Log, TEXT("Tile %d selectable flag changed to %d"), GridAddress, Message.NewSelectableStatus);
+	UE_LOG(LogSGameTile, Log, TEXT("Tile %d selectable flag changed to %d"), GridAddress, Message.NewSelectableStatus);
 
 	if (Message.NewSelectableStatus == true)
 	{
@@ -258,7 +258,7 @@ void ASGTileBase::HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatu
 {
 	FILTER_MESSAGE;
 
-	UE_LOG(LogSGame, Log, TEXT("Tile %d link status changed to %d"), GridAddress, Message.NewLinkStatus);
+	UE_LOG(LogSGameTile, Log, TEXT("Tile %d link status changed to %d"), GridAddress, Message.NewLinkStatus);
 
 	if (Message.NewLinkStatus == true)
 	{
@@ -282,7 +282,7 @@ void ASGTileBase::HandleTileMove(const FMessage_Gameplay_TileMoved& Message, con
 {
 	FILTER_MESSAGE;
 
-	UE_LOG(LogSGame, Log, TEXT("Tile ID: %d, at old address: %d will move to the new address %d"), Message.TileID, Message.OldTileAddress, Message.NewTileAddress);
+	UE_LOG(LogSGameTile, Log, TEXT("Tile ID: %d, at old address: %d will move to the new address %d"), Message.TileID, Message.OldTileAddress, Message.NewTileAddress);
 
 	float FallDistance = 0;
 	FallingStartLocation = GetActorLocation();

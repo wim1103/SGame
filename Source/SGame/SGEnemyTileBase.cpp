@@ -68,6 +68,7 @@ void ASGEnemyTileBase::BeginAttack()
 	AttackingElapsedTime = 0;
 
 	// Pop up our tile on top of the fading sprite
+	this->AddActorWorldOffset(FVector(0.0f, 1000.0f, 0.0f));
 
 	// Set the attack sprite
 	checkSlow(Sprite_Attacking);
@@ -80,7 +81,7 @@ void ASGEnemyTileBase::EndAttack()
 	bIsAttacking = false;
 
 	// Pop down the tile to the original place
-	
+	this->AddActorWorldOffset(FVector(0.0f, -1000.0f, 0.0f));
 
 	// Make sure the rotation and scale back to origin
 	checkSlow(Sprite_Normal);

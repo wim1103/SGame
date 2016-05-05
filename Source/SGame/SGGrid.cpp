@@ -10,7 +10,7 @@
 ASGGrid::ASGGrid(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	TileManager = CreateDefaultSubobject<USGTileManager>(TEXT("TileManager"));
 
 	TileSize.Set(106.67f, 106.67f);
@@ -25,13 +25,15 @@ void ASGGrid::BeginPlay()
 	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_Grid")
 		.Handling<FMessage_Gameplay_LinkedTilesCollect>(this, &ASGGrid::HandleTileArrayCollect)
 		.Handling<FMessage_Gameplay_NewTilePicked>(this, &ASGGrid::HandleNewTileIsPicked)
-		.Handling<FMessage_Gameplay_CollectLinkLine>(this, &ASGGrid::HandleCollectLinkLine);
+		.Handling<FMessage_Gameplay_CollectLinkLine>(this, &ASGGrid::HandleCollectLinkLine)
+		.Handling<FMessage_Gameplay_EnemyBeginAttack>(this, &ASGGrid::HandleBeginAttack);
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the grid needed messages
 		MessageEndpoint->Subscribe<FMessage_Gameplay_LinkedTilesCollect>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_NewTilePicked>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_CollectLinkLine>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyBeginAttack>();
 	}
 
 	// Initialize the grid
@@ -58,6 +60,7 @@ void ASGGrid::BeginPlay()
 
 	// Attack fading sprite is needed to play attacking effect
 	checkSlow(AttackFadingSprite);
+	AttackFadingSprite->GetRenderComponent()->SetSpriteColor(FLinearColor(1.0f, 1.0f, 1.0f, 0.f));
 }
 
 // Called every frame
@@ -299,6 +302,9 @@ void ASGGrid::BeginAttack()
 
 void ASGGrid::EndAttack()
 {
+	checkSlow(AttackFadingSprite && AttackFadingSprite->GetRenderComponent());
+	AttackFadingSprite->GetRenderComponent()->SetSpriteColor(FLinearColor(1.0f, 1.0f, 1.0f, 0.f));
+
 	IsAttacking = false;
 }
 
@@ -401,7 +407,7 @@ void ASGGrid::HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect&
 
 void ASGGrid::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
 {
-
+	BeginAttack();
 }
 
 void ASGGrid::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context)

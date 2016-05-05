@@ -58,6 +58,8 @@ public:
 	/** Player end build path */
 	UFUNCTION(BlueprintCallable, Category = Game)
 	void OnPlayerEndBuildPath();
+	FTimerHandle PlayerEndInputTimer;
+	void TimerPlayerEndInput();
 
 	/** Player end input */
 	UFUNCTION(BlueprintCallable, Category = Game)

@@ -6,5 +6,6 @@
 
 #include "AssertionMacros.h"
 DECLARE_LOG_CATEGORY_EXTERN(LogSGame, Display, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogSGameTile, Display, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGameProcedure, Display, All);
 
