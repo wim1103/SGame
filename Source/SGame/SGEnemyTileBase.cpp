@@ -68,9 +68,9 @@ void ASGEnemyTileBase::BeginAttack()
 	ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
 	checkSlow(GameMode);
 	int CurrentRound = GameMode->GetCurrentRound();
-	if (CurrentRound - SpawnedRound == 0)
+	if (CurrentRound != 1 && CurrentRound - SpawnedRound == 0)
 	{
-		// Skip the spawn round
+		// Skip the spawn round except for the first round
 		return;
 	}
 
