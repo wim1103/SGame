@@ -84,6 +84,9 @@ public:
 	int32 GetTileID() const { return TileID; }
 	void SetTileID(int32 val) { TileID = val; }
 
+	int32 GetSpawnedRound() const { return SpawnedRound; }
+	void SetSpawnedRound(int32 val) { SpawnedRound = val; }
+
 	UPROPERTY(BlueprintReadOnly)
 	int32 TileTypeID;
 
@@ -148,6 +151,9 @@ protected:
 
 	/** Current tile's Id */
 	int32 TileID;
+
+	/** Spawned turn */
+	int32 SpawnedRound;
 
 	/** Keep a weak reference to the owner*/
 	ASGGrid* Grid;

@@ -12,6 +12,7 @@ ASGGameMode::ASGGameMode(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bCanEverTick = true;
 	DefaultPawnClass = nullptr;
 	PlayerControllerClass = ASGPlayerController::StaticClass();
+	CurrentRound = 0;
 }
 
 void ASGGameMode::BeginPlay()

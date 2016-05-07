@@ -186,6 +186,10 @@ void ASGGrid::RefillGrid()
 
 void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
 {
+	ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
+	checkSlow(GameMode);
+	int CurrentRound = GameMode->GetCurrentRound();
+	
 	// We always start fill the first row [0 index row]
 	for (int startRow = 0; startRow < inNum; startRow++)
 	{
@@ -200,7 +204,7 @@ void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
 		SpawnLocation.Z += TileSize.Y * inNum;
 
 		// create the tile at the specified location
-		const ASGTileBase* NewTile = TileManager->CreateTile(this, SpawnLocation, GridAddress, TileID);
+		const ASGTileBase* NewTile = TileManager->CreateTile(this, SpawnLocation, GridAddress, TileID, CurrentRound);
 		if (NewTile == nullptr)
 		{
 			UE_LOG(LogSGame, Error, TEXT("Cannot create tile at location %d, %d"), inColumnIndex, startRow);

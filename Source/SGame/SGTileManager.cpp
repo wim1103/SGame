@@ -9,7 +9,7 @@ USGTileManager::USGTileManager(const FObjectInitializer& ObjectInitializer) : Su
 	AllTiles.Empty();
 }
 
-ASGTileBase* USGTileManager::CreateTile(AActor* inOwner, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID)
+ASGTileBase* USGTileManager::CreateTile(AActor* inOwner, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID, int32 CurrentRound)
 {
 	checkSlow(inOwner);
 	checkSlow(TileLibrary.IsValidIndex(TileTypeID));
@@ -47,6 +47,7 @@ ASGTileBase* USGTileManager::CreateTile(AActor* inOwner, FVector SpawnLocation, 
 		NewTile->TileTypeID = TileTypeID;
 		NewTile->SetGridAddress(SpawnGridAddress);
 		NewTile->SetTileID(NextTileID);
+		NewTile->SetSpawnedRound(CurrentRound);
 
 		check(NextTileID < MAXINT32 - 1);
 		NextTileID++;

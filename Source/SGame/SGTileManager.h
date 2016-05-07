@@ -46,7 +46,7 @@ class SGAME_API USGTileManager : public UObject
 	GENERATED_UCLASS_BODY()
 
 public:
-	ASGTileBase* CreateTile(AActor* inOwner, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID);
+	ASGTileBase* CreateTile(AActor* inOwner, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID, int32 CurrentRound);
 	int32 SelectTileFromLibrary();
 	bool DestroyTileWithID(int32 TileIDToDelete);
 

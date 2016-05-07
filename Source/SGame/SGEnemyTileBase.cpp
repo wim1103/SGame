@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SGame.h"
+#include "SGGameMode.h"
 #include "SGEnemyTileBase.h"
-
 
 ASGEnemyTileBase::ASGEnemyTileBase()
 {
@@ -64,6 +64,16 @@ void ASGEnemyTileBase::TickAttacking(float DeltaSeconds)
 
 void ASGEnemyTileBase::BeginAttack()
 {
+	// Enemy only attack next round
+	ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
+	checkSlow(GameMode);
+	int CurrentRound = GameMode->GetCurrentRound();
+	if (CurrentRound - SpawnedRound == 0)
+	{
+		// Skip the spawn round
+		return;
+	}
+
 	bIsAttacking = true;
 	AttackingElapsedTime = 0;
 

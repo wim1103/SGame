@@ -84,6 +84,8 @@ public:
 	ASGGrid* GetCurrentGrid() const { return CurrentGrid; }
 	void SetCurrentGrid(ASGGrid* val) { checkSlow(val != nullptr);  CurrentGrid = val; }
 
+	int32 GetCurrentRound() const { return CurrentRound; }
+
 protected:
 
 private:
@@ -100,7 +102,7 @@ private:
 	FMessageEndpointPtr MessageEndpoint;
 
 	/** Current round number*/
-	uint32				CurrentRound;
+	int32				CurrentRound;
 
 	/** Current link line */
 	ASGLinkLine*		CurrentLinkLine;
