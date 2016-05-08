@@ -6,6 +6,8 @@
 #include "PaperSprite.h"
 #include "PaperSpriteComponent.h"
 #include "Messaging.h"
+
+#include "FAsyncQueue.h"
 #include "SGameMessages.h"
 #include "SGTileBase.h"
 
@@ -52,6 +54,26 @@ public:
 	/** Return whether the current link line contains the tile*/
 	UFUNCTION(BlueprintCallable, Category = Visitor)
 	bool ContainsTileAddress(int32 inTileAddress);
+
+	/** Whether to replay the link animation*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
+	bool bShouldReplayLinkAnimation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
+	float	ReplayHeadAnimationDuration;
+	float	ReplayHeadAnimationElapsedTime;
+
+	/** 
+	 * Replay link animation 
+	 *
+	 * @return true to replay successfully
+	 */
+	UFUNCTION(BlueprintCallable, Category = Visitor)
+	bool ReplayLinkAniamtion();
+	bool IsReplayingLinkLineAnimation;
+	void BeginReplayLinkAnimation();
+	void EndReplayLinkAnimation();
+	void TickReplayLinkHeadAnimation(float DeltaSeconds);
 
 	/** Whether it is a static line. Test only, for static link lines.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -111,8 +133,17 @@ private:
 
 	ASGGrid* ParentGrid;
 
+	// Replay link line points, only used for replaying the link line
+	int32	CurrentReplayLength;
+	// Async queue for replyaing animation
+	TSharedRef<FAsyncQueue, ESPMode::ThreadSafe> ReplayAnimQueue;
+	/** Cached current turn collected tiles for do collect animtion after replay link line animation */
+	TArray<const ASGTileBase*> CachedCollectTiles;
+
 	void CollectTileResource(TArray<const ASGTileBase*> TilesToCollect);
 	TArray<FTileDamageInfo> CaculateDamage(TArray<const ASGTileBase*>& CauseDamageTiles);
+	void ReplayLinkHeadAnimation();
+
 public:
 	void ResetLinkState();
 	void BuildPath(const ASGTileBase* inNewTile);

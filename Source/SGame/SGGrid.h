@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+
 #include "SGTileBase.h"
 #include "Messaging.h"
 #include "SGameMessages.h"

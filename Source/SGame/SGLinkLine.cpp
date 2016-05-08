@@ -6,10 +6,11 @@
 #include "Math/UnrealMathUtility.h"
 
 // Sets default values
-ASGLinkLine::ASGLinkLine()
+ASGLinkLine::ASGLinkLine(): ReplayAnimQueue(FAsyncQueue::Create())
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	bShouldReplayLinkAnimation = true;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	RootComponent->Mobility = EComponentMobility::Movable;
@@ -23,6 +24,9 @@ ASGLinkLine::ASGLinkLine()
 	TailSpriteRenderComponent->Mobility = EComponentMobility::Movable;
 	TailSpriteRenderComponent->AttachParent = RootComponent;
 	TailSpriteRenderComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	ReplayHeadAnimationDuration = 0.3f;
+	ReplayHeadAnimationElapsedTime = 0;
 }
 
 // Called when the game starts or when spawned
@@ -56,7 +60,7 @@ void ASGLinkLine::BeginPlay()
 void ASGLinkLine::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
-
+	TickReplayLinkHeadAnimation(DeltaTime);
 }
 
 bool ASGLinkLine::UpdateLinkLineSprites()
@@ -282,6 +286,115 @@ bool ASGLinkLine::ContainsTileAddress(int32 inTileAddress)
 	return LinkLinePoints.Contains(inTileAddress);
 }
 
+bool ASGLinkLine::ReplayLinkAniamtion()
+{
+	// Empty the replay queue
+	checkSlow(ReplayAnimQueue->IsEmpty());
+
+	// Start from the 2 two points
+	CurrentReplayLength = 2;
+
+	// Kick off the replay
+	BeginReplayLinkAnimation();
+
+	return true;
+}
+
+void ASGLinkLine::BeginReplayLinkAnimation()
+{
+	checkSlow(LinkLinePoints.Num() >= 3);
+
+	for (int ReplayLength = 1; ReplayLength < LinkLinePoints.Num(); ReplayLength++)
+	{
+		// Replaying the link asyncly
+		ReplayAnimQueue->Add(FAsyncDelegate::CreateLambda([this](const FCallbackDelegate& Callback)
+		{
+			UE_LOG(LogSGameAsyncTask, Log, TEXT("Starting replay link line anim with length: %d"), CurrentReplayLength);
+			FTimerHandle FooBar;
+			GetWorldTimerManager().SetTimer(FooBar, Callback, ReplayHeadAnimationDuration, false);
+
+			TArray<int32> ReplayingLinkLinePoints;
+
+			// Reconstruct the replay link line points one by one
+			ReplayingLinkLinePoints.Empty();
+
+			// Push back the replayed length
+			for (int i = 0; i < this->CurrentReplayLength; i++)
+			{
+				ReplayingLinkLinePoints.Push(LinkLinePoints[i]);
+			}
+
+			// Construct the link line again
+			UpdateLinkLineSprites(ReplayingLinkLinePoints);
+
+			// Replay head anim
+			ReplayLinkHeadAnimation();
+
+			// Next step, add one more point to the array
+			CurrentReplayLength++;
+		}));
+	}
+
+	UE_LOG(LogSGame, Log, TEXT("Start async replay link lines."));
+
+	// After the animation, we start async end the Replay work
+	ReplayAnimQueue->Execute(FCallbackDelegate::CreateLambda([this]()
+	{
+		UE_LOG(LogSGameAsyncTask, Log, TEXT("End replay link line anim."));
+		this->EndReplayLinkAnimation();
+	}));
+}
+
+void ASGLinkLine::EndReplayLinkAnimation()
+{
+	UE_LOG(LogSGame, Log, TEXT("End replay link line anim."));
+
+	IsReplayingLinkLineAnimation = false;
+
+	// Finally collect the tile resources
+	if (CachedCollectTiles.Num() > 0)
+	{
+		CollectTileResource(CachedCollectTiles);
+	}
+	
+	// Reset the linklin afterall
+	ResetLinkState();
+}
+
+void ASGLinkLine::TickReplayLinkHeadAnimation(float DeltaSeconds)
+{
+	if (bShouldReplayLinkAnimation == false || IsReplayingLinkLineAnimation == false)
+	{
+		return;
+	}
+
+	float Ratio = ReplayHeadAnimationElapsedTime / ReplayHeadAnimationDuration;
+	if (Ratio > 1.0f)
+	{
+		// Current segement replay is finished
+		IsReplayingLinkLineAnimation = false;
+		return;
+	}
+	else
+	{
+		if (BodySpriteRenderComponentsArray.Num() > 0)
+		{
+			// Get the last body sprite
+			UPaperSpriteComponent* LastLinebody = BodySpriteRenderComponentsArray.Last();
+			checkSlow(LastLinebody);
+			LastLinebody->SetRelativeScale3D(FVector(Ratio + 0.2f, 1.0f, 1.0f));
+		}
+		else
+		{
+			// Set the tail sprite scale
+			checkSlow(TailSpriteRenderComponent);
+			TailSpriteRenderComponent->SetRelativeScale3D(FVector(Ratio + 0.2f, 1.0, 1.0f));
+		}
+	}
+
+	ReplayHeadAnimationElapsedTime += DeltaSeconds;
+}
+
 UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngle)
 {
 	// Create the base sprite and initialize
@@ -445,6 +558,15 @@ TArray<FTileDamageInfo> ASGLinkLine::CaculateDamage(TArray<const ASGTileBase*>& 
 	return ResultDamageInfo;
 }
 
+void ASGLinkLine::ReplayLinkHeadAnimation()
+{
+	// Reset the played link line percentage
+	ReplayHeadAnimationElapsedTime = 0;
+
+	// Turn on to use body lerp animation
+	IsReplayingLinkLineAnimation = false;
+}
+
 void ASGLinkLine::ResetLinkState()
 {
 	// Cleaer the current link
@@ -552,11 +674,23 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 		}
 	}
 
-	// Finally collect the tile resources
-	CollectTileResource(CollectedTiles);
+	// Replay the link animation if needed
+	if (bShouldReplayLinkAnimation == false)
+	{
+		// Finally collect the tile resources
+		CollectTileResource(CollectedTiles);
 
-	// Reset the linklin afterall
-	ResetLinkState();
+		// Reset the linklin afterall
+		ResetLinkState();
+	}
+	else
+	{
+		// Cache the collected tiles
+		CachedCollectTiles = CollectedTiles;
+
+		// Replay link line animation if needed
+		ReplayLinkAniamtion();
+	}
 }
 
 #endif

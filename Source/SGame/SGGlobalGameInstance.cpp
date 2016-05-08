@@ -5,9 +5,10 @@
 #include "SGEnemyTileBase.h"
 
 
-USGGlobalGameInstance::USGGlobalGameInstance(const FObjectInitializer& ObjectInitializer)
+USGGlobalGameInstance::USGGlobalGameInstance() : Queue(FAsyncQueue::Create())
 {
 	MessageEndpoint = FMessageEndpoint::Builder("GlobalGameInstance");
+	CurrentReplayIndex = 0;
 }
 
 void USGGlobalGameInstance::StartGame()
@@ -63,4 +64,94 @@ void USGGlobalGameInstance::BeginAttack()
 		ASGEnemyTileBase* Tile = *It;
 		Tile->BeginAttack();
 	}
+}
+
+void USGGlobalGameInstance::TestAsyncQueue()
+{
+	/* The example itself :
+	 *
+	 *  // Don't store the Queue on the stack or it will get destroyed before it finishes
+	 *  // You can't use "new", only a factory method "FAsyncQueue::Create()" which always returns `TSharedRef<FAsyncQueue, ESPMode::ThreadSafe>`
+	*/
+
+	for (int i = 0; i < 10; i++)
+	{
+		Queue->Add(FAsyncDelegate::CreateLambda([this](const FCallbackDelegate& Callback)
+		{
+			UE_LOG(LogSGameAsyncTask, Warning, TEXT("Starting Long Task ASYNC"));
+			FTimerHandle FooBar;
+			this->GetWorldTimerManager().SetTimer(FooBar, Callback, 1, false);
+
+			// Play animation
+			this->TestReplayAnimation();
+		}));
+	}
+
+	/*
+	Queue->Add(FAsyncQueue::MakeSync(FCallbackDelegate::CreateLambda([]()
+	{
+		UE_LOG(LogSGameAsyncTask, Warning, TEXT("Doing Instant Task SYNC"));
+	})));
+
+	TArray<FAsyncDelegate> ParallelTasks;
+	TArray<FAsyncDelegate> LongestParallel;
+	LongestParallel.Add(FAsyncDelegate::CreateLambda([this](const FCallbackDelegate& Callback)
+	{
+		UE_LOG(LogSGameAsyncTask, Warning, TEXT("Starting Longest Parallel ASYNC"));
+		FTimerHandle FooBar;
+		this->GetWorldTimerManager().SetTimer(FooBar, Callback, 10, false);
+	}));
+
+	LongestParallel.Add(FAsyncQueue::MakeSync(FCallbackDelegate::CreateLambda([]()
+	{
+		UE_LOG(LogSGameAsyncTask, Warning, TEXT("Finished Longest Parallel"));
+		})));
+	ParallelTasks.Add(FAsyncQueue::MakeSequence(LongestParallel));
+	
+	TArray<FAsyncDelegate> ShortestParallel;
+	ShortestParallel.Add(FAsyncDelegate::CreateLambda([this](const FCallbackDelegate& Callback)
+	{
+		UE_LOG(LogSGameAsyncTask, Warning, TEXT("Starting Shortest Parallel ASYNC"));
+		FTimerHandle FooBar;
+		this->GetWorldTimerManager().SetTimer(FooBar, Callback, 1, false);
+	}));
+
+	ShortestParallel.Add(FAsyncQueue::MakeSync(FCallbackDelegate::CreateLambda([]()
+	{
+		UE_LOG(LogSGameAsyncTask, Warning, TEXT("Finished Shortest Parallel"));
+	})));
+
+	ParallelTasks.Add(FAsyncQueue::MakeSequence(ShortestParallel));
+	TArray<FAsyncDelegate> MediumParallel;
+	
+	MediumParallel.Add(FAsyncDelegate::CreateLambda([this](const FCallbackDelegate& Callback)
+	{
+		UE_LOG(LogSGameAsyncTask, Warning, TEXT("Starting Medium Parallel ASYNC"));
+		FTimerHandle FooBar;
+		this->GetWorldTimerManager().SetTimer(FooBar, Callback, 2, false);
+	}));
+
+	MediumParallel.Add(FAsyncQueue::MakeSync(FCallbackDelegate::CreateLambda([]()
+	{
+		UE_LOG(LogSGameAsyncTask, Warning, TEXT("Finished Medium Parallel"));
+	})));
+
+	ParallelTasks.Add(FAsyncQueue::MakeSequence(MediumParallel));
+	Queue->Add(FAsyncQueue::MakeParallel(ParallelTasks));
+
+	*/
+
+	UE_LOG(LogSGameAsyncTask, Warning, TEXT("START"));
+	Queue->Execute(FCallbackDelegate::CreateLambda([this]()
+	{
+		this->FinishReplayAnimation();
+	}));
+}
+
+class FTimerManager& USGGlobalGameInstance::GetWorldTimerManager() const
+{
+	UWorld* World = GetWorld();
+	checkSlow(World);
+
+	return World->GetTimerManager();
 }
