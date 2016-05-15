@@ -17,16 +17,28 @@ public:
 	ASGEnemyTileBase();
 
 	/** Tick attacking */
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = Attack)
 	void TickAttacking(float DeltaSeconds);
 
-	/** Tick attacking */
+	/** Begin attack */
 	UFUNCTION(BlueprintCallable, Category = Attack)
 	void BeginAttack();
 
-	/** Tick attacking */
+	/** End attack */
 	UFUNCTION(BlueprintCallable, Category = Attack)
 	void EndAttack();
+
+	/** Tick playing hit */
+	UFUNCTION(BlueprintCallable, Category = Hit)
+	void TickPlayHit(float DeltaSeconds);
+
+	/** Begin play hit */
+	UFUNCTION(BlueprintCallable, Category = Hit)
+	void BeginPlayHit();
+
+	/** End play hit */
+	UFUNCTION(BlueprintCallable, Category = Attack)
+	void EndPlayHit();
 
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
@@ -41,6 +53,7 @@ protected:
 	UPaperSprite* Sprite_Attacking;
 
 	bool	bIsAttacking;
+	bool	bIsPlayingHit;
 
 	/** How long will it takes to finish a attack */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
@@ -67,6 +80,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
 	int32 AttackingShakeFreq;
 
+	/** How long will it takes to finish a attack */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hit")
+	float PlayHitDuration;
+	float PlayHitElapsedTime;
+
 private:
 	// Holds the messaging endpoint.
 	// Noted that this class may have two message endpoint, 
@@ -76,4 +94,7 @@ private:
 
 	/** Handle begin attack message */
 	void HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context);
+
+	/** Handle play hit animation and effects */
+	void HandlePlayHit(const FMessage_Gameplay_EnemyGetHit& Message, const IMessageContextRef& Context);
 };

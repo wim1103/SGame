@@ -15,6 +15,9 @@ ASGEnemyTileBase::ASGEnemyTileBase()
 	AttackingScaleTimeWindow = 0.1f;
 	AttackingScaleRatio = 1.3f;
 	bIsAttacking = false;
+
+	bIsPlayingHit = false;
+	PlayHitElapsedTime = 0;
 }
 
 void ASGEnemyTileBase::TickAttacking(float DeltaSeconds)
@@ -101,9 +104,35 @@ void ASGEnemyTileBase::EndAttack()
 	GetRenderComponent()->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
 }
 
+void ASGEnemyTileBase::TickPlayHit(float DeltaSeconds)
+{
+	if (bIsPlayingHit == false)
+	{
+		return;
+	}
+
+	// Calculate the time ratio
+	float Ratio = PlayHitElapsedTime / PlayHitDuration;
+	if (Ratio > 1.0f)
+	{
+		EndPlayHit();
+		return;
+	}
+
+	// Calculate the shaking ratio
+	float CurrentRatio = Ratio * PI * AttackingShakeFreq;
+
+	// Do a sin curve to map to [1, -1]
+	float FinalRatio = FMath::Sin(CurrentRatio);
+	GetRenderComponent()->SetRelativeRotation(FRotator(FinalRatio * AttackingShakeDegree, 0, 0));
+
+	PlayHitElapsedTime += DeltaSeconds;
+}
+
 void ASGEnemyTileBase::Tick(float DeltaSeconds)
 {
 	TickAttacking(DeltaSeconds);
+	TickPlayHit(DeltaSeconds);
 	Super::Tick(DeltaSeconds);
 }
 
@@ -116,16 +145,35 @@ void ASGEnemyTileBase::BeginPlay()
 	// one for itself
 	FString EndPointName = FString::Printf(TEXT("Gameplay_Tile_%d_Enemylogic"), GridAddress);
 	MessageEndpoint = FMessageEndpoint::Builder(*EndPointName)
-		.Handling<FMessage_Gameplay_EnemyBeginAttack>(this, &ASGEnemyTileBase::HandleBeginAttack);
+		.Handling<FMessage_Gameplay_EnemyBeginAttack>(this, &ASGEnemyTileBase::HandleBeginAttack)
+		.Handling<FMessage_Gameplay_EnemyGetHit>(this, &ASGEnemyTileBase::HandlePlayHit);
 
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the tile need events
 		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyBeginAttack>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyGetHit>();
 	}
 }
 
 void ASGEnemyTileBase::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
 {
 	BeginAttack();
+}
+
+void ASGEnemyTileBase::HandlePlayHit(const FMessage_Gameplay_EnemyGetHit& Message, const IMessageContextRef& Context)
+{
+	FILTER_MESSAGE;
+	BeginPlayHit();
+}
+
+void ASGEnemyTileBase::BeginPlayHit()
+{
+	PlayHitElapsedTime = 0;
+	bIsPlayingHit = true;
+}
+
+void ASGEnemyTileBase::EndPlayHit()
+{
+	bIsPlayingHit = false;
 }
