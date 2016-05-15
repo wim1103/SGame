@@ -33,6 +33,10 @@ public:
 	/** Returns RenderComponent subobject **/
 	FORCEINLINE class UPaperSpriteComponent* GetRenderComponent() const { return RenderComponent; }
 
+public:
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetHealth", Category = "Health"))
+	void SetCurrentHealth(int inNewHealth);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn)
 	int32		CurrentHP;

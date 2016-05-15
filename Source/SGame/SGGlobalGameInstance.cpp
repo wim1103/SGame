@@ -3,6 +3,7 @@
 #include "SGame.h"
 #include "SGGlobalGameInstance.h"
 #include "SGEnemyTileBase.h"
+#include "SpritePawn.h"
 
 
 USGGlobalGameInstance::USGGlobalGameInstance() : Queue(FAsyncQueue::Create())
@@ -63,6 +64,14 @@ void USGGlobalGameInstance::BeginAttack()
 	{
 		ASGEnemyTileBase* Tile = *It;
 		Tile->BeginAttack();
+	}
+}
+
+void USGGlobalGameInstance::SetHealth(int newHealth)
+{
+	for (TActorIterator<ASpritePawn> It(GetWorld()); It; ++It)
+	{
+		((ASpritePawn*)(*It))->SetCurrentHealth(newHealth);
 	}
 }
 
