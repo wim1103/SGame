@@ -40,6 +40,10 @@ public:
 	UFUNCTION(exec)
 	void BeginAttack();
 
+	//Test Set Health
+	UFUNCTION(exec)
+	void SetHealth(int newHealth);
+
 	// Test async queue
 	UFUNCTION(exec)
 	void TestAsyncQueue();
