@@ -66,6 +66,10 @@ public:
 	UFUNCTION()
 	void TileEnter(ETouchIndex::Type FingerIndex);
 
+	/** When the user's finger release a tile*/
+	UFUNCTION()
+	void TileRelease(ETouchIndex::Type FingerIndex);
+
 	/** Mouse surrogate for TilePress. */
 	UFUNCTION()
 	void TilePress_Mouse();
@@ -73,6 +77,10 @@ public:
 	/** Mouse surrogate for TileEnter. */
 	UFUNCTION()
 	void TileEnter_Mouse();
+
+	/** Mouse surrogate for TileRelease*/
+	UFUNCTION()
+	void TileRelease_Mouse();
 
 	/** Is current tile selecatable*/
 	UFUNCTION()
@@ -83,6 +91,8 @@ public:
 
 	int32 GetTileID() const { return TileID; }
 	void SetTileID(int32 val) { TileID = val; }
+
+	virtual int32 GetTileCausedDamage() const { return Data.CauseDamageInfo.InitialDamage; }
 
 	int32 GetSpawnedRound() const { return SpawnedRound; }
 	void SetSpawnedRound(int32 val) { SpawnedRound = val; }

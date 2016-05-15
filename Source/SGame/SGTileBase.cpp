@@ -26,9 +26,11 @@ void ASGTileBase::BeginPlay()
 	// Set our class up to handle clicks and touches.
 	OnClicked.AddUniqueDynamic(this, &ASGTileBase::TilePress_Mouse);
 	OnBeginCursorOver.AddUniqueDynamic(this, &ASGTileBase::TileEnter_Mouse);
+	OnReleased.AddUniqueDynamic(this, &ASGTileBase::TileRelease_Mouse);
 
 	OnInputTouchBegin.AddUniqueDynamic(this, &ASGTileBase::TilePress);
 	OnInputTouchEnter.AddUniqueDynamic(this, &ASGTileBase::TileEnter);
+	OnInputTouchEnd.AddUniqueDynamic(this, &ASGTileBase::TileRelease);
 
 	FString EndPointName = FString::Printf(TEXT("Gameplay_Tile_%d"), GridAddress);
 	MessageEndpoint = FMessageEndpoint::Builder(*EndPointName)
@@ -75,6 +77,23 @@ void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex)
 void ASGTileBase::TileEnter(ETouchIndex::Type FingerIndex)
 {
 	UE_LOG(LogSGameTile, Log, TEXT("Tile %s was entered, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
+	FMessage_Gameplay_NewTilePicked* TilePickedMessage = new FMessage_Gameplay_NewTilePicked();
+	TilePickedMessage->TileID = TileID;
+	if (MessageEndpoint.IsValid() == true)
+	{
+		MessageEndpoint->Publish(TilePickedMessage, EMessageScope::Process);
+	}
+}
+
+void ASGTileBase::TileRelease(ETouchIndex::Type FingerIndex)
+{
+	FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMessage = new FMessage_Gameplay_GameStatusUpdate();
+	GameStatusUpdateMessage->NewGameStatus = ESGGameStatus::EGS_PlayerEndBuildPath;
+
+	if (MessageEndpoint.IsValid() == true)
+	{
+		MessageEndpoint->Publish(GameStatusUpdateMessage, EMessageScope::Process);
+	}
 }
 
 void ASGTileBase::TilePress_Mouse()
@@ -91,6 +110,14 @@ void ASGTileBase::TileEnter_Mouse()
 		{
 			TileEnter(ETouchIndex::Touch1);
 		}
+	}
+}
+
+void ASGTileBase::TileRelease_Mouse()
+{
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		TileRelease(ETouchIndex::Touch1);
 	}
 }
 
