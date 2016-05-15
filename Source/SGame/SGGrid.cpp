@@ -124,7 +124,7 @@ void ASGGrid::Condense()
 
 			// Send tile move message to the tile
 			const ASGTileBase* testTile = GridTiles[testAddress];
-			checkSlow(testTile != nullptr);
+			checkSlow(testTile);
 
 			// Update the tile new address
 			FMessage_Gameplay_TileMoved* TileMoveMessage = new FMessage_Gameplay_TileMoved();

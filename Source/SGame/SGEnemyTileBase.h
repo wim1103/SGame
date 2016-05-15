@@ -48,9 +48,21 @@ public:
 
 protected:
 
-	// The sprite asset for selected state
+	// The sprite asset for attcking state
 	UPROPERTY(Category = Sprite, EditAnywhere, BlueprintReadOnly, meta = (DisplayThumbnail = "true"))
 	UPaperSprite* Sprite_Attacking;
+
+	// The attack text render component
+	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
+	UTextRenderComponent* Text_Attack;
+
+	// The armor text render component
+	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
+	UTextRenderComponent* Text_Armor;
+
+	// The hp text render component
+	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
+	UTextRenderComponent* Text_HP;
 
 	bool	bIsAttacking;
 	bool	bIsPlayingHit;

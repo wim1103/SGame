@@ -19,6 +19,13 @@ ASGEnemyTileBase::ASGEnemyTileBase()
 	bIsPlayingHit = false;
 	PlayHitElapsedTime = 0;
 	PlayHitDuration = 0.3f;
+
+	Text_Attack = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComponent-Attack"));
+	Text_Attack->AttachParent = RootComponent;
+	Text_Armor = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComponent-Armor"));
+	Text_Armor->AttachParent = RootComponent;
+	Text_HP = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComponent-HP"));
+	Text_HP->AttachParent = RootComponent;
 }
 
 void ASGEnemyTileBase::TickAttacking(float DeltaSeconds)
@@ -155,6 +162,14 @@ void ASGEnemyTileBase::BeginPlay()
 		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyBeginAttack>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyGetHit>();
 	}
+
+	// Set the stats text
+	checkSlow(Text_HP);
+	Text_HP->SetText(FText::AsNumber(Data.LifeArmorInfo.CurrentLife));
+	checkSlow(Text_Armor);
+	Text_Armor->SetText(FText::AsNumber(Data.LifeArmorInfo.CurrentArmor));
+	checkSlow(Text_Attack);
+	Text_Attack->SetText(FText::AsNumber(Data.CauseDamageInfo.InitialDamage));
 }
 
 void ASGEnemyTileBase::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
