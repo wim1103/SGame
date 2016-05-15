@@ -291,8 +291,20 @@ bool ASGLinkLine::ReplayLinkAniamtion()
 	// Empty the replay queue
 	checkSlow(ReplayAnimQueue->IsEmpty());
 
-	// Start from the 2 two points
-	CurrentReplayLength = 2;
+	if (MessageEndpoint.IsValid() == true)
+	{
+		// Reset the tile link status
+		FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+		LinkStatusChangeMessage->TileID = -1;
+		LinkStatusChangeMessage->NewLinkStatus = false;
+		MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
+
+		// Reset the tile selectable status
+		FMessage_Gameplay_TileSelectableStatusChange* SelectableMessage = new FMessage_Gameplay_TileSelectableStatusChange{ 0 };
+		SelectableMessage->TileID = -1;
+		SelectableMessage->NewSelectableStatus = true;
+		MessageEndpoint->Publish(SelectableMessage, EMessageScope::Process);
+	}
 
 	// Kick off the replay
 	BeginReplayLinkAnimation();
@@ -307,9 +319,9 @@ void ASGLinkLine::BeginReplayLinkAnimation()
 	for (int ReplayLength = 1; ReplayLength < LinkLinePoints.Num(); ReplayLength++)
 	{
 		// Replaying the link asyncly
-		ReplayAnimQueue->Add(FAsyncDelegate::CreateLambda([this](const FCallbackDelegate& Callback)
+		ReplayAnimQueue->Add(FAsyncDelegate::CreateLambda([this, ReplayLength](const FCallbackDelegate& Callback)
 		{
-			UE_LOG(LogSGameAsyncTask, Log, TEXT("Starting replay link line anim with length: %d"), CurrentReplayLength);
+			UE_LOG(LogSGameAsyncTask, Log, TEXT("Starting replay link line anim with length: %d"), ReplayLength);
 			FTimerHandle FooBar;
 			GetWorldTimerManager().SetTimer(FooBar, Callback, ReplayHeadAnimationDuration, false);
 
@@ -319,7 +331,7 @@ void ASGLinkLine::BeginReplayLinkAnimation()
 			ReplayingLinkLinePoints.Empty();
 
 			// Push back the replayed length
-			for (int i = 0; i < this->CurrentReplayLength; i++)
+			for (int i = 0; i <= ReplayLength; i++)
 			{
 				ReplayingLinkLinePoints.Push(LinkLinePoints[i]);
 			}
@@ -327,11 +339,34 @@ void ASGLinkLine::BeginReplayLinkAnimation()
 			// Construct the link line again
 			UpdateLinkLineSprites(ReplayingLinkLinePoints);
 
+			checkSlow(ParentGrid);
+			if (this->MessageEndpoint.IsValid() == true)
+			{
+				if (ReplayLength == 1)
+				{
+					// Send the selected message to the fake tail
+					FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+					const ASGTileBase* FakeSelectedTile = ParentGrid->GetTileFromGridAddress(LinkLinePoints[0]);
+					LinkStatusChangeMessage->TileID = FakeSelectedTile->GetTileID();
+					LinkStatusChangeMessage->NewLinkStatus = true;
+					MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
+				}
+
+				// Send the selected message to the fake head
+				FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+				const ASGTileBase* FakeSelectedTile = ParentGrid->GetTileFromGridAddress(LinkLinePoints[ReplayLength]);
+				LinkStatusChangeMessage->TileID = FakeSelectedTile->GetTileID();
+				LinkStatusChangeMessage->NewLinkStatus = true;
+				MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
+
+				// If the tile is an enemy tile, then play hit animation
+				FMessage_Gameplay_EnemyGetHit* HitMessage = new FMessage_Gameplay_EnemyGetHit{ 0 };
+				HitMessage->TileID = FakeSelectedTile->GetTileID();
+				MessageEndpoint->Publish(HitMessage, EMessageScope::Process);
+			}
+
 			// Replay head anim
 			ReplayLinkHeadAnimation();
-
-			// Next step, add one more point to the array
-			CurrentReplayLength++;
 		}));
 	}
 

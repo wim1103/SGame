@@ -133,8 +133,6 @@ private:
 
 	ASGGrid* ParentGrid;
 
-	// Replay link line points, only used for replaying the link line
-	int32	CurrentReplayLength;
 	// Async queue for replyaing animation
 	TSharedRef<FAsyncQueue, ESPMode::ThreadSafe> ReplayAnimQueue;
 	/** Cached current turn collected tiles for do collect animtion after replay link line animation */
