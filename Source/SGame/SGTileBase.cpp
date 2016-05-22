@@ -3,6 +3,7 @@
 #include "SGame.h"
 #include "SGTileBase.h"
 #include "SGGrid.h"
+#include "SGGameMode.h"
 
 // Sets default values
 ASGTileBase::ASGTileBase()
@@ -253,8 +254,19 @@ void ASGTileBase::HandleTakeDamage(const FMessage_Gameplay_DamageToTile& Message
 		return;
 	}
 
-	// Take damage first
-	bool TileDead = OnTakeTileDamage(Message.DamageInfos, Data.LifeArmorInfo);
+	ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
+	checkSlow(GameMode);
+
+	if (GameMode->ShouldReplayLinkAnimation() == true)
+	{
+		// Take damage will delay to replay link animation
+		CachedDamageMessage = Message;
+	}
+	else
+	{
+		// Take damage first
+		bool TileDead = OnTakeTileDamage(Message.DamageInfos, Data.LifeArmorInfo);
+	}
 }
 
 void ASGTileBase::HandleSelectableStatusChange(const FMessage_Gameplay_TileSelectableStatusChange& Message, const IMessageContextRef& Context)

@@ -5,6 +5,7 @@
 
 #include "SGGrid.h"
 #include "SGGameMode.h"
+#include "SGEnemyTileBase.h"
 
 // Sets default values
 ASGGrid::ASGGrid(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -235,6 +236,35 @@ void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, const ASGTileBase* 
 	GridTiles[inGridAddress] = inTile;
 }
 
+bool ASGGrid::CalculateEnemyDamageToPlayer(float& outDamageCanBeShield, float& outDamageDirectToHP)
+{
+	// Iterate the grid to find the enemy tiles
+	TArray<FTileDamageInfo> EnemyCauseDamageInfoArray;
+	for (int i = 0; i < GridTiles.Num(); i++)
+	{
+		const ASGEnemyTileBase* EnemyTile = Cast<ASGEnemyTileBase>(GridTiles[i]);
+		if (EnemyTile != nullptr)
+		{
+			EnemyCauseDamageInfoArray.Add(EnemyTile->Data.CauseDamageInfo);
+		}
+	}
+
+	if (EnemyCauseDamageInfoArray.Num() == 0)
+	{
+		// We don't find enemy tiles, so return false, means that there is no pending attack
+		return false;
+	}
+
+	// Iterate the damage info array, calculate the final
+	for (int i = 0; i < EnemyCauseDamageInfoArray.Num(); i++)
+	{
+		outDamageCanBeShield += EnemyCauseDamageInfoArray[i].InitialDamage * (1 - EnemyCauseDamageInfoArray[i].PiercingArmorRatio);
+		outDamageDirectToHP += EnemyCauseDamageInfoArray[i].InitialDamage * (EnemyCauseDamageInfoArray[i].PiercingArmorRatio);
+	}
+
+	return true;
+}
+
 void ASGGrid::ResetTiles()
 {
 	ResetTileLinkInfo();
@@ -417,7 +447,13 @@ void ASGGrid::HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect&
 
 void ASGGrid::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
 {
-	BeginAttackFadeAnimation();
+	float ShiledDamage = 0;
+	float DirectDamage = 0;
+	if (CalculateEnemyDamageToPlayer(ShiledDamage, DirectDamage) == true)
+	{
+		UE_LOG(LogSGame, Log, TEXT("Enemy will cause %f shield damage, and %f direct damage "), ShiledDamage, DirectDamage);
+		BeginAttackFadeAnimation();
+	}
 }
 
 void ASGGrid::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context)

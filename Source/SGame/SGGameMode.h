@@ -10,6 +10,7 @@
 #include "SGLinkLine.h"
 #include "SGGrid.h"
 #include "SGTileManager.h"
+#include "SGSpritePawn.h"
 
 #include "SGGameMode.generated.h"
 
@@ -86,14 +87,19 @@ public:
 
 	int32 GetCurrentRound() const { return CurrentRound; }
 
-	/** Player end input */
 	UFUNCTION(BlueprintCallable, Category = Game)
 	bool IsLinkLineValid();
+
+	bool ShouldReplayLinkAnimation() const { return bShouldReplayLinkAnimation; }
 
 protected:
 	/** The minum lenth require for on valid link line*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Game)
 	int32 MinimunLengthLinkLineRequired;
+
+	/** Whether to replay the link animation*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
+	bool bShouldReplayLinkAnimation;
 
 private:
 	/** Handles Game start messages. */
@@ -116,4 +122,7 @@ private:
 
 	/** Current grid */
 	ASGGrid*			CurrentGrid;
+
+	/** Current player pawn (master) */
+	ASGSpritePawn*		CurrentPlayerPawn;
 };

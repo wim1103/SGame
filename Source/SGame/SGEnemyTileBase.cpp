@@ -187,6 +187,29 @@ void ASGEnemyTileBase::BeginPlayHit()
 {
 	PlayHitElapsedTime = 0;
 	bIsPlayingHit = true;
+
+	// Ensure the cached message is valid
+	if (CachedDamageMessage.TileID == TileID)
+	{
+		// Do the take damage now
+		if (OnTakeTileDamage(CachedDamageMessage.DamageInfos, Data.LifeArmorInfo) == false)
+		{
+			// Update the new stats
+			checkSlow(Text_HP);
+			Text_HP->SetText(FText::AsNumber(Data.LifeArmorInfo.CurrentLife));
+			checkSlow(Text_Armor);
+			Text_Armor->SetText(FText::AsNumber(Data.LifeArmorInfo.CurrentArmor));
+			checkSlow(Text_Attack);
+			Text_Attack->SetText(FText::AsNumber(Data.CauseDamageInfo.InitialDamage));
+		}
+		else
+		{
+			// Set the dead sprite
+			checkSlow(Sprite_Dead);
+			checkSlow(GetRenderComponent());
+			GetRenderComponent()->SetSprite(Sprite_Dead);
+		}
+	}
 }
 
 void ASGEnemyTileBase::EndPlayHit()

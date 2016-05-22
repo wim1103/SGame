@@ -176,7 +176,7 @@ protected:
 	*
 	* @return return true means that the tile is dead (life reduce to 0)
 	*/
-	bool OnTakeTileDamage(const TArray<FTileDamageInfo>& DamageInfos, FTileLifeArmorInfo& LifeArmorInfo) const;
+	virtual bool OnTakeTileDamage(const TArray<FTileDamageInfo>& DamageInfos, FTileLifeArmorInfo& LifeArmorInfo) const;
 
 	/** If the Message send to me */
 	bool FilterMessage(int32 inTileID)
@@ -189,6 +189,8 @@ protected:
 
 		return inTileID == TileID;	
 	}
+
+	FMessage_Gameplay_DamageToTile CachedDamageMessage;
 
 private:
 

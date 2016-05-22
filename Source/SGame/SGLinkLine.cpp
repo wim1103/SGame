@@ -10,8 +10,7 @@ ASGLinkLine::ASGLinkLine(): ReplayAnimQueue(FAsyncQueue::Create())
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	bShouldReplayLinkAnimation = true;
-
+	
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	RootComponent->Mobility = EComponentMobility::Movable;
 
@@ -350,6 +349,11 @@ void ASGLinkLine::BeginReplayLinkAnimation()
 					LinkStatusChangeMessage->TileID = FakeSelectedTile->GetTileID();
 					LinkStatusChangeMessage->NewLinkStatus = true;
 					MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
+
+					// If the tile is an enemy tile, then play hit animation
+					FMessage_Gameplay_EnemyGetHit* HitMessage = new FMessage_Gameplay_EnemyGetHit{ 0 };
+					HitMessage->TileID = FakeSelectedTile->GetTileID();
+					MessageEndpoint->Publish(HitMessage, EMessageScope::Process);
 				}
 
 				// Send the selected message to the fake head
@@ -398,7 +402,7 @@ void ASGLinkLine::EndReplayLinkAnimation()
 
 void ASGLinkLine::TickReplayLinkHeadAnimation(float DeltaSeconds)
 {
-	if (bShouldReplayLinkAnimation == false || IsReplayingLinkLineAnimation == false)
+	if (IsReplayingLinkLineAnimation == false)
 	{
 		return;
 	}
@@ -710,12 +714,14 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 	}
 
 	// Replay the link animation if needed
-	if (bShouldReplayLinkAnimation == false)
+	ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
+	checkSlow(GameMode);
+	if (GameMode->ShouldReplayLinkAnimation() == false)
 	{
 		// Finally collect the tile resources
 		CollectTileResource(CollectedTiles);
 
-		// Reset the linklin afterall
+		// Reset the linkline after all
 		ResetLinkState();
 	}
 	else

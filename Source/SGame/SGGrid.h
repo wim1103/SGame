@@ -135,6 +135,17 @@ protected:
 	/** Tile Manager for this grid*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Tile)
 	USGTileManager*		TileManager;
+
+	/** 
+	 * Calculate the enemy damage 
+	 *
+	 * @param outDamageCanBeShield damage can be shielded
+	 * @param outDamageDirectToHP damage direct to the hp
+	 *
+	 * @return true means there is enemy who will attack the player
+	*/
+	UFUNCTION(BlueprintCallable, Category = Attack)
+	bool CalculateEnemyDamageToPlayer(float& outDamageCanBeShield, float& outDamageDirectToHP);
 private:
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;

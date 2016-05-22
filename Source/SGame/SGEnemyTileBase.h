@@ -3,18 +3,49 @@
 #pragma once
 
 #include "SGTileBase.h"
+#include "SGGlobalGameInstance.h"
+
 #include "SGEnemyTileBase.generated.h"
 
 /**
- * 
+ * Enemy base tile
  */
 UCLASS()
 class SGAME_API ASGEnemyTileBase : public ASGTileBase
 {
 	GENERATED_BODY()
 
+	friend USGGlobalGameInstance;
+
 public:
 	ASGEnemyTileBase();
+
+	// Called every frame
+	virtual void Tick(float DeltaSeconds) override;
+
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+protected:
+	// The sprite asset for attcking state
+	UPROPERTY(Category = Sprite, EditAnywhere, BlueprintReadOnly, meta = (DisplayThumbnail = "true"))
+	UPaperSprite* Sprite_Attacking;
+
+	// The sprite asset for dead state
+	UPROPERTY(Category = Sprite, EditAnywhere, BlueprintReadOnly, meta = (DisplayThumbnail = "true"))
+	UPaperSprite* Sprite_Dead;
+
+	// The attack text render component
+	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
+	UTextRenderComponent* Text_Attack;
+
+	// The armor text render component
+	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
+	UTextRenderComponent* Text_Armor;
+
+	// The hp text render component
+	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
+	UTextRenderComponent* Text_HP;
 
 	/** Tick attacking */
 	UFUNCTION(BlueprintCallable, Category = Attack)
@@ -39,30 +70,6 @@ public:
 	/** End play hit */
 	UFUNCTION(BlueprintCallable, Category = Attack)
 	void EndPlayHit();
-
-	// Called every frame
-	virtual void Tick(float DeltaSeconds) override;
-
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-protected:
-
-	// The sprite asset for attcking state
-	UPROPERTY(Category = Sprite, EditAnywhere, BlueprintReadOnly, meta = (DisplayThumbnail = "true"))
-	UPaperSprite* Sprite_Attacking;
-
-	// The attack text render component
-	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
-	UTextRenderComponent* Text_Attack;
-
-	// The armor text render component
-	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
-	UTextRenderComponent* Text_Armor;
-
-	// The hp text render component
-	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
-	UTextRenderComponent* Text_HP;
 
 	bool	bIsAttacking;
 	bool	bIsPlayingHit;

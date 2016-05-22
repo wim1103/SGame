@@ -226,4 +226,12 @@ struct FMessage_Gameplay_EnemyGetHit
 	/** The picked tile address, if the address is -1, then all apply to all tiles*/
 	UPROPERTY()
 	int32 TileID;
+
+	/** The picked tile address, if the address is -1, then all apply to all tiles*/
+	UPROPERTY()
+	int32 DamageToTile;
+
+	/** The picked tile address, if the address is -1, then all apply to all tiles*/
+	UPROPERTY()
+	float DamagePiercingRatio;
 };

@@ -55,10 +55,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Visitor)
 	bool ContainsTileAddress(int32 inTileAddress);
 
-	/** Whether to replay the link animation*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
-	bool bShouldReplayLinkAnimation;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	float	ReplayHeadAnimationDuration;
 	float	ReplayHeadAnimationElapsedTime;

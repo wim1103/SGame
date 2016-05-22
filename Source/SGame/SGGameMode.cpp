@@ -4,8 +4,6 @@
 #include "SGGameMode.h"
 #include "SGPlayerController.h"
 
-
-
 ASGGameMode::ASGGameMode(const FObjectInitializer& ObjectInitializer)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -14,6 +12,8 @@ ASGGameMode::ASGGameMode(const FObjectInitializer& ObjectInitializer)
 	PlayerControllerClass = ASGPlayerController::StaticClass();
 	CurrentRound = 0;
 	MinimunLengthLinkLineRequired = 3;
+	CurrentPlayerPawn = 0;
+	bShouldReplayLinkAnimation = true;
 }
 
 void ASGGameMode::BeginPlay()
