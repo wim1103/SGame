@@ -3,7 +3,6 @@
 #include "SGame.h"
 #include "SGGlobalGameInstance.h"
 #include "SGEnemyTileBase.h"
-#include "SpritePawn.h"
 #include "SGSpritePawn.h"
 
 USGGlobalGameInstance::USGGlobalGameInstance() : Queue(FAsyncQueue::Create())

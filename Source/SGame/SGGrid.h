@@ -60,11 +60,7 @@ public:
 
 	/** Reset the tile select info */
 	UFUNCTION(BlueprintCallable, Category = Grid)
-	void ResetTileSelectInfo();
-
-	/** Reset the tile link info */
-	UFUNCTION(BlueprintCallable, Category = Grid)
-	void ResetTileLinkInfo();
+	void ResetTiles();
 
 	/** Get the tile by the address*/
 	const ASGTileBase* GetTileFromGridAddress(int32 GridAddress);
@@ -130,6 +126,14 @@ protected:
 	/** Return the tile can link to the linkline */
 	UFUNCTION(BlueprintCallable, Category = LinkLine)
 	bool CanLinkToLastTile(const ASGTileBase* inCurrentTile);
+
+	/** Reset the tile select info */
+	UFUNCTION(BlueprintCallable, Category = Grid)
+	void ResetTileSelectInfo();
+
+	/** Reset the tile link info */
+	UFUNCTION(BlueprintCallable, Category = Grid)
+	void ResetTileLinkInfo();
 
 private:
 	// Holds the messaging endpoint.

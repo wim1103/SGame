@@ -13,6 +13,7 @@ ASGGameMode::ASGGameMode(const FObjectInitializer& ObjectInitializer)
 	DefaultPawnClass = nullptr;
 	PlayerControllerClass = ASGPlayerController::StaticClass();
 	CurrentRound = 0;
+	MinimunLengthLinkLineRequired = 3;
 }
 
 void ASGGameMode::BeginPlay()
@@ -99,13 +100,6 @@ void ASGGameMode::OnPlayerTurnBegin()
 	checkSlow(CurrentLinkLine);
 	CurrentLinkLine->ResetLinkState();
 
-	// Reset the tile select info
-	checkSlow(CurrentGrid);
-	CurrentGrid->ResetTileSelectInfo();
-
-	// Reset the tile link info
-	CurrentGrid->ResetTileLinkInfo();
-
 	// Change the next status to player regenerate
 	if (MessageEndpoint.IsValid())
 	{
@@ -154,11 +148,25 @@ void ASGGameMode::OnPlayerBeginInput()
 	// Reset the link line.
 	checkSlow(CurrentLinkLine);
 	CurrentLinkLine->ResetLinkState();
+
+	// Reset the tiles
+	checkSlow(CurrentGrid);
+	CurrentGrid->ResetTiles();
 }
 
 void ASGGameMode::OnPlayerEndBuildPath()
 {
 	UE_LOG(LogSGameProcedure, Log, TEXT("Player end build path!"));
+
+	// Check if the linkline meet requirement
+	if (IsLinkLineValid() == false)
+	{
+		// If not, set back the stage to player input
+		FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
+		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_PlayerBeginInput;
+		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
+		return;
+	}
 
 	// First we need to forward to linkline for collect some tiles
 	checkSlow(CurrentLinkLine);
@@ -189,6 +197,17 @@ void ASGGameMode::Tick(float DeltaSeconds)
 	{
 		MessageEndpoint->ProcessInbox();
 	}
+}
+
+bool ASGGameMode::IsLinkLineValid()
+{
+	checkSlow(CurrentLinkLine);
+	if (CurrentLinkLine->LinkLineTiles.Num() >= MinimunLengthLinkLineRequired)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 void ASGGameMode::HandleGameStart(const FMessage_Gameplay_GameStart& Message, const IMessageContextRef& Context)
@@ -298,8 +317,6 @@ void ASGGameMode::OnPlayerEndInput()
 	UE_LOG(LogSGameProcedure, Log, TEXT("Player end input!"));
 
 	checkSlow(MessageEndpoint.IsValid());
-
-	// Do post player input thing
 
 	// Send to enemy attack stage
 	FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();

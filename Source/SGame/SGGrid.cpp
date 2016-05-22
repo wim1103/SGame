@@ -235,6 +235,12 @@ void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, const ASGTileBase* 
 	GridTiles[inGridAddress] = inTile;
 }
 
+void ASGGrid::ResetTiles()
+{
+	ResetTileLinkInfo();
+	ResetTileSelectInfo();
+}
+
 const ASGTileBase* ASGGrid::GetTileFromGridAddress(int32 GridAddress)
 {
 	if (GridAddress < GridTiles.Num())

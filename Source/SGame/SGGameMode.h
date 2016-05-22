@@ -86,7 +86,14 @@ public:
 
 	int32 GetCurrentRound() const { return CurrentRound; }
 
+	/** Player end input */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	bool IsLinkLineValid();
+
 protected:
+	/** The minum lenth require for on valid link line*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Game)
+	int32 MinimunLengthLinkLineRequired;
 
 private:
 	/** Handles Game start messages. */
