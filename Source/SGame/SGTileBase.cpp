@@ -188,8 +188,8 @@ void ASGTileBase::HandleTileCollected(const FMessage_Gameplay_TileCollect& Messa
 	// Do some collect animation
 
 	// After all, tell the game mode to remove it
-	check(Grid && Grid->TileManager);
-	if (Grid->TileManager->DestroyTileWithID(TileID) == false)
+	check(Grid && Grid->GetTileManager());
+	if (Grid->GetTileManager()->DestroyTileWithID(TileID) == false)
 	{
 		UE_LOG(LogSGameTile, Warning, TEXT("Tile delete failed!"));
 	}

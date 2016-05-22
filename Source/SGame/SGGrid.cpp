@@ -66,7 +66,7 @@ void ASGGrid::BeginPlay()
 // Called every frame
 void ASGGrid::Tick( float DeltaTime )
 {
-	TickAttacking(DeltaTime);
+	TickAttackFadeAnimation(DeltaTime);
 	Super::Tick( DeltaTime );
 }
 
@@ -267,7 +267,7 @@ const ASGTileBase* ASGGrid::GetTileFromTileID(int32 inTileID)
 	return nullptr;
 }
 
-void ASGGrid::TickAttacking(float DeltaSeconds)
+void ASGGrid::TickAttackFadeAnimation(float DeltaSeconds)
 {
 	if (IsAttacking == false)
 	{
@@ -277,7 +277,7 @@ void ASGGrid::TickAttacking(float DeltaSeconds)
 	float Ratio = AttackingElapsedTime / AttackingDuration;
 	if (Ratio > 1)
 	{
-		EndAttack();
+		EndAttackFadeAnimation();
 		return;
 	}
 
@@ -304,13 +304,13 @@ void ASGGrid::TickAttacking(float DeltaSeconds)
 	AttackingElapsedTime += DeltaSeconds;
 }
 
-void ASGGrid::BeginAttack()
+void ASGGrid::BeginAttackFadeAnimation()
 {
 	AttackingElapsedTime = 0;
 	IsAttacking = true;
 }
 
-void ASGGrid::EndAttack()
+void ASGGrid::EndAttackFadeAnimation()
 {
 	checkSlow(AttackFadingSprite && AttackFadingSprite->GetRenderComponent());
 	AttackFadingSprite->GetRenderComponent()->SetSpriteColor(FLinearColor(1.0f, 1.0f, 1.0f, 0.f));
@@ -417,7 +417,7 @@ void ASGGrid::HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect&
 
 void ASGGrid::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
 {
-	BeginAttack();
+	BeginAttackFadeAnimation();
 }
 
 void ASGGrid::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context)

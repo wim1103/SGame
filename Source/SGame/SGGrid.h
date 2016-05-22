@@ -25,38 +25,9 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	/** The size of a space on the grid. Does not include borders or spacing between tiles. */
-	UPROPERTY(EditAnywhere, Category = Tile)
-	FVector2D TileSize;
-
-	/** The width of the grid. Needed to calculate tile positions and neighbors. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
-	int32 GridWidth;
-
-	/** The height of the grid. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
-	int32 GridHeight;
-
-	/** Condense the grid, fill the holes*/
-	UFUNCTION(BlueprintCallable, Category = Refill)
-	void Condense();
-
 	/** Refill all the tiles on the grid*/
 	UFUNCTION(BlueprintCallable, Category = Refill)
 	void RefillGrid();
-
-	/** Refill one column on the grid
-	*
-	* @param inColumnIndex columnIndex to fill
-	* @param inNum		   how many rows to fill	
-	* 
-	*/
-	UFUNCTION(BlueprintCallable, Category = Refill)
-	void RefillColumn(int32 inColumnIndex, int32 inNum);
-
-	/** Refill a specific grid address with the tile */
-	UFUNCTION(BlueprintCallable, Category = Refill)
-	void RefillGridAddressWithTile(int32 inGridAddress, const ASGTileBase* inTile);
 
 	/** Reset the tile select info */
 	UFUNCTION(BlueprintCallable, Category = Grid)
@@ -66,32 +37,6 @@ public:
 	const ASGTileBase* GetTileFromGridAddress(int32 GridAddress);
 	/** Get the tile by the tile id*/
 	const ASGTileBase* GetTileFromTileID(int32 inTileID);
-
-	/** Tick attacking */
-	UFUNCTION()
-	void TickAttacking(float DeltaSeconds);
-
-	/** Tick attacking */
-	UFUNCTION(BlueprintCallable, Category = Attack)
-	void BeginAttack();
-
-	/** Tick attacking */
-	UFUNCTION(BlueprintCallable, Category = Attack)
-	void EndAttack();
-
-	/** How long will it takes to finish a attack */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
-	float AttackingDuration;
-	float AttackingElapsedTime;
-	bool IsAttacking;
-
-	/** The time window to fade in and out */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
-	float FadingTimeWindow;
-
-	/** The fading alpha */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
-	float ResultFadingAlpha;
 
 	/** Get the world location for a given grid address. */
 	UFUNCTION(BlueprintCallable, Category = Tile)
@@ -111,10 +56,7 @@ public:
 		return (GridHeight - rowIndex - 1) * GridWidth + columnIndex;
 	}
 
-	/** Tile Manager for this grid*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Tile)
-	USGTileManager*		TileManager;
-
+	USGTileManager*	GetTileManager() const { return TileManager; }
 protected:
 	/** Contains the tile only on the grid */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -135,6 +77,64 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = Grid)
 	void ResetTileLinkInfo();
 
+	/** Tick attacking */
+	UFUNCTION()
+	void TickAttackFadeAnimation(float DeltaSeconds);
+
+	/** Tick attacking */
+	UFUNCTION(BlueprintCallable, Category = Attack)
+	void BeginAttackFadeAnimation();
+
+	/** Tick attacking */
+	UFUNCTION(BlueprintCallable, Category = Attack)
+	void EndAttackFadeAnimation();
+
+	/** How long will it takes to finish a attack */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float AttackingDuration;
+	float AttackingElapsedTime;
+	bool IsAttacking;
+
+	/** The time window to fade in and out */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float FadingTimeWindow;
+
+	/** The fading alpha */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float ResultFadingAlpha;
+
+	/** Condense the grid, fill the holes*/
+	UFUNCTION(BlueprintCallable, Category = Refill)
+	void Condense();
+
+	/** Refill one column on the grid
+	*
+	* @param inColumnIndex columnIndex to fill
+	* @param inNum		   how many rows to fill
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = Refill)
+	void RefillColumn(int32 inColumnIndex, int32 inNum);
+
+	/** Refill a specific grid address with the tile */
+	UFUNCTION(BlueprintCallable, Category = Refill)
+	void RefillGridAddressWithTile(int32 inGridAddress, const ASGTileBase* inTile);
+
+	/** The size of a space on the grid. Does not include borders or spacing between tiles. */
+	UPROPERTY(EditAnywhere, Category = Tile)
+	FVector2D TileSize;
+
+	/** The width of the grid. Needed to calculate tile positions and neighbors. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
+	int32 GridWidth;
+
+	/** The height of the grid. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
+	int32 GridHeight;
+
+	/** Tile Manager for this grid*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Tile)
+	USGTileManager*		TileManager;
 private:
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
