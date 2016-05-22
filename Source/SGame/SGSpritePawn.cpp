@@ -1,11 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SGame.h"
-#include "SpritePawn.h"
-
+#include "SGSpritePawn.h"
 
 // Sets default values
-ASpritePawn::ASpritePawn()
+ASGSpritePawn::ASGSpritePawn()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -16,28 +15,28 @@ ASpritePawn::ASpritePawn()
 }
 
 // Called when the game starts or when spawned
-void ASpritePawn::BeginPlay()
+void ASGSpritePawn::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
 // Called every frame
-void ASpritePawn::Tick( float DeltaTime )
+void ASGSpritePawn::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
 
 }
 
 // Called to bind functionality to input
-void ASpritePawn::SetupPlayerInputComponent(class UInputComponent* InputComponent)
+void ASGSpritePawn::SetupPlayerInputComponent(class UInputComponent* InputComponent)
 {
 	Super::SetupPlayerInputComponent(InputComponent);
 
 }
 
 #if WITH_EDITOR
-bool ASpritePawn::GetReferencedContentObjects(TArray<UObject*>& Objects) const
+bool ASGSpritePawn::GetReferencedContentObjects(TArray<UObject*>& Objects) const
 {
 	Super::GetReferencedContentObjects(Objects);
 

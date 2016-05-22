@@ -4,7 +4,7 @@
 #include "SGGlobalGameInstance.h"
 #include "SGEnemyTileBase.h"
 #include "SpritePawn.h"
-
+#include "SGSpritePawn.h"
 
 USGGlobalGameInstance::USGGlobalGameInstance() : Queue(FAsyncQueue::Create())
 {
@@ -69,9 +69,9 @@ void USGGlobalGameInstance::BeginAttack()
 
 void USGGlobalGameInstance::SetHealth(int newHealth)
 {
-	for (TActorIterator<ASpritePawn> It(GetWorld()); It; ++It)
+	for (TActorIterator<ASGSpritePawn> It(GetWorld()); It; ++It)
 	{
-		((ASpritePawn*)(*It))->SetCurrentHealth(newHealth);
+		((ASGSpritePawn*)(*It))->SetCurrentHealth(newHealth);
 	}
 }
 
