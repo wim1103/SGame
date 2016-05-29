@@ -4,6 +4,9 @@
 
 #include "PaperSpriteComponent.h"
 #include "GameFramework/Pawn.h"
+#include "Messaging.h"
+#include "SGameMessages.h"
+
 #include "SGSpritePawn.generated.h"
 
 UCLASS()
@@ -47,7 +50,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn)
 	int32		ArmorMax;
 
+	/** Handles the player picked new tile*/
+	void HandlePlayerTakeDamage(const FMessage_Gameplay_PlayerTakeDamage& Message, const IMessageContextRef& Context);
+
+	/** Handles collect resouce*/
+	void HandleCollectResouce(const FMessage_Gameplay_ResourceCollect& Message, const IMessageContextRef& Context);
+
 private:
 	UPROPERTY(Category = Sprite, VisibleAnywhere, BlueprintReadOnly, meta = (ExposeFunctionCategories = "Sprite,Rendering,Physics,Components|Sprite", AllowPrivateAccess = "true"))
 	class UPaperSpriteComponent* RenderComponent;
+
+	// Holds the messaging endpoint.
+	FMessageEndpointPtr MessageEndpoint;
 };

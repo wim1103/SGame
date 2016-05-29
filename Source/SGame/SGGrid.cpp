@@ -452,6 +452,15 @@ void ASGGrid::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Messag
 	if (CalculateEnemyDamageToPlayer(ShiledDamage, DirectDamage) == true)
 	{
 		UE_LOG(LogSGame, Log, TEXT("Enemy will cause %f shield damage, and %f direct damage "), ShiledDamage, DirectDamage);
+		
+		// Send player pawn take damage message
+		FMessage_Gameplay_PlayerTakeDamage* PlayerTakeDamageMessage = new FMessage_Gameplay_PlayerTakeDamage{ 0 };
+		PlayerTakeDamageMessage->ShiledDamage = ShiledDamage;
+		PlayerTakeDamageMessage->DirectDamage = DirectDamage;
+		
+		checkSlow(MessageEndpoint.IsValid());
+		MessageEndpoint->Publish(PlayerTakeDamageMessage, EMessageScope::Process);
+
 		BeginAttackFadeAnimation();
 	}
 }

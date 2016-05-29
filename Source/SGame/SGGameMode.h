@@ -54,23 +54,23 @@ public:
 
 	/** Player input */
 	UFUNCTION(BlueprintCallable, Category = Game)
-	void OnPlayerBeginInput();
+	void OnPlayerBeginInputStage();
 
 	/** Player end build path */
 	UFUNCTION(BlueprintCallable, Category = Game)
-	void OnPlayerEndBuildPath();
+	void OnPlayerEndBuildPathStage();
 	FTimerHandle PlayerEndInputTimer;
 	void TimerPlayerEndInput();
 
 	/** Player end input */
 	UFUNCTION(BlueprintCallable, Category = Game)
-	void OnPlayerEndInput();
+	void OnPlayerEndInputStage();
 
 	/** Enemy attack stage*/
-	void OnEnemyAttack();
+	void OnEnemyAttackStage();
 
 	/** Called when this round end*/
-	void OnRoundEnd();
+	void OnRoundEndStage();
 
 	/** Called when game over */
 	UFUNCTION(BlueprintCallable, Category = Game)

@@ -29,6 +29,7 @@ namespace ESGResourceType
 		ETT_Armor = 1,					// Armor of the player
 		ETT_Money = 2,					// Money
 		ETT_XP = 3,						// In game player xp
+		ETT_MAX = 4,					// Max resource type
 	};
 }
 

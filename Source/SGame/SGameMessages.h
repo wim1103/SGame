@@ -172,6 +172,36 @@ struct FMessage_Gameplay_TileLinkedStatusChange
 	bool NewLinkStatus;
 };
 
+/**
+* Player take damage
+*/
+USTRUCT()
+struct FMessage_Gameplay_PlayerTakeDamage
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** Damage can be shielded*/
+	UPROPERTY()
+	float ShiledDamage;
+
+	/** Damage direct to the hp */
+	UPROPERTY()
+	float DirectDamage;
+};
+
+/**
+* Resouce collect
+*/
+USTRUCT()
+struct FMessage_Gameplay_ResourceCollect
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** Collect resouce array, using the resource type as index */
+	UPROPERTY()
+	TArray<float> SummupResouces;
+};
+
 /** Defines the game state */
 UENUM()
 namespace ESGGameStatus

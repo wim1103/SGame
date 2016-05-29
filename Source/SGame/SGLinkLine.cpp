@@ -538,7 +538,9 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead
 
 void ASGLinkLine::CollectTileResource(TArray<const ASGTileBase*> TilesToCollect)
 {
-	TMap<ESGResourceType::Type, float> SummmpResource;
+	// Collect resouce array, using the resource type as index
+	TArray<float> SummmpResource;
+	SummmpResource.AddZeroed(ESGResourceType::ETT_MAX);
 
 	// Array of tile address should be collected, used for condense the grid
 	TArray<int32> CollectedTileAddressArray;
@@ -556,19 +558,20 @@ void ASGLinkLine::CollectTileResource(TArray<const ASGTileBase*> TilesToCollect)
 		TArray<FTileResourceUnit> TileResource = Tile->GetTileResource();
 		for (int j = 0; j < TileResource.Num(); j++)
 		{
-			if (SummmpResource.Find(TileResource[j].ResourceType) == nullptr)
-			{
-				// Insert the type to the summup result
-				SummmpResource.Add(TileResource[j].ResourceType, TileResource[j].ResourceAmount);
-			}
-			else
-			{
-				// Sumup the resource
-				SummmpResource[TileResource[j].ResourceType] += TileResource[j].ResourceAmount;
-			}
+			// Sumup the resource
+			SummmpResource[TileResource[j].ResourceType] += TileResource[j].ResourceAmount;
 		}
 	}
 
+	if (SummmpResource.Num() > 0)
+	{
+		FMessage_Gameplay_ResourceCollect* ResouceCollectMessage = new FMessage_Gameplay_ResourceCollect();
+		ResouceCollectMessage->SummupResouces = SummmpResource;
+
+		checkSlow(MessageEndpoint.IsValid());
+		MessageEndpoint->Publish(ResouceCollectMessage, EMessageScope::Process);
+	}
+	
 	// Finally, tell the grid we have finish collect resource, the tileis collected
 	if (CollectedTileAddressArray.Num() > 0)
 	{

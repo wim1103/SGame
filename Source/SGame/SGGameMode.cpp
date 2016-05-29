@@ -135,7 +135,7 @@ void ASGGameMode::OnPlayerSkillCD()
 	}
 }
 
-void ASGGameMode::OnPlayerBeginInput()
+void ASGGameMode::OnPlayerBeginInputStage()
 {
 	UE_LOG(LogSGameProcedure, Log, TEXT("Player begin input!"));
 
@@ -154,7 +154,7 @@ void ASGGameMode::OnPlayerBeginInput()
 	CurrentGrid->ResetTiles();
 }
 
-void ASGGameMode::OnPlayerEndBuildPath()
+void ASGGameMode::OnPlayerEndBuildPathStage()
 {
 	UE_LOG(LogSGameProcedure, Log, TEXT("Player end build path!"));
 
@@ -240,19 +240,19 @@ void ASGGameMode::HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdat
 		OnPlayerSkillCD();
 		break;
 	case ESGGameStatus::EGS_PlayerBeginInput:
-		OnPlayerBeginInput();
+		OnPlayerBeginInputStage();
 		break;
 	case ESGGameStatus::EGS_PlayerEndBuildPath:
-		OnPlayerEndBuildPath();
+		OnPlayerEndBuildPathStage();
 		break;
 	case ESGGameStatus::EGS_PlayerEndInput:
-		OnPlayerEndInput();
+		OnPlayerEndInputStage();
 		break;
 	case ESGGameStatus::EGS_EnemyAttack:
-		OnEnemyAttack();
+		OnEnemyAttackStage();
 		break;
 	case ESGGameStatus::EGS_RoundEnd:
-		OnRoundEnd();
+		OnRoundEndStage();
 		break;
 	case ESGGameStatus::EGS_GameOver:
 		OnGameOver();
@@ -263,7 +263,7 @@ void ASGGameMode::HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdat
 	}
 }
 
-void ASGGameMode::OnEnemyAttack()
+void ASGGameMode::OnEnemyAttackStage()
 {
 	UE_LOG(LogSGameProcedure, Log, TEXT("Enemy attack stage!"));
 
@@ -279,7 +279,7 @@ void ASGGameMode::OnEnemyAttack()
 	MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
 }
 
-void ASGGameMode::OnRoundEnd()
+void ASGGameMode::OnRoundEndStage()
 {
 	UE_LOG(LogSGameProcedure, Log, TEXT("Round end!"));
 
@@ -312,7 +312,7 @@ void ASGGameMode::OnGameOver()
 	UE_LOG(LogSGameProcedure, Log, TEXT("Game over!"));
 }
 
-void ASGGameMode::OnPlayerEndInput()
+void ASGGameMode::OnPlayerEndInputStage()
 {
 	UE_LOG(LogSGameProcedure, Log, TEXT("Player end input!"));
 
