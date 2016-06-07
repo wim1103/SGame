@@ -99,6 +99,7 @@ void ASGEnemyTileBase::BeginAttack()
 
 void ASGEnemyTileBase::EndAttack()
 {
+	// Set the flag, disable the attacking tick
 	bIsAttacking = false;
 
 	// Pop down the tile to the original place

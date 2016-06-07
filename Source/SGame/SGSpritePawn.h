@@ -56,6 +56,9 @@ protected:
 	/** Handles collect resouce*/
 	void HandleCollectResouce(const FMessage_Gameplay_ResourceCollect& Message, const IMessageContextRef& Context);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Hit)
+	UParticleSystemComponent*		PlayerHitPSC;
+
 private:
 	UPROPERTY(Category = Sprite, VisibleAnywhere, BlueprintReadOnly, meta = (ExposeFunctionCategories = "Sprite,Rendering,Physics,Components|Sprite", AllowPrivateAccess = "true"))
 	class UPaperSpriteComponent* RenderComponent;

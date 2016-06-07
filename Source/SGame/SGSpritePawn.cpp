@@ -13,6 +13,11 @@ ASGSpritePawn::ASGSpritePawn()
 	RenderComponent->Mobility = EComponentMobility::Movable;
 	RenderComponent->AttachParent = RootComponent;
 
+	PlayerHitPSC = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("PlayerHitPSC"));
+	PlayerHitPSC->Mobility = EComponentMobility::Movable;
+	PlayerHitPSC->AttachParent = RootComponent;
+	PlayerHitPSC->bAutoActivate = false;
+
 	HPMax = 100;
 	ArmorMax = 0;
 }
@@ -55,6 +60,12 @@ void ASGSpritePawn::HandlePlayerTakeDamage(const FMessage_Gameplay_PlayerTakeDam
 	// todo: Add armor damage calculation
 	CurrentHP = CurrentHP - Message.DirectDamage;
 	SetCurrentHealth(CurrentHP);
+
+	// Play hit psc
+	if (PlayerHitPSC != nullptr)
+	{
+		PlayerHitPSC->ActivateSystem(true);
+	}
 }
 
 void ASGSpritePawn::HandleCollectResouce(const FMessage_Gameplay_ResourceCollect& Message, const IMessageContextRef& Context)
