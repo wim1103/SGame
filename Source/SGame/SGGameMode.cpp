@@ -212,7 +212,7 @@ bool ASGGameMode::IsLinkLineValid()
 	return false;
 }
 
-ASGSkillBase* ASGGameMode::CreatePlayerSkilkByName(FName inSkillName)
+ASGSkillBase* ASGGameMode::CreatePlayerSkilkByName(FString inSkillName)
 {
 	checkSlow(PlayerSkillManager);
 	return PlayerSkillManager->CreateSkillByName(this, inSkillName);

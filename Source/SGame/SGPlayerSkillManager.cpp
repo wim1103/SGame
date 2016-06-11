@@ -3,7 +3,7 @@
 #include "SGame.h"
 #include "SGPlayerSkillManager.h"
 
-ASGSkillBase* USGPlayerSkillManager::CreateSkillByName(const AActor* inOwner, FName inSkillName)
+ASGSkillBase* USGPlayerSkillManager::CreateSkillByName(const AActor* inOwner, FString inSkillName)
 {
 	checkSlow(inOwner);
 
@@ -22,7 +22,7 @@ ASGSkillBase* USGPlayerSkillManager::CreateSkillByName(const AActor* inOwner, FN
 		else
 		{
 			// Otherwise check with the skill default object's name
-			const ASGSkillBase* DefaultSkillObject = TargetSkillClass.GetDefaultObject();
+			const ASGSkillBase* DefaultSkillObject = PlayerSkill.SkillClass.GetDefaultObject();
 			
 			checkSlow(DefaultSkillObject);
 			if (DefaultSkillObject == nullptr)
@@ -41,9 +41,9 @@ ASGSkillBase* USGPlayerSkillManager::CreateSkillByName(const AActor* inOwner, FN
 		}
 	}
 
-	if (TargetSkillClass->GetDefaultObject() == NULL)
+	if (TargetSkillClass.GetDefaultObject() == NULL)
 	{
-		UE_LOG(LogSGame, Warning,  TEXT("Player skill library don't find the target name skill %s, return"), *inSkillName.ToString());
+		UE_LOG(LogSGame, Warning,  TEXT("Player skill library don't find the target name skill %s, return"), *inSkillName);
 		return nullptr;
 	}
 
@@ -55,7 +55,7 @@ ASGSkillBase* USGPlayerSkillManager::CreateSkillByName(const AActor* inOwner, FN
 		ASGSkillBase* const NewSkillInstance = World->SpawnActor<ASGSkillBase>(TargetSkillClass);
 		if (NewSkillInstance == nullptr)
 		{
-			UE_LOG(LogSGame, Warning, TEXT("Player skill created failed, return null ptr"), *inSkillName.ToString());
+			UE_LOG(LogSGame, Warning, TEXT("Player skill created failed, return null ptr"), *inSkillName);
 			return nullptr;
 		}
 

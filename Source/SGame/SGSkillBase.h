@@ -12,7 +12,7 @@ struct FSGSkillBaseData
 
 	/** The default CD for the skill */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Skill)
-	FName SkillName;
+	FString SkillName;
 
 	/** The default CD for the skill */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Skill)
@@ -45,7 +45,7 @@ public:
 
 	/** blueprint event: pickup appears */
 	UFUNCTION(BlueprintImplementableEvent)
-	void EventPlayerUseSkill();
+	void PlayerUseSkill();
 
 protected:
 

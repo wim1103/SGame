@@ -31,7 +31,7 @@ protected:
 
 	/** Player's current skill name array, use to spawn initial skill*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	TArray<FName> SkillNamesArray;
+	TArray<FString> SkillNamesArray;
 
 private:
 	/** Player can input now*/

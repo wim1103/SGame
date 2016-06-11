@@ -37,7 +37,7 @@ class SGAME_API USGPlayerSkillManager : public UObject
 public:
 	/** Condense the grid, fill the holes*/
 	UFUNCTION(BlueprintCallable, Category = Skill)
-	ASGSkillBase* CreateSkillByName(const AActor* inOwner, FName inSkillName);
+	ASGSkillBase* CreateSkillByName(const AActor* inOwner, FString inSkillName);
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Skill)

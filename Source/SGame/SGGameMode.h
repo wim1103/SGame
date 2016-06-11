@@ -79,7 +79,7 @@ public:
 
 	/** Create player skill */
 	UFUNCTION(BlueprintCallable, Category = Game)
-	ASGSkillBase* CreatePlayerSkilkByName(FName inSkillName);
+	ASGSkillBase* CreatePlayerSkilkByName(FString inSkillName);
 
 	/** Check if game over */
 	bool CheckGameOver();
@@ -111,6 +111,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Skill)
 	USGPlayerSkillManager* PlayerSkillManager;
 
+	/** Current grid */
+	UPROPERTY(BlueprintReadOnly, Category = Game)
+	ASGGrid*			CurrentGrid;
+
 private:
 	/** Handles Game start messages. */
 	void HandleGameStart(const FMessage_Gameplay_GameStart& Message, const IMessageContextRef& Context);
@@ -129,9 +133,6 @@ private:
 
 	/** Current link line */
 	ASGLinkLine*		CurrentLinkLine;
-
-	/** Current grid */
-	ASGGrid*			CurrentGrid;
 
 	/** Current player pawn (master) */
 	ASGSpritePawn*		CurrentPlayerPawn;

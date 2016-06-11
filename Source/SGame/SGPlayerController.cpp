@@ -29,7 +29,7 @@ void ASGPlayerController::BeginPlay()
 		MessageEndpoint->Subscribe<FMessage_Gameplay_PlayerBeginInput>();
 	}
 
-	for (FName SkillName : SkillNamesArray)
+	for (FString SkillName : SkillNamesArray)
 	{
 		ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
 		checkSlow(GameMode);

@@ -28,8 +28,8 @@ void USGCheatManager::UseSkill(int32 inSkillIndex)
 {
 	ASGPlayerController* MyPC = GetOuterASGPlayerController();
 
-	checkSlow(MyPC->SkillsArray.IsValidIndex(inSkillIndex));
-	MyPC->SkillsArray[inSkillIndex]->EventPlayerUseSkill();
+	checkSlow(MyPC->SkillsArray.IsValidIndex(inSkillIndex) && MyPC->SkillsArray[inSkillIndex]);
+	MyPC->SkillsArray[inSkillIndex]->PlayerUseSkill();
 }
 
 
