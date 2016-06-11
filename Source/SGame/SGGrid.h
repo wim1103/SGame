@@ -25,6 +25,10 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
+	/** Reset grid */
+	UFUNCTION(BlueprintCallable, Category = Refill)
+	void ResetGrid();
+
 	/** Refill all the tiles on the grid*/
 	UFUNCTION(BlueprintCallable, Category = Refill)
 	void RefillGrid();

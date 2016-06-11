@@ -15,7 +15,7 @@ class SGAME_API ASGEnemyTileBase : public ASGTileBase
 {
 	GENERATED_BODY()
 
-	friend USGGlobalGameInstance;
+	friend class USGCheatManager;
 
 public:
 	ASGEnemyTileBase();

@@ -2,6 +2,8 @@
 
 #include "SGame.h"
 #include "SGPlayerController.h"
+#include "SGGameMode.h"
+#include "SGCheatManager.h"
 
 ASGPlayerController::ASGPlayerController(const FObjectInitializer& ObjectInitializer)
 {
@@ -11,6 +13,9 @@ ASGPlayerController::ASGPlayerController(const FObjectInitializer& ObjectInitial
 	// We need click/touch events to interact with our tiles.
 	bEnableTouchEvents = bEnableClickEvents = true;
 	bEnableTouchOverEvents = bEnableMouseOverEvents = true;
+
+	// Cheat manager allow us to do some fast debugging
+	CheatClass = USGCheatManager::StaticClass();
 }
 
 void ASGPlayerController::BeginPlay()
@@ -22,6 +27,21 @@ void ASGPlayerController::BeginPlay()
 	{
 		// Subscribe the begin input event to allow the player input
 		MessageEndpoint->Subscribe<FMessage_Gameplay_PlayerBeginInput>();
+	}
+
+	for (FName SkillName : SkillNamesArray)
+	{
+		ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
+		checkSlow(GameMode);
+
+		ASGSkillBase* NewPlayerSkill = GameMode->CreatePlayerSkilkByName(SkillName);
+		if (NewPlayerSkill == nullptr)
+		{
+			UE_LOG(LogSGame, Log, TEXT("Player skil create failed"));
+		}
+
+		// Put the new skill into skill array
+		SkillsArray.Add(NewPlayerSkill);
 	}
 }
 

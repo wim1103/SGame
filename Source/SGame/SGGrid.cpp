@@ -71,6 +71,29 @@ void ASGGrid::Tick( float DeltaTime )
 	Super::Tick( DeltaTime );
 }
 
+void ASGGrid::ResetGrid()
+{
+	// Iterate the each colum of grid tiles arry, find the holes
+	for (int columnIndex = 0; columnIndex < GridWidth; columnIndex++)
+	{
+		for (int rowIndex = 0; rowIndex < GridHeight; rowIndex++)
+		{
+			// If it is hole already, pass it
+			int gridAddress = ColumnRowToGridAddress(columnIndex, rowIndex);
+			
+			// Destroy the tile
+			checkSlow(GridTiles[gridAddress] && GetTileManager());
+			GetTileManager()->DestroyTileWithID(GridTiles[gridAddress]->GetTileID());
+
+			// Empty the current grid tile
+			GridTiles[gridAddress] = nullptr;
+		}
+	}
+
+	// Refill the grid again
+	RefillGrid();
+}
+
 void ASGGrid::Condense()
 {
 	TMap<int32, int32> GridHoleNumMap;
@@ -441,7 +464,7 @@ void ASGGrid::HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect&
 		GridTiles[disappearTileAddress] = nullptr;
 	}
 
-	// Conden the grid
+	// Condense the grid
 	Condense();
 }
 
@@ -577,7 +600,7 @@ void ASGGrid::UpdateTileLinkState()
 {
 	checkSlow(CurrentLinkLine != nullptr);
 
-	// Iterator all the grid tiles, only the negihbor tile between the head can be selected
+	// Iterator all the grid tiles, only the neighbor tile between the head can be selected
 	checkSlow(CurrentGrid != nullptr);
 	for (int32 i = 0; i < 36; i++)
 	{

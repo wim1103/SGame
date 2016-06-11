@@ -11,6 +11,7 @@
 #include "SGGrid.h"
 #include "SGTileManager.h"
 #include "SGSpritePawn.h"
+#include "SGPlayerSkillManager.h"
 
 #include "SGGameMode.generated.h"
 
@@ -76,6 +77,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Game)
 	void OnGameOver();
 
+	/** Create player skill */
+	UFUNCTION(BlueprintCallable, Category = Game)
+	ASGSkillBase* CreatePlayerSkilkByName(FName inSkillName);
+
 	/** Check if game over */
 	bool CheckGameOver();
 
@@ -93,6 +98,7 @@ public:
 	bool ShouldReplayLinkAnimation() const { return bShouldReplayLinkAnimation; }
 
 protected:
+
 	/** The minum lenth require for on valid link line*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Game)
 	int32 MinimunLengthLinkLineRequired;
@@ -100,6 +106,10 @@ protected:
 	/** Whether to replay the link animation*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	bool bShouldReplayLinkAnimation;
+
+	/** Whether to replay the link animation*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Skill)
+	USGPlayerSkillManager* PlayerSkillManager;
 
 private:
 	/** Handles Game start messages. */

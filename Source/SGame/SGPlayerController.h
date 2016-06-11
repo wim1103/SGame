@@ -5,6 +5,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Messaging.h"
 #include "SGameMessages.h"
+#include "SGSkillBase.h"
+#include "SGPlayerSkillManager.h"
 
 #include "SGPlayerController.generated.h"
 
@@ -20,7 +22,17 @@ public:
 
 	/** Event when play begins for this actor. */
 	virtual void BeginPlay() override;
-	
+
+	/** Player's current skill instance*/
+	UPROPERTY(BlueprintReadOnly, Category = "Skill")
+	TArray<ASGSkillBase*> SkillsArray;
+
+protected:
+
+	/** Player's current skill name array, use to spawn initial skill*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	TArray<FName> SkillNamesArray;
+
 private:
 	/** Player can input now*/
 	void HandlePlayerBeginInput(const FMessage_Gameplay_PlayerBeginInput& Message, const IMessageContextRef& Context);

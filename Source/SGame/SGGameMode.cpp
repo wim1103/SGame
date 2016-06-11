@@ -14,6 +14,8 @@ ASGGameMode::ASGGameMode(const FObjectInitializer& ObjectInitializer)
 	MinimunLengthLinkLineRequired = 3;
 	CurrentPlayerPawn = 0;
 	bShouldReplayLinkAnimation = true;
+
+	PlayerSkillManager = CreateDefaultSubobject<USGPlayerSkillManager>(TEXT("PlayerSkillManager"));
 }
 
 void ASGGameMode::BeginPlay()
@@ -208,6 +210,12 @@ bool ASGGameMode::IsLinkLineValid()
 	}
 
 	return false;
+}
+
+ASGSkillBase* ASGGameMode::CreatePlayerSkilkByName(FName inSkillName)
+{
+	checkSlow(PlayerSkillManager);
+	return PlayerSkillManager->CreateSkillByName(this, inSkillName);
 }
 
 void ASGGameMode::HandleGameStart(const FMessage_Gameplay_GameStart& Message, const IMessageContextRef& Context)
