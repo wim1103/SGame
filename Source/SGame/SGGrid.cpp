@@ -147,7 +147,7 @@ void ASGGrid::Condense()
 			int MoveDownNum = GridHoleNumMap[testAddress];
 
 			// Send tile move message to the tile
-			const ASGTileBase* testTile = GridTiles[testAddress];
+			ASGTileBase* testTile = GridTiles[testAddress];
 			checkSlow(testTile);
 
 			// Update the tile new address
@@ -228,7 +228,7 @@ void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
 		SpawnLocation.Z += TileSize.Y * inNum;
 
 		// create the tile at the specified location
-		const ASGTileBase* NewTile = TileManager->CreateTile(this, SpawnLocation, GridAddress, TileID, CurrentRound);
+		ASGTileBase* NewTile = TileManager->CreateTile(this, SpawnLocation, GridAddress, TileID, CurrentRound);
 		if (NewTile == nullptr)
 		{
 			UE_LOG(LogSGame, Error, TEXT("Cannot create tile at location %d, %d"), inColumnIndex, startRow);
@@ -239,7 +239,7 @@ void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
 	}
 }
 
-void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, const ASGTileBase* inTile)
+void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, ASGTileBase* inTile)
 {
 	checkSlow(GridTiles.IsValidIndex(inGridAddress));
 	checkSlow(inTile != nullptr);
@@ -294,9 +294,9 @@ void ASGGrid::ResetTiles()
 	ResetTileSelectInfo();
 }
 
-const ASGTileBase* ASGGrid::GetTileFromGridAddress(int32 GridAddress)
+ASGTileBase* ASGGrid::GetTileFromGridAddress(int32 GridAddress)
 {
-	if (GridAddress < GridTiles.Num())
+	if (GridTiles.IsValidIndex(GridAddress))
 	{
 		return GridTiles[GridAddress];
 	}
@@ -307,7 +307,7 @@ const ASGTileBase* ASGGrid::GetTileFromGridAddress(int32 GridAddress)
 	}
 }
 
-const ASGTileBase* ASGGrid::GetTileFromTileID(int32 inTileID)
+ASGTileBase* ASGGrid::GetTileFromTileID(int32 inTileID)
 {
 	for (int i = 0; i < GridTiles.Num(); i++)
 	{
@@ -417,6 +417,84 @@ bool ASGGrid::GetGridAddressWithOffset(int32 InitialGridAddress, int32 XOffset, 
 	return true;
 }
 
+ASGTileBase* ASGGrid::GetTileFromColumnAndRow(int32 inColumn, int32 inRow)
+{
+	int32 GridAddress;
+	GridAddress = ColumnRowToGridAddress(inColumn, inRow);
+
+	return GetTileFromGridAddress(GridAddress);
+}
+
+TArray<ASGTileBase*> ASGGrid::GetTileSquareFromColumnAndRow(int32 inColumn, int32 inRow)
+{
+	TArray<ASGTileBase*> ResultTileArray;
+	if ((inColumn > 0 && inColumn < GridWidth - 1) &&
+		(inRow > 0 && inRow < GridHeight - 1))
+	{
+		ResultTileArray.Add(GetTileFromColumnAndRow(inColumn - 1, inRow - 1));
+		ResultTileArray.Add(GetTileFromColumnAndRow(inColumn - 1, inRow));
+		ResultTileArray.Add(GetTileFromColumnAndRow(inColumn - 1, inRow + 1));
+		ResultTileArray.Add(GetTileFromColumnAndRow(inColumn, inRow - 1));
+		ResultTileArray.Add(GetTileFromColumnAndRow(inColumn, inRow));
+		ResultTileArray.Add(GetTileFromColumnAndRow(inColumn, inRow + 1));
+		ResultTileArray.Add(GetTileFromColumnAndRow(inColumn + 1, inRow - 1));
+		ResultTileArray.Add(GetTileFromColumnAndRow(inColumn + 1, inRow));
+		ResultTileArray.Add(GetTileFromColumnAndRow(inColumn + 1, inRow + 1));
+	}
+
+	return ResultTileArray;
+}
+
+bool ASGGrid::CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect)
+{
+	// Collect resouce array, using the resource type as index
+	TArray<float> SummmpResource;
+	SummmpResource.AddZeroed(ESGResourceType::ETT_MAX);
+
+	// Array of tile address should be collected, used for condense the grid
+	TArray<int32> CollectedTileAddressArray;
+
+	// Iterate the link tiles, retrieve their resources
+	for (int i = 0; i < inTileArrayToCollect.Num(); i++)
+	{
+		const ASGTileBase* Tile = inTileArrayToCollect[i];
+		checkSlow(Tile);
+
+		// Insert into the collect tile array
+		CollectedTileAddressArray.Add(Tile->GetGridAddress());
+
+		// Collecte the resouces
+		TArray<FTileResourceUnit> TileResource = Tile->GetTileResource();
+		for (int j = 0; j < TileResource.Num(); j++)
+		{
+			// Sumup the resource
+			SummmpResource[TileResource[j].ResourceType] += TileResource[j].ResourceAmount;
+		}
+	}
+
+	if (SummmpResource.Num() > 0)
+	{
+		FMessage_Gameplay_ResourceCollect* ResouceCollectMessage = new FMessage_Gameplay_ResourceCollect();
+		ResouceCollectMessage->SummupResouces = SummmpResource;
+
+		checkSlow(MessageEndpoint.IsValid());
+		MessageEndpoint->Publish(ResouceCollectMessage, EMessageScope::Process);
+	}
+
+	// Finally, tell the grid we have finish collect resource, the tileis collected
+	if (CollectedTileAddressArray.Num() > 0)
+	{
+		FMessage_Gameplay_LinkedTilesCollect* Message = new FMessage_Gameplay_LinkedTilesCollect();
+		Message->TilesAddressToCollect = CollectedTileAddressArray;
+		if (MessageEndpoint.IsValid() == true)
+		{
+			MessageEndpoint->Publish(Message, EMessageScope::Process);
+		}
+	}
+
+	return true;
+}
+
 bool ASGGrid::AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB)
 {
 	if (GridAddressA == GridAddressB)
@@ -503,7 +581,7 @@ void ASGGrid::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Messa
 		return;
 	}
 
-	const ASGTileBase* CurrentTile = GetTileFromTileID(Message.TileID);
+	ASGTileBase* CurrentTile = GetTileFromTileID(Message.TileID);
 	if (CurrentTile == nullptr)
 	{
 		UE_LOG(LogSGame, Warning, TEXT("Cannot get tile from the tile ID %d"), Message.TileID);

@@ -394,7 +394,8 @@ void ASGLinkLine::EndReplayLinkAnimation()
 	// Finally collect the tile resources
 	if (CachedCollectTiles.Num() > 0)
 	{
-		CollectTileResource(CachedCollectTiles);
+		checkSlow(ParentGrid);
+		ParentGrid->CollectTileArray(CachedCollectTiles);
 	}
 	
 	// Reset the linklin afterall
@@ -537,55 +538,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead
 	return NewSprite;
 }
 
-void ASGLinkLine::CollectTileResource(TArray<const ASGTileBase*> TilesToCollect)
-{
-	// Collect resouce array, using the resource type as index
-	TArray<float> SummmpResource;
-	SummmpResource.AddZeroed(ESGResourceType::ETT_MAX);
-
-	// Array of tile address should be collected, used for condense the grid
-	TArray<int32> CollectedTileAddressArray;
-
-	// Iterate the link tiles, retrieve their resources
-	for (int i = 0; i < TilesToCollect.Num(); i++)
-	{
-		const ASGTileBase* Tile = TilesToCollect[i];
-		checkSlow(Tile);
-		
-		// Insert into the collect tile array
-		CollectedTileAddressArray.Add(Tile->GetGridAddress());
-
-		// Collecte the resouces
-		TArray<FTileResourceUnit> TileResource = Tile->GetTileResource();
-		for (int j = 0; j < TileResource.Num(); j++)
-		{
-			// Sumup the resource
-			SummmpResource[TileResource[j].ResourceType] += TileResource[j].ResourceAmount;
-		}
-	}
-
-	if (SummmpResource.Num() > 0)
-	{
-		FMessage_Gameplay_ResourceCollect* ResouceCollectMessage = new FMessage_Gameplay_ResourceCollect();
-		ResouceCollectMessage->SummupResouces = SummmpResource;
-
-		checkSlow(MessageEndpoint.IsValid());
-		MessageEndpoint->Publish(ResouceCollectMessage, EMessageScope::Process);
-	}
-	
-	// Finally, tell the grid we have finish collect resource, the tileis collected
-	if (CollectedTileAddressArray.Num() > 0)
-	{
-		FMessage_Gameplay_LinkedTilesCollect* Message = new FMessage_Gameplay_LinkedTilesCollect();
-		Message->TilesAddressToCollect = CollectedTileAddressArray;
-		if (MessageEndpoint.IsValid() == true)
-		{
-			MessageEndpoint->Publish(Message, EMessageScope::Process);
-		}
-	}
-}
-
-TArray<FTileDamageInfo> ASGLinkLine::CaculateDamage(TArray<const ASGTileBase*>& CauseDamageTiles)
+TArray<FTileDamageInfo> ASGLinkLine::CaculateDamage(TArray<ASGTileBase*>& CauseDamageTiles)
 {
 	// We can do complex damage calculation here
 	// But currently, we just simply retrieve the damage info
@@ -620,7 +573,7 @@ void ASGLinkLine::ResetLinkState()
 	Update();
 }
 
-void ASGLinkLine::BuildPath(const ASGTileBase* inNewTile)
+void ASGLinkLine::BuildPath(ASGTileBase* inNewTile)
 {
 	checkSlow(inNewTile);
 	UE_LOG(LogSGame, Log, TEXT("Linkline build path using tile %d"), inNewTile->GetGridAddress());
@@ -657,14 +610,14 @@ void ASGLinkLine::BuildPath(const ASGTileBase* inNewTile)
 
 void ASGLinkLine::OnPlayerFinishBuildPath()
 {
-	TArray<const ASGTileBase*> TakeDamageTiles;
-	TArray<const ASGTileBase*> CollectedTiles;
+	TArray<ASGTileBase*> TakeDamageTiles;
+	TArray<ASGTileBase*> CollectedTiles;
 
 	// First we should find the can take damage tiles in the link line
 	for (int i = 0; i < LinkLineTiles.Num(); i++)
 	{
 		checkSlow(LinkLineTiles[i]);
-		const ASGTileBase* Tile = LinkLineTiles[i];
+		ASGTileBase* Tile = LinkLineTiles[i];
 		if (Tile->Abilities.bCanTakeDamage == true && Tile->Abilities.bEnemyTile)
 		{
 			TakeDamageTiles.Add(Tile);
@@ -680,11 +633,11 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 	if (TakeDamageTiles.Num() > 0)
 	{
 		// If it contains the take damage tiles, we should calculate the damage then
-		TArray<const ASGTileBase*> CauseDamageTiles;
+		TArray<ASGTileBase*> CauseDamageTiles;
 		for (int i = 0; i < LinkLineTiles.Num(); i++)
 		{
 			checkSlow(LinkLineTiles[i]);
-			const ASGTileBase* Tile = LinkLineTiles[i];
+			ASGTileBase* Tile = LinkLineTiles[i];
 			if (Tile->Abilities.bCanCauseDamage == true && Tile->Abilities.bEnemyTile == false)
 			{
 				CauseDamageTiles.Add(Tile);
@@ -698,7 +651,7 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 		for (int i = 0; i < TakeDamageTiles.Num(); i++)
 		{
 			checkSlow(TakeDamageTiles[i]);
-			const ASGTileBase* Tile = TakeDamageTiles[i];
+			ASGTileBase* Tile = TakeDamageTiles[i];
 
 			// Evaluate if the tile can suirve, for add the tile to collect tile array
 			if (Tile->EvaluateDamageToTile(DamageInfos) == true)
@@ -722,8 +675,10 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 	checkSlow(GameMode);
 	if (GameMode->ShouldReplayLinkAnimation() == false)
 	{
+		checkSlow(ParentGrid);
+
 		// Finally collect the tile resources
-		CollectTileResource(CollectedTiles);
+		ParentGrid->CollectTileArray(CollectedTiles);
 
 		// Reset the linkline after all
 		ResetLinkState();

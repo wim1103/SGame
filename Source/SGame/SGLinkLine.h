@@ -80,7 +80,7 @@ public:
 	TArray<int32> StaticLinePoints;
 
 	/** Current tiles in the link line*/
-	TArray<const ASGTileBase*> LinkLineTiles;
+	TArray<ASGTileBase*> LinkLineTiles;
 
 protected:
 	// The sprite asset for link corners 45 degree
@@ -127,19 +127,19 @@ private:
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
 
+	// Hold the reference to its parent grid
 	ASGGrid* ParentGrid;
 
 	// Async queue for replyaing animation
 	TSharedRef<FAsyncQueue, ESPMode::ThreadSafe> ReplayAnimQueue;
 	/** Cached current turn collected tiles for do collect animtion after replay link line animation */
-	TArray<const ASGTileBase*> CachedCollectTiles;
+	TArray<ASGTileBase*> CachedCollectTiles;
 
-	void CollectTileResource(TArray<const ASGTileBase*> TilesToCollect);
-	TArray<FTileDamageInfo> CaculateDamage(TArray<const ASGTileBase*>& CauseDamageTiles);
+	TArray<FTileDamageInfo> CaculateDamage(TArray<ASGTileBase*>& CauseDamageTiles);
 	void ReplayLinkHeadAnimation();
 
 public:
 	void ResetLinkState();
-	void BuildPath(const ASGTileBase* inNewTile);
+	void BuildPath(ASGTileBase* inNewTile);
 	void OnPlayerFinishBuildPath();
 };

@@ -38,9 +38,9 @@ public:
 	void ResetTiles();
 
 	/** Get the tile by the address*/
-	const ASGTileBase* GetTileFromGridAddress(int32 GridAddress);
+	ASGTileBase* GetTileFromGridAddress(int32 GridAddress);
 	/** Get the tile by the tile id*/
-	const ASGTileBase* GetTileFromTileID(int32 inTileID);
+	ASGTileBase* GetTileFromTileID(int32 inTileID);
 
 	/** Get the world location for a given grid address. */
 	UFUNCTION(BlueprintCallable, Category = Tile)
@@ -50,8 +50,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Tile)
 	bool GetGridAddressWithOffset(int32 InitialGridAddress, int32 XOffset, int32 YOffset, int32 &ReturnGridAddress);
 
-	/** Calculate if the two address are neighbor, the link is 8 directions*/
-	bool AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB);
+	/** Get a tile from column and row*/
+	UFUNCTION(BlueprintCallable, Category = Tile)
+	ASGTileBase* GetTileFromColumnAndRow(int32 inColumn, int32 inRow);
+
+	/** Get a tile square from column and row and its surronding tiles*/
+	UFUNCTION(BlueprintCallable, Category = Tile)
+	TArray<ASGTileBase*> GetTileSquareFromColumnAndRow(int32 inColumn, int32 inRow);
+
+	/** Collect a array of tiles*/
+	UFUNCTION(BlueprintCallable, Category = Tile)
+	bool CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect);
 
 	/** Take into the column and row, return the grid address*/
 	int32 ColumnRowToGridAddress(int columnIndex, int32 rowIndex)
@@ -61,10 +70,11 @@ public:
 	}
 
 	USGTileManager*	GetTileManager() const { return TileManager; }
+
 protected:
 	/** Contains the tile only on the grid */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<const ASGTileBase*> GridTiles;
+	TArray<ASGTileBase*> GridTiles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	APaperSpriteActor*			AttackFadingSprite;
@@ -122,7 +132,7 @@ protected:
 
 	/** Refill a specific grid address with the tile */
 	UFUNCTION(BlueprintCallable, Category = Refill)
-	void RefillGridAddressWithTile(int32 inGridAddress, const ASGTileBase* inTile);
+	void RefillGridAddressWithTile(int32 inGridAddress, ASGTileBase* inTile);
 
 	/** The size of a space on the grid. Does not include borders or spacing between tiles. */
 	UPROPERTY(EditAnywhere, Category = Tile)
@@ -150,6 +160,10 @@ protected:
 	*/
 	UFUNCTION(BlueprintCallable, Category = Attack)
 	bool CalculateEnemyDamageToPlayer(float& outDamageCanBeShield, float& outDamageDirectToHP);
+
+	/** Calculate if the two address are neighbor, the link is 8 directions*/
+	bool AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB);
+
 private:
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
