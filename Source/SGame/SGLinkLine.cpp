@@ -279,6 +279,7 @@ bool ASGLinkLine::GetReferencedContentObjects(TArray<UObject*>& Objects) const
 	}
 	return true;
 }
+#endif
 
 bool ASGLinkLine::ContainsTileAddress(int32 inTileAddress)
 {
@@ -736,5 +737,3 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 		ReplayLinkAniamtion();
 	}
 }
-
-#endif
