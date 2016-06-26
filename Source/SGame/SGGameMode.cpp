@@ -22,6 +22,7 @@ void ASGGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Create messaeng end point for game mode
 	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_GameMode")
 		.Handling<FMessage_Gameplay_GameStart>(this, &ASGGameMode::HandleGameStart)
 		.Handling<FMessage_Gameplay_GameStatusUpdate>(this, &ASGGameMode::HandleGameStatusUpdate)
