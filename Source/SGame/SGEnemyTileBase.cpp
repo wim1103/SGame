@@ -21,11 +21,11 @@ ASGEnemyTileBase::ASGEnemyTileBase()
 	PlayHitDuration = 0.3f;
 
 	Text_Attack = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComponent-Attack"));
-	Text_Attack->AttachParent = RootComponent;
+	Text_Attack->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	Text_Armor = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComponent-Armor"));
-	Text_Armor->AttachParent = RootComponent;
+	Text_Armor->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	Text_HP = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComponent-HP"));
-	Text_HP->AttachParent = RootComponent;
+	Text_HP->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 void ASGEnemyTileBase::TickAttacking(float DeltaSeconds)

@@ -10,6 +10,9 @@ ASGSkillBase::ASGSkillBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	RenderComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("PlayerPawnSprite"));
+	RenderComponent->Mobility = EComponentMobility::Movable;
+	RenderComponent->AttachParent = RootComponent;
 }
 
 // Called when the game starts or when spawned
@@ -26,5 +29,16 @@ void ASGSkillBase::BeginPlay()
 void ASGSkillBase::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
+}
+
+bool ASGSkillBase::GetReferencedContentObjects(TArray<UObject*>& Objects) const
+{
+	Super::GetReferencedContentObjects(Objects);
+
+	if (UPaperSprite* SourceSprite = RenderComponent->GetSprite())
+	{
+		Objects.Add(SourceSprite);
+	}
+	return true;
 }
 

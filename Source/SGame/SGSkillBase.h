@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "PaperSpriteComponent.h"
 #include "SGSkillBase.generated.h"
 
 USTRUCT()
@@ -47,6 +48,15 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayerUseSkill();
 
+	// AActor interface
+#if WITH_EDITOR
+	virtual bool GetReferencedContentObjects(TArray<UObject*>& Objects) const override;
+#endif
+	// End of AActor interface
+
+	/** Returns RenderComponent subobject **/
+	FORCEINLINE class UPaperSpriteComponent* GetRenderComponent() const { return RenderComponent; }
+
 protected:
 
 	/** Whether the enemy can take damage */
@@ -60,4 +70,7 @@ protected:
 	/** Remaining CD for the skill */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Skill)
 	int32 RemainingCD;
+
+	UPROPERTY(Category = Sprite, VisibleAnywhere, BlueprintReadOnly, meta = (ExposeFunctionCategories = "Sprite,Rendering,Physics,Components|Sprite", AllowPrivateAccess = "true"))
+	class UPaperSpriteComponent* RenderComponent;
 };

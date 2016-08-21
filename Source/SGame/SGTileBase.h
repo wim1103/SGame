@@ -60,27 +60,27 @@ public:
 
 	/** When a tile is touched. */
 	UFUNCTION()
-	void TilePress(ETouchIndex::Type FingerIndex);
+	void TilePress(ETouchIndex::Type FingerIndex, AActor* TouchedActor);
 
 	/** When the user's finger moves over a tile. */
 	UFUNCTION()
-	void TileEnter(ETouchIndex::Type FingerIndex);
+	void TileEnter(ETouchIndex::Type FingerIndex, AActor* TouchedActor);
 
 	/** When the user's finger release a tile*/
 	UFUNCTION()
-	void TileRelease(ETouchIndex::Type FingerIndex);
+	void TileRelease(ETouchIndex::Type FingerIndex, AActor* TouchedActor);
 
 	/** Mouse surrogate for TilePress. */
 	UFUNCTION()
-	void TilePress_Mouse();
+	void TilePress_Mouse(AActor* TouchedActor, FKey ButtonPressed);
 
 	/** Mouse surrogate for TileEnter. */
 	UFUNCTION()
-	void TileEnter_Mouse();
+	void TileEnter_Mouse(AActor* TouchedActor);
 
 	/** Mouse surrogate for TileRelease*/
 	UFUNCTION()
-	void TileRelease_Mouse();
+	void TileRelease_Mouse(AActor* TouchedActor, FKey ButtonPressed);
 
 	/** Is current tile selecatable*/
 	UFUNCTION()

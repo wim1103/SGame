@@ -16,12 +16,12 @@ ASGLinkLine::ASGLinkLine(): ReplayAnimQueue(FAsyncQueue::Create())
 
 	HeadSpriteRenderComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("LinkLineSpriteComponent-Head"));
 	HeadSpriteRenderComponent->Mobility = EComponentMobility::Movable;
-	HeadSpriteRenderComponent->AttachParent = RootComponent;
+	HeadSpriteRenderComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	HeadSpriteRenderComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	TailSpriteRenderComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("LinkLineSpriteComponent-Tail"));
 	TailSpriteRenderComponent->Mobility = EComponentMobility::Movable;
-	TailSpriteRenderComponent->AttachParent = RootComponent;
+	TailSpriteRenderComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	TailSpriteRenderComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	ReplayHeadAnimationDuration = 0.3f;
@@ -84,7 +84,7 @@ bool ASGLinkLine::UpdateLinkLineSprites(const TArray<int32>& LinePoints)
 	{
 		checkSlow(BodySpriteRenderComponentsArray[i] != nullptr);
 		// Detach the component
-		BodySpriteRenderComponentsArray[i]->DetachFromParent();
+		BodySpriteRenderComponentsArray[i]->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
 		BodySpriteRenderComponentsArray[i]->UnregisterComponent();
 	}
 	BodySpriteRenderComponentsArray.Empty();
@@ -443,7 +443,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngl
 	NewSprite = NewObject<UPaperSpriteComponent>(this);
 	NewSprite->Mobility = EComponentMobility::Movable;
 	NewSprite->RegisterComponent();
-	NewSprite->AttachTo(RootComponent);
+	NewSprite->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	NewSprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Rotate to the last angle
@@ -512,7 +512,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead
 		NewSprite->Mobility = EComponentMobility::Movable;
 		NewSprite->SetSprite(BodySprite);
 		NewSprite->RegisterComponent();
-		NewSprite->AttachTo(RootComponent);
+		NewSprite->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 		NewSprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 		// Add to the body sprite array

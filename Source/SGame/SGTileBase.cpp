@@ -62,7 +62,7 @@ void ASGTileBase::Tick( float DeltaTime )
 	TickFalling(DeltaTime);
 }
 
-void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex)
+void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex, AActor* TouchedActor)
 {
 	UE_LOG(LogSGameTile, Log, TEXT("Tile %s was pressed, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
 
@@ -75,7 +75,7 @@ void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex)
 	}
 }
 
-void ASGTileBase::TileEnter(ETouchIndex::Type FingerIndex)
+void ASGTileBase::TileEnter(ETouchIndex::Type FingerIndex, AActor* TouchedActor)
 {
 	UE_LOG(LogSGameTile, Log, TEXT("Tile %s was entered, address (%d,%d)"), *GetName(), GridAddress % 6, GridAddress / 6);
 	FMessage_Gameplay_NewTilePicked* TilePickedMessage = new FMessage_Gameplay_NewTilePicked();
@@ -86,7 +86,7 @@ void ASGTileBase::TileEnter(ETouchIndex::Type FingerIndex)
 	}
 }
 
-void ASGTileBase::TileRelease(ETouchIndex::Type FingerIndex)
+void ASGTileBase::TileRelease(ETouchIndex::Type FingerIndex, AActor* TouchedActor)
 {
 	FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMessage = new FMessage_Gameplay_GameStatusUpdate();
 	GameStatusUpdateMessage->NewGameStatus = ESGGameStatus::EGS_PlayerEndBuildPath;
@@ -97,28 +97,28 @@ void ASGTileBase::TileRelease(ETouchIndex::Type FingerIndex)
 	}
 }
 
-void ASGTileBase::TilePress_Mouse()
+void ASGTileBase::TilePress_Mouse(AActor* TouchedActor, FKey ButtonPressed)
 {
-	TilePress(ETouchIndex::Touch1);
+	TilePress(ETouchIndex::Touch1, TouchedActor);
 }
 
-void ASGTileBase::TileEnter_Mouse()
+void ASGTileBase::TileEnter_Mouse(AActor* TouchedActor)
 {
 	// This is meant to simulate finger-swiping, so ignore if the mouse isn't clicked.
 	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
 	{
 		if (PC->IsInputKeyDown(EKeys::LeftMouseButton))
 		{
-			TileEnter(ETouchIndex::Touch1);
+			TileEnter(ETouchIndex::Touch1, TouchedActor);
 		}
 	}
 }
 
-void ASGTileBase::TileRelease_Mouse()
+void ASGTileBase::TileRelease_Mouse(AActor* TouchedActor, FKey ButtonPressed)
 {
 	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
 	{
-		TileRelease(ETouchIndex::Touch1);
+		TileRelease(ETouchIndex::Touch1, TouchedActor);
 	}
 }
 
