@@ -16,6 +16,7 @@ ASGGrid::ASGGrid(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 
 	TileSize.Set(106.67f, 106.67f);
 	IsAttacking = false;
+	CurrentFallingTileNum = 0;
 }
 
 // Called when the game starts or when spawned
@@ -27,7 +28,9 @@ void ASGGrid::BeginPlay()
 		.Handling<FMessage_Gameplay_LinkedTilesCollect>(this, &ASGGrid::HandleTileArrayCollect)
 		.Handling<FMessage_Gameplay_NewTilePicked>(this, &ASGGrid::HandleNewTileIsPicked)
 		.Handling<FMessage_Gameplay_CollectLinkLine>(this, &ASGGrid::HandleCollectLinkLine)
-		.Handling<FMessage_Gameplay_EnemyBeginAttack>(this, &ASGGrid::HandleBeginAttack);
+		.Handling<FMessage_Gameplay_EnemyBeginAttack>(this, &ASGGrid::HandleBeginAttack)
+		.Handling<FMessage_Gameplay_TileBeginMove>(this, &ASGGrid::HandleTileBeginMove)
+		.Handling<FMessage_Gameplay_TileEndMove>(this, &ASGGrid::HandleTileEndMove);
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the grid needed messages
@@ -35,6 +38,8 @@ void ASGGrid::BeginPlay()
 		MessageEndpoint->Subscribe<FMessage_Gameplay_NewTilePicked>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_CollectLinkLine>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyBeginAttack>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_TileBeginMove>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_TileEndMove>();
 	}
 
 	// Initialize the grid
@@ -151,7 +156,7 @@ void ASGGrid::Condense()
 			checkSlow(testTile);
 
 			// Update the tile new address
-			FMessage_Gameplay_TileMoved* TileMoveMessage = new FMessage_Gameplay_TileMoved();
+			FMessage_Gameplay_TileBeginMove* TileMoveMessage = new FMessage_Gameplay_TileBeginMove();
 			TileMoveMessage->TileID = testTile->GetTileID();
 			TileMoveMessage->OldTileAddress = testTile->GetGridAddress();
 			TileMoveMessage->NewTileAddress = ColumnRowToGridAddress(columnIndex, rowIndex + MoveDownNum);
@@ -174,6 +179,7 @@ void ASGGrid::Condense()
 
 void ASGGrid::RefillGrid()
 {
+	bool bNeedRefill = false;
 	for (int32 Col = 0; Col < GridWidth; ++Col)
 	{
 		int TopGridAddress = ColumnRowToGridAddress(Col, 0);
@@ -200,7 +206,16 @@ void ASGGrid::RefillGrid()
 			}
 		}
 
-		RefillColumn(Col, RowNum);
+		if (RowNum > 0)
+		{
+			RefillColumn(Col, RowNum);
+			bNeedRefill = true;
+		}
+	}
+
+	if (bNeedRefill == false)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("Nothing to refill, error"));
 	}
 
 	// After all reset the tile state
@@ -245,7 +260,7 @@ void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, ASGTileBase* inTile
 	checkSlow(inTile != nullptr);
 
 	// Send the tile move message to the tile
-	FMessage_Gameplay_TileMoved* TileMoveMessage = new FMessage_Gameplay_TileMoved();
+	FMessage_Gameplay_TileBeginMove* TileMoveMessage = new FMessage_Gameplay_TileBeginMove();
 	TileMoveMessage->TileID = inTile->GetTileID();
 	TileMoveMessage->OldTileAddress = -1;
 	TileMoveMessage->NewTileAddress = inGridAddress;
@@ -481,7 +496,7 @@ bool ASGGrid::CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect)
 		MessageEndpoint->Publish(ResouceCollectMessage, EMessageScope::Process);
 	}
 
-	// Finally, tell the grid we have finish collect resource, the tileis collected
+	// Finally, tell the grid we have finish collect resource, the tiles are collected
 	if (CollectedTileAddressArray.Num() > 0)
 	{
 		FMessage_Gameplay_LinkedTilesCollect* Message = new FMessage_Gameplay_LinkedTilesCollect();
@@ -563,6 +578,29 @@ void ASGGrid::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Messag
 		MessageEndpoint->Publish(PlayerTakeDamageMessage, EMessageScope::Process);
 
 		BeginAttackFadeAnimation();
+	}
+}
+
+void ASGGrid::HandleTileBeginMove(const FMessage_Gameplay_TileBeginMove& Message, const IMessageContextRef& Context)
+{
+	checkSlow(CurrentFallingTileNum >= 0);
+
+	CurrentFallingTileNum++;
+}
+
+void ASGGrid::HandleTileEndMove(const FMessage_Gameplay_TileEndMove& Message, const IMessageContextRef& Context)
+{
+	checkSlow(CurrentFallingTileNum > 0);
+
+	CurrentFallingTileNum--;
+	if (CurrentFallingTileNum == 0)
+	{
+		// Send the message indicate that all the tiles have finished falling
+		if (MessageEndpoint.IsValid() == true)
+		{
+			FMessage_Gameplay_AllTileFinishMove* FinishMoveMessage = new FMessage_Gameplay_AllTileFinishMove();
+			MessageEndpoint->Publish(FinishMoveMessage, EMessageScope::Process);
+		}
 	}
 }
 

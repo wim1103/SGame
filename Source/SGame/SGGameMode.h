@@ -122,6 +122,9 @@ private:
 	/** Handles the game status update messages. */
 	void HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdate& Message, const IMessageContextRef& Context);
 
+	/** Handle all tile has finish moving message, push the game procesdure to next stage */
+	void HandleAllTileFinishMoving(const FMessage_Gameplay_AllTileFinishMove& Message, const IMessageContextRef& Context);
+
 	ESGGameStatus::Type CurrentGameGameStatus;
 	ESGGameStatus::Type NextGameStatus;
 

@@ -69,7 +69,12 @@ public:
 		return (GridHeight - rowIndex - 1) * GridWidth + columnIndex;
 	}
 
+	/** Helper to get tile manager */
 	USGTileManager*	GetTileManager() const { return TileManager; }
+
+	/** Is some tile is moving */
+	UFUNCTION(BlueprintCallable, Category = Tile)
+	bool IsSomeTileFalling() { return CurrentFallingTileNum > 0; }
 
 protected:
 	/** Contains the tile only on the grid */
@@ -138,6 +143,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Tile)
 	FVector2D TileSize;
 
+	/** Current falling tile num */
+	UPROPERTY(BlueprintReadOnly, Category = Tile)
+	int32 CurrentFallingTileNum;
+
 	/** The width of the grid. Needed to calculate tile positions and neighbors. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
 	int32 GridWidth;
@@ -179,6 +188,12 @@ private:
 
 	/** Handle begin attack event*/
 	void HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context);
+
+	/** Handle when some tile begin move, just increase the count*/
+	void HandleTileBeginMove(const FMessage_Gameplay_TileBeginMove& Message, const IMessageContextRef& Context);
+
+	/** Handle when some tile end move, just decrease the count*/
+	void HandleTileEndMove(const FMessage_Gameplay_TileEndMove& Message, const IMessageContextRef& Context);
 
 	void UpdateTileSelectState();
 	void UpdateTileLinkState();

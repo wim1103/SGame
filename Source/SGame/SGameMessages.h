@@ -121,7 +121,7 @@ struct FMessage_Gameplay_DamageToTile
 * Tile moved message
 */
 USTRUCT()
-struct FMessage_Gameplay_TileMoved
+struct FMessage_Gameplay_TileBeginMove
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -136,6 +136,28 @@ struct FMessage_Gameplay_TileMoved
 	/** The old grid address */
 	UPROPERTY()
 	int32 NewTileAddress;
+};
+
+/**
+* Tile moved message
+*/
+USTRUCT()
+struct FMessage_Gameplay_TileEndMove
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** The tile id */
+	UPROPERTY()
+	int32 TileID;
+};
+
+/**
+* All tile finish move
+*/
+USTRUCT()
+struct FMessage_Gameplay_AllTileFinishMove
+{
+	GENERATED_USTRUCT_BODY()
 };
 
 /**

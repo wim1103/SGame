@@ -37,7 +37,7 @@ void ASGTileBase::BeginPlay()
 	MessageEndpoint = FMessageEndpoint::Builder(*EndPointName)
 		.Handling<FMessage_Gameplay_TileSelectableStatusChange>(this, &ASGTileBase::HandleSelectableStatusChange)
 		.Handling<FMessage_Gameplay_TileLinkedStatusChange>(this, &ASGTileBase::HandleLinkStatusChange)
-		.Handling<FMessage_Gameplay_TileMoved>(this, &ASGTileBase::HandleTileMove)
+		.Handling<FMessage_Gameplay_TileBeginMove>(this, &ASGTileBase::HandleTileMove)
 		.Handling<FMessage_Gameplay_TileCollect>(this, &ASGTileBase::HandleTileCollected)
 		.Handling<FMessage_Gameplay_DamageToTile>(this, &ASGTileBase::HandleTakeDamage);
 
@@ -46,7 +46,7 @@ void ASGTileBase::BeginPlay()
 		// Subscribe the tile need events
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileSelectableStatusChange>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileLinkedStatusChange>();
-		MessageEndpoint->Subscribe<FMessage_Gameplay_TileMoved>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_TileBeginMove>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileCollect>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_DamageToTile>();
 	}
@@ -317,7 +317,7 @@ void ASGTileBase::HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatu
 	}
 }
 
-void ASGTileBase::HandleTileMove(const FMessage_Gameplay_TileMoved& Message, const IMessageContextRef& Context)
+void ASGTileBase::HandleTileMove(const FMessage_Gameplay_TileBeginMove& Message, const IMessageContextRef& Context)
 {
 	FILTER_MESSAGE;
 
@@ -340,5 +340,13 @@ void ASGTileBase::FinishFalling()
 	SetActorLocation(FallingEndLocation);
 	TotalFallingTime = -1;
 	FallingElapsedTime = 0;
+
+	if (MessageEndpoint.IsValid() == true)
+	{
+		// Send the finish move message to other module
+		FMessage_Gameplay_TileEndMove* Message = new FMessage_Gameplay_TileEndMove();
+		Message->TileID = TileID;
+		MessageEndpoint->Publish(Message, EMessageScope::Process);
+	}
 }
 

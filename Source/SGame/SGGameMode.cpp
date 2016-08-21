@@ -26,12 +26,14 @@ void ASGGameMode::BeginPlay()
 	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_GameMode")
 		.Handling<FMessage_Gameplay_GameStart>(this, &ASGGameMode::HandleGameStart)
 		.Handling<FMessage_Gameplay_GameStatusUpdate>(this, &ASGGameMode::HandleGameStatusUpdate)
+		.Handling<FMessage_Gameplay_AllTileFinishMove>(this, &ASGGameMode::HandleAllTileFinishMoving)
 		.WithInbox();
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Subscribe the game mode needed messages
 		MessageEndpoint->Subscribe<FMessage_Gameplay_GameStart>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_GameStatusUpdate>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_AllTileFinishMove>();
 	}
 
 	// Find the grid actor in the world
@@ -175,13 +177,6 @@ void ASGGameMode::OnPlayerEndBuildPathStage()
 	checkSlow(CurrentLinkLine);
 	CurrentLinkLine->OnPlayerFinishBuildPath();
 
-	// Currently, set a timer function to move to next stage
-	// to give the falling animation time
-	GetWorldTimerManager().SetTimer(PlayerEndInputTimer, this, &ASGGameMode::TimerPlayerEndInput, 5, false);
-}
-
-void ASGGameMode::TimerPlayerEndInput()
-{
 	// Change the next status to player end input
 	if (MessageEndpoint.IsValid())
 	{
@@ -272,6 +267,18 @@ void ASGGameMode::HandleGameStatusUpdate(const FMessage_Gameplay_GameStatusUpdat
 	}
 }
 
+void ASGGameMode::HandleAllTileFinishMoving(const FMessage_Gameplay_AllTileFinishMove& Message, const IMessageContextRef& Context)
+{
+	if (CurrentGameGameStatus == ESGGameStatus::EGS_PlayerEndInput)
+	{
+		// Send to enemy attack stage
+		checkSlow(MessageEndpoint.IsValid());
+		FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
+		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_EnemyAttack;
+		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
+	}
+}
+
 void ASGGameMode::OnEnemyAttackStage()
 {
 	UE_LOG(LogSGameProcedure, Log, TEXT("Enemy attack stage!"));
@@ -325,10 +332,5 @@ void ASGGameMode::OnPlayerEndInputStage()
 {
 	UE_LOG(LogSGameProcedure, Log, TEXT("Player end input!"));
 
-	checkSlow(MessageEndpoint.IsValid());
 
-	// Send to enemy attack stage
-	FMessage_Gameplay_GameStatusUpdate* GameStatusUpdateMesssage = new FMessage_Gameplay_GameStatusUpdate();
-	GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_EnemyAttack;
-	MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
 }

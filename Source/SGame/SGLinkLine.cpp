@@ -397,8 +397,15 @@ void ASGLinkLine::EndReplayLinkAnimation()
 		checkSlow(ParentGrid);
 		ParentGrid->CollectTileArray(CachedCollectTiles);
 	}
+	else
+	{
+		// We don't need to refill the grid, send tile finish moving message directly
+		checkSlow(MessageEndpoint.IsValid());
+		FMessage_Gameplay_AllTileFinishMove* Message = new FMessage_Gameplay_AllTileFinishMove();
+		MessageEndpoint->Publish(Message, EMessageScope::Process);
+	}
 	
-	// Reset the linklin afterall
+	// Reset the linkline after all
 	ResetLinkState();
 }
 

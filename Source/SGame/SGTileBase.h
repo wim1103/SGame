@@ -206,7 +206,7 @@ private:
 	void HandleLinkStatusChange(const FMessage_Gameplay_TileLinkedStatusChange& Message, const IMessageContextRef& Context);
 
 	/** Handles tile become selectalbe */
-	void HandleTileMove(const FMessage_Gameplay_TileMoved& Message, const IMessageContextRef& Context);
+	void HandleTileMove(const FMessage_Gameplay_TileBeginMove& Message, const IMessageContextRef& Context);
 
 	/** Handle tile collected */
 	void HandleTileCollected(const FMessage_Gameplay_TileCollect& Message, const IMessageContextRef& Context);

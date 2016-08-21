@@ -11,11 +11,11 @@ ASGSpritePawn::ASGSpritePawn()
 
 	RenderComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("PlayerPawnSprite"));
 	RenderComponent->Mobility = EComponentMobility::Movable;
-	RenderComponent->AttachParent = RootComponent;
+	RenderComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 
 	PlayerHitPSC = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("PlayerHitPSC"));
 	PlayerHitPSC->Mobility = EComponentMobility::Movable;
-	PlayerHitPSC->AttachParent = RootComponent;
+	PlayerHitPSC->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	PlayerHitPSC->bAutoActivate = false;
 
 	HPMax = 100;
