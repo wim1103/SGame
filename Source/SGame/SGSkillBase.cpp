@@ -12,7 +12,7 @@ ASGSkillBase::ASGSkillBase()
 
 	RenderComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("PlayerPawnSprite"));
 	RenderComponent->Mobility = EComponentMobility::Movable;
-	RenderComponent->AttachParent = RootComponent;
+	RenderComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 // Called when the game starts or when spawned
