@@ -226,24 +226,21 @@ struct FMessage_Gameplay_ResourceCollect
 
 /** Defines the game state */
 UENUM()
-namespace ESGGameStatus
+enum class ESGGameStatus : uint8
 {
-	enum Type
-	{
-		EGS_Init,					// Initial value
-		EGS_GameStart,				// Shield
-		EGS_RondBegin,				// New round begin
-		EGS_PlayerTurnBegin,		// Player turn begin
-		EGS_PlayerRegengerate,		// Player regenerate
-		EGS_PlayerSkillCD,			// Player regenerate
-		EGS_PlayerBeginInput,		// Player begin input, can link line or use the skill
-		EGS_PlayerEndBuildPath,		// Player end build the path, but he can still use skill or buy some thing
-		EGS_PlayerEndInput,			// Player end input, his turn end
-		EGS_EnemyAttack,			// Enemy attack player
-		EGS_RoundEnd,				// End of the round
-		EGS_GameOver,				// Game over
-	};
-}
+	EGS_Init,					// Initial value
+	EGS_GameStart,				// Game start
+	EGS_RondBegin,				// New round begin
+	EGS_PlayerTurnBegin,		// Player turn begin
+	EGS_PlayerRegengerate,		// Player regenerate
+	EGS_PlayerSkillCD,			// Player skill CD
+	EGS_PlayerBeginInput,		// Player begin input, can link line or use the skill
+	EGS_PlayerEndBuildPath,		// Player end build the path, but he can still use skill or buy some thing
+	EGS_PlayerEndInput,			// Player end input, his turn end
+	EGS_EnemyAttack,			// Enemy attack player
+	EGS_RoundEnd,				// End of the round
+	EGS_GameOver,				// Game over
+};
 
 /**
  * Game status update messages
@@ -255,7 +252,7 @@ struct FMessage_Gameplay_GameStatusUpdate
 
 	/** The new game status */
 	UPROPERTY()
-	TEnumAsByte<ESGGameStatus::Type> NewGameStatus;
+	ESGGameStatus NewGameStatus;
 };
 
 /**

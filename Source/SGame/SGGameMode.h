@@ -31,11 +31,7 @@ public:
 
 	/** Initialize the tiles on the grid*/
 	UFUNCTION(BlueprintCallable, Category = Game)
-	void SetNextStatus(ESGGameStatus::Type inNewStatus);
-
-	/** Initialize the tiles on the grid*/
-	UFUNCTION(BlueprintCallable, Category = Game)
-	ESGGameStatus::Type GetCurrentGameStatus();
+	ESGGameStatus GetCurrentGameStatus();
 
 	/** Begin the new round */
 	UFUNCTION(BlueprintCallable, Category = Game)
@@ -125,8 +121,8 @@ private:
 	/** Handle all tile has finish moving message, push the game procesdure to next stage */
 	void HandleAllTileFinishMoving(const FMessage_Gameplay_AllTileFinishMove& Message, const IMessageContextRef& Context);
 
-	ESGGameStatus::Type CurrentGameGameStatus;
-	ESGGameStatus::Type NextGameStatus;
+	/** Current game status for this mode*/
+	ESGGameStatus CurrentGameGameStatus;
 
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;

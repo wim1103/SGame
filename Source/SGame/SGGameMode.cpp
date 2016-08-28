@@ -73,12 +73,7 @@ void ASGGameMode::BeginPlay()
 	}
 }
 
-void ASGGameMode::SetNextStatus(ESGGameStatus::Type inNewStatus)
-{
-	NextGameStatus = inNewStatus;
-}
-
-ESGGameStatus::Type ASGGameMode::GetCurrentGameStatus()
+ESGGameStatus ASGGameMode::GetCurrentGameStatus()
 {
 	return CurrentGameGameStatus;
 }
