@@ -5,33 +5,27 @@
 
 /** Types of tile base type. */
 UENUM()
-namespace ESGTileType
+enum class ESGTileType : uint8
 {
-	enum Type
-	{
-		ETT_Sword = 0,					// Sword
-		ETT_Shield = 1,					// Shield
-		ETT_Potion = 2,					// Potion
-		ETT_Coin = 3,					// Coin
-		ETT_Mana = 4,					// Mana
-		ETT_Arrow = 5,					// Arrow
-		ETT_Soldier = 6					// Soldier
-	};
-}
+	ETT_Sword = 0,					// Sword
+	ETT_Shield = 1,					// Shield
+	ETT_Potion = 2,					// Potion
+	ETT_Coin = 3,					// Coin
+	ETT_Mana = 4,					// Mana
+	ETT_Arrow = 5,					// Arrow
+	ETT_Soldier = 6					// Soldier
+};
 
 /** Types of resource type. */
 UENUM()
-namespace ESGResourceType
+enum class ESGResourceType : uint8
 {
-	enum Type
-	{
-		ETR_HP = 0,						// HP of the player
-		ETT_Armor = 1,					// Armor of the player
-		ETT_Money = 2,					// Money
-		ETT_XP = 3,						// In game player xp
-		ETT_MAX = 4,					// Max resource type
-	};
-}
+	ETR_HP = 0,						// HP of the player
+	ETT_Armor = 1,					// Armor of the player
+	ETT_Money = 2,					// Money
+	ETT_XP = 3,						// In game player xp
+	ETT_MAX = 4,					// Max resource type
+};
 
 /** The tile resource unit, which can be collected */
 USTRUCT()
@@ -40,7 +34,7 @@ struct FTileResourceUnit
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TEnumAsByte<ESGResourceType::Type> ResourceType;
+	ESGResourceType ResourceType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float					ResourceAmount;
 };

@@ -463,8 +463,8 @@ TArray<ASGTileBase*> ASGGrid::GetTileSquareFromColumnAndRow(int32 inColumn, int3
 bool ASGGrid::CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect)
 {
 	// Collect resouce array, using the resource type as index
-	TArray<float> SummmpResource;
-	SummmpResource.AddZeroed(ESGResourceType::ETT_MAX);
+	TArray<float> SumupResource;
+	SumupResource.AddZeroed(static_cast<int32>(ESGResourceType::ETT_MAX));
 
 	// Array of tile address should be collected, used for condense the grid
 	TArray<int32> CollectedTileAddressArray;
@@ -483,14 +483,14 @@ bool ASGGrid::CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect)
 		for (int j = 0; j < TileResource.Num(); j++)
 		{
 			// Sumup the resource
-			SummmpResource[TileResource[j].ResourceType] += TileResource[j].ResourceAmount;
+			SumupResource[static_cast<int32>(TileResource[j].ResourceType)] += TileResource[j].ResourceAmount;
 		}
 	}
 
-	if (SummmpResource.Num() > 0)
+	if (SumupResource.Num() > 0)
 	{
 		FMessage_Gameplay_ResourceCollect* ResouceCollectMessage = new FMessage_Gameplay_ResourceCollect();
-		ResouceCollectMessage->SummupResouces = SummmpResource;
+		ResouceCollectMessage->SummupResouces = SumupResource;
 
 		checkSlow(MessageEndpoint.IsValid());
 		MessageEndpoint->Publish(ResouceCollectMessage, EMessageScope::Process);

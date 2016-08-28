@@ -68,11 +68,11 @@ void ASGSpritePawn::HandlePlayerTakeDamage(const FMessage_Gameplay_PlayerTakeDam
 
 void ASGSpritePawn::HandleCollectResouce(const FMessage_Gameplay_ResourceCollect& Message, const IMessageContextRef& Context)
 {
-	CurrentHP += Message.SummupResouces[ESGResourceType::ETR_HP];
+	CurrentHP += Message.SummupResouces[static_cast<int32>(ESGResourceType::ETR_HP)];
 	FMath::Clamp(CurrentHP, 0, HPMax);
 	SetCurrentHealth(CurrentHP);
 
-	CurrentArmor += Message.SummupResouces[ESGResourceType::ETT_Armor];
+	CurrentArmor += Message.SummupResouces[static_cast<int32>(ESGResourceType::ETT_Armor)];
 	FMath::Clamp(CurrentArmor, 0, ArmorMax);
 }
 
