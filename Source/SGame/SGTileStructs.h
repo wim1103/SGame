@@ -87,6 +87,10 @@ struct FSGTileAbilities
 	/** Whether the enemy can take damage */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanCauseDamage;
+
+	/** Whether the enemy can cause custom behavior */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanCauseCustomBehavior;
 };
 
 /** Types of every possible tile state flag that the tile will be in, note it can be in multiple state */
