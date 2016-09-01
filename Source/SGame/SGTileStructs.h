@@ -91,19 +91,16 @@ struct FSGTileAbilities
 
 /** Types of every possible tile state flag that the tile will be in, note it can be in multiple state */
 UENUM()
-namespace ESGTileStatusFlag
+enum class ESGTileStatusFlag : uint8
 {
-	enum Type
-	{
-		ESF_STATUS_CHANGED,		// Tile status has changed
-		ESF_POISONED,			// Tile is posioned
-		ESF_BURNING,			// Tile is burning
-		ESF_PATH_TYPE,			// Tile is the same type as path
-		ESF_DEAD,				// Tile is dead
-		ESF_SELECTABLE,			// Tile is linkable
-		ESF_MATCHABLE,			// Tile is matchable to the current path
-		ESF_BROKEN,				// Tile is broken
-		ESF_FROZEN,				// Tile is frozen
-		ESF_LINKED,				// Tile is linked
-	};
-}
+	ESF_STATUS_CHANGED,		// Tile status has changed
+	ESF_POISONED,			// Tile is posioned
+	ESF_BURNING,			// Tile is burning
+	ESF_PATH_TYPE,			// Tile is the same type as path
+	ESF_DEAD,				// Tile is dead
+	ESF_SELECTABLE,			// Tile is linkable
+	ESF_MATCHABLE,			// Tile is matchable to the current path
+	ESF_BROKEN,				// Tile is broken
+	ESF_FROZEN,				// Tile is frozen
+	ESF_LINKED,				// Tile is linked
+};

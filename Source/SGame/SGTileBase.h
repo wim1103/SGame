@@ -24,11 +24,11 @@ struct FSGTileData
 public:
 	/** The base type of the current tile*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TEnumAsByte<ESGTileType> TileType;
+	ESGTileType TileType;
 
 	/** The current tile status flag, should not be accessed anywhere, for test convenient now*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray< TEnumAsByte<ESGTileStatusFlag::Type> > TileStatusArray;
+	TArray<ESGTileStatusFlag> TileStatusArray;
 
 	/** The current tile resource info*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
