@@ -31,6 +31,7 @@ void ASGSkillBase::Tick( float DeltaTime )
 	Super::Tick( DeltaTime );
 }
 
+#if WITH_EDITOR
 bool ASGSkillBase::GetReferencedContentObjects(TArray<UObject*>& Objects) const
 {
 	Super::GetReferencedContentObjects(Objects);
@@ -41,4 +42,5 @@ bool ASGSkillBase::GetReferencedContentObjects(TArray<UObject*>& Objects) const
 	}
 	return true;
 }
+#endif
 
