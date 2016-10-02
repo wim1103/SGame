@@ -108,11 +108,9 @@ public:
 	FSGTileData Data;
 
 	// Falling functions
+	UFUNCTION(BlueprintImplementableEvent)
 	void StartFalling();
 	void FinishFalling();
-	
-	UFUNCTION()
-	void TickFalling(float DeltaTime);
 
 	// Currently all the tile can be collect, even the enemy tile, because it can 
 	// be part of the XP resouces
@@ -154,11 +152,11 @@ protected:
 	// The sprite asset for link corners 45 degree
 	UPROPERTY(Category = Sprite, EditAnywhere, BlueprintReadOnly, meta = (DisplayThumbnail = "true"))
 	UPaperSprite* Sprite_Normal;
-
-	// Handle falling
-	float TotalFallingTime;
-	float FallingElapsedTime;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
 	FVector FallingStartLocation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
 	FVector FallingEndLocation;
 
 	/** Current tile's Id */

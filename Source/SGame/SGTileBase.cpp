@@ -13,10 +13,6 @@ ASGTileBase::ASGTileBase()
 
 	// We want the tile can be moved (falling), so we need a root component
 	SetRootComponent(GetRenderComponent());
-
-	// Indicate there is no falling happend now
-	TotalFallingTime = -1;
-	FallingElapsedTime = 0;
 }
 
 // Called when the game starts or when spawned
@@ -59,7 +55,7 @@ void ASGTileBase::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
 
-	TickFalling(DeltaTime);
+	// TickFalling(DeltaTime);
 }
 
 void ASGTileBase::TilePress(ETouchIndex::Type FingerIndex, AActor* TouchedActor)
@@ -135,36 +131,6 @@ void ASGTileBase::SetGridAddress(int32 NewLocation)
 int32 ASGTileBase::GetGridAddress() const
 {
 	return GridAddress;
-}
-
-void ASGTileBase::StartFalling()
-{
-
-}
-
-void ASGTileBase::TickFalling(float DeltaTime)
-{
-	if (TotalFallingTime < 0)
-	{
-		// Indicate no falling will happen
-		return;
-	}
-
-	if (FallingElapsedTime < TotalFallingTime)
-	{
-		FallingElapsedTime += DeltaTime;
-	}
-
-	float Ratio = FallingElapsedTime / TotalFallingTime;
-	if (Ratio >= 1.0f)
-	{
-		FinishFalling();
-	}
-	else
-	{
-		FVector NewLocation = FMath::Lerp(FallingStartLocation, FallingEndLocation, Ratio);
-		SetActorLocation(NewLocation);
-	}
 }
 
 void ASGTileBase::OnTileCollected()
@@ -246,7 +212,11 @@ bool ASGTileBase::EvaluateDamageToTile(const TArray<FTileDamageInfo>& DamageInfo
 
 void ASGTileBase::OnTweenCompleteNative(AiTweenEvent* eventOperator, AActor* actorTweening, USceneComponent* componentTweening, UWidget* widgetTweening, FName tweenName, FHitResult sweepHitResultForMoveEvents, bool successfulTransform)
 {
-	UE_LOG(LogSGame, Log, TEXT("Tile finish tweening"));
+	if (tweenName == TEXT("Falling"))
+	{
+		UE_LOG(LogSGame, Log, TEXT("Tile %d finished moved to the new address %d"), TileID, GridAddress);
+		FinishFalling();
+	}
 }
 
 void ASGTileBase::HandleTakeDamage(const FMessage_Gameplay_DamageToTile& Message, const IMessageContextRef& Context)
@@ -328,24 +298,24 @@ void ASGTileBase::HandleTileMove(const FMessage_Gameplay_TileBeginMove& Message,
 
 	UE_LOG(LogSGameTile, Log, TEXT("Tile ID: %d, at old address: %d will move to the new address %d"), Message.TileID, Message.OldTileAddress, Message.NewTileAddress);
 
-	float FallDistance = 0;
-	FallingStartLocation = GetActorLocation();
-
+	if (Grid == nullptr)
+	{
+		Grid = Cast<ASGGrid>(GetOwner());
+	}
 	check(Grid);
 	FallingEndLocation = Grid->GetLocationFromGridAddress(Message.NewTileAddress);
-	FallDistance = FallingStartLocation.Z - FallingEndLocation.Z;
-	TotalFallingTime = FallDistance / FallingSpeed;
+	FallingStartLocation = GetActorLocation();
 
 	// Set the new grid address
 	SetGridAddress(Message.NewTileAddress);
+
+	// Start the falling
+	StartFalling();
 }
 
 void ASGTileBase::FinishFalling()
 {
 	SetActorLocation(FallingEndLocation);
-	TotalFallingTime = -1;
-	FallingElapsedTime = 0;
-
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Send the finish move message to other module

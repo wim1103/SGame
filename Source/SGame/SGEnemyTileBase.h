@@ -53,7 +53,11 @@ protected:
 
 	/** Begin attack */
 	UFUNCTION(BlueprintCallable, Category = Attack)
-	void BeginAttack();
+	void EnemyAttack();
+
+	// Start Attack, using BP function to implement, since it is more convenient to polish
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartAttack();
 
 	/** End attack */
 	UFUNCTION(BlueprintCallable, Category = Attack)

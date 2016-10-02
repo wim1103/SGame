@@ -20,7 +20,7 @@ void USGCheatManager::BeginAttack()
 	for (TActorIterator<ASGEnemyTileBase> It(GetWorld()); It; ++It)
 	{
 		ASGEnemyTileBase* Tile = *It;
-		Tile->BeginAttack();
+		Tile->EnemyAttack();
 	}
 }
 

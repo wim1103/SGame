@@ -73,7 +73,7 @@ void ASGEnemyTileBase::TickAttacking(float DeltaSeconds)
 	AttackingElapsedTime += DeltaSeconds;
 }
 
-void ASGEnemyTileBase::BeginAttack()
+void ASGEnemyTileBase::EnemyAttack()
 {
 	// Enemy only attack next round
 	ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
@@ -85,16 +85,24 @@ void ASGEnemyTileBase::BeginAttack()
 		return;
 	}
 
-	bIsAttacking = true;
-	AttackingElapsedTime = 0;
+	static bool bUseCodeAttackLogic = false;
+	if (bUseCodeAttackLogic == true)
+	{
+		bIsAttacking = true;
+		AttackingElapsedTime = 0;
 
-	// Pop up our tile on top of the fading sprite
-	this->AddActorWorldOffset(FVector(0.0f, 1000.0f, 0.0f));
+		// Pop up our tile on top of the fading sprite
+		this->AddActorWorldOffset(FVector(0.0f, 1000.0f, 0.0f));
 
-	// Set the attack sprite
-	checkSlow(Sprite_Attacking);
-	checkSlow(GetRenderComponent());
-	GetRenderComponent()->SetSprite(Sprite_Attacking);
+		// Set the attack sprite
+		checkSlow(Sprite_Attacking);
+		checkSlow(GetRenderComponent());
+		GetRenderComponent()->SetSprite(Sprite_Attacking);
+	}
+	else
+	{
+		StartAttack();
+	}
 }
 
 void ASGEnemyTileBase::EndAttack()
@@ -175,7 +183,7 @@ void ASGEnemyTileBase::BeginPlay()
 
 void ASGEnemyTileBase::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
 {
-	BeginAttack();
+	EnemyAttack();
 }
 
 void ASGEnemyTileBase::HandlePlayHit(const FMessage_Gameplay_EnemyGetHit& Message, const IMessageContextRef& Context)

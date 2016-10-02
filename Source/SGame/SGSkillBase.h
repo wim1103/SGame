@@ -44,7 +44,7 @@ public:
 		return (RemainingCD <= 0);
 	}
 
-	/** blueprint event: pickup appears */
+	/** blueprint event: player use skill */
 	UFUNCTION(BlueprintImplementableEvent)
 	void PlayerUseSkill();
 
