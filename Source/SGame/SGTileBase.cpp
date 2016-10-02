@@ -244,6 +244,11 @@ bool ASGTileBase::EvaluateDamageToTile(const TArray<FTileDamageInfo>& DamageInfo
 	return OnTakeTileDamage(DamageInfos, FakeInfo);
 }
 
+void ASGTileBase::OnTweenCompleteNative(AiTweenEvent* eventOperator, AActor* actorTweening, USceneComponent* componentTweening, UWidget* widgetTweening, FName tweenName, FHitResult sweepHitResultForMoveEvents, bool successfulTransform)
+{
+	UE_LOG(LogSGame, Log, TEXT("Tile finish tweening"));
+}
+
 void ASGTileBase::HandleTakeDamage(const FMessage_Gameplay_DamageToTile& Message, const IMessageContextRef& Context)
 {
 	FILTER_MESSAGE;

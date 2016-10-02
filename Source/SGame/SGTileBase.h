@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Messaging.h"
 #include "SGameMessages.h"
+#include "iTween/iTInterface.h"
 
 #include "SGTileBase.generated.h"
 
@@ -44,7 +45,7 @@ public:
 };
 
 UCLASS()
-class SGAME_API ASGTileBase : public APaperSpriteActor
+class SGAME_API ASGTileBase : public APaperSpriteActor, public IiTInterface
 {
 	GENERATED_BODY()
 	
@@ -131,7 +132,8 @@ public:
 	* @return return true means that the tile is dead (life reduce to 0)
 	*/
 	bool EvaluateDamageToTile(const TArray<FTileDamageInfo>& DamageInfos) const;
-	
+
+	virtual void OnTweenCompleteNative(AiTweenEvent* eventOperator, AActor* actorTweening, USceneComponent* componentTweening, UWidget* widgetTweening, FName tweenName, FHitResult sweepHitResultForMoveEvents, bool successfulTransform) override;
 
 protected:
 	/** Location on the grid as a 1D key/value. To find neighbors, ask the grid. */
