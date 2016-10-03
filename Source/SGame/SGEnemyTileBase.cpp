@@ -14,11 +14,6 @@ ASGEnemyTileBase::ASGEnemyTileBase()
 	AttackingShakeFreq = 6;
 	AttackingScaleTimeWindow = 0.1f;
 	AttackingScaleRatio = 1.3f;
-	bIsAttacking = false;
-
-	bIsPlayingHit = false;
-	PlayHitElapsedTime = 0;
-	PlayHitDuration = 0.3f;
 
 	Text_Attack = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComponent-Attack"));
 	Text_Attack->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
@@ -26,51 +21,6 @@ ASGEnemyTileBase::ASGEnemyTileBase()
 	Text_Armor->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	Text_HP = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComponent-HP"));
 	Text_HP->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-}
-
-void ASGEnemyTileBase::TickAttacking(float DeltaSeconds)
-{
-	if (bIsAttacking == false)
-	{
-		return;
-	}
-
-	// Calculate the time ratio
-	float Ratio = AttackingElapsedTime / AttackingDuration;
-	if (Ratio > 1.0f)
-	{
-		EndAttack();
-		return;
-	}
-
-	checkSlow(GetRenderComponent());
-
-	// Scale up the tile
-	if (Ratio < AttackingScaleTimeWindow)
-	{
-		// Calculate the scale up ratio
-		float ScaleUpRatio = FMath::Lerp(1.0f, AttackingScaleRatio, Ratio / AttackingScaleTimeWindow);
-		GetRenderComponent()->SetWorldScale3D(FVector(ScaleUpRatio, ScaleUpRatio, ScaleUpRatio));
-	}
-	// Scale down the tile
-	else if (Ratio > 1 - AttackingScaleTimeWindow)
-	{
-		// Calculate the scale down ratio
-		float ScaleUpRatio = FMath::Lerp(1.0f, AttackingScaleRatio, (1.0f - Ratio) / AttackingScaleTimeWindow);
-		GetRenderComponent()->SetWorldScale3D(FVector(ScaleUpRatio, ScaleUpRatio, ScaleUpRatio));
-	}
-	// We are in shaking 
-	else
-	{
-		// Calculate the shaking ratio
-		float CurrentRatio = (Ratio - AttackingScaleTimeWindow) / (1 - AttackingScaleTimeWindow) * PI * AttackingShakeFreq;
-
-		// Do a sin curve to map to [1, -1]
-		float FinalRatio = FMath::Sin(CurrentRatio);
-		GetRenderComponent()->SetRelativeRotation(FRotator(FinalRatio * AttackingShakeDegree, 0, 0));
-	}
-
-	AttackingElapsedTime += DeltaSeconds;
 }
 
 void ASGEnemyTileBase::EnemyAttack()
@@ -84,34 +34,18 @@ void ASGEnemyTileBase::EnemyAttack()
 		// Skip the spawn round except for the first round
 		return;
 	}
-
-	static bool bUseCodeAttackLogic = false;
-	if (bUseCodeAttackLogic == true)
-	{
-		bIsAttacking = true;
-		AttackingElapsedTime = 0;
-
-		// Pop up our tile on top of the fading sprite
-		this->AddActorWorldOffset(FVector(0.0f, 1000.0f, 0.0f));
-
-		// Set the attack sprite
-		checkSlow(Sprite_Attacking);
-		checkSlow(GetRenderComponent());
-		GetRenderComponent()->SetSprite(Sprite_Attacking);
-	}
-	else
-	{
-		StartAttack();
-	}
+	
+	StartAttackAnimation();
 }
 
-void ASGEnemyTileBase::EndAttack()
+void ASGEnemyTileBase::ResetTile()
 {
 	// Set the flag, disable the attacking tick
 	bIsAttacking = false;
 
 	// Pop down the tile to the original place
 	this->AddActorWorldOffset(FVector(0.0f, -1000.0f, 0.0f));
+	this->SetActorLocation(FallingEndLocation);
 
 	// Make sure the rotation and scale back to origin
 	checkSlow(Sprite_Normal);
@@ -121,35 +55,8 @@ void ASGEnemyTileBase::EndAttack()
 	GetRenderComponent()->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
 }
 
-void ASGEnemyTileBase::TickPlayHit(float DeltaSeconds)
-{
-	if (bIsPlayingHit == false)
-	{
-		return;
-	}
-
-	// Calculate the time ratio
-	float Ratio = PlayHitElapsedTime / PlayHitDuration;
-	if (Ratio > 1.0f)
-	{
-		EndPlayHit();
-		return;
-	}
-
-	// Calculate the shaking ratio
-	float CurrentRatio = Ratio * PI * AttackingShakeFreq;
-
-	// Do a sin curve to map to [1, -1]
-	float FinalRatio = FMath::Sin(CurrentRatio);
-	GetRenderComponent()->SetRelativeRotation(FRotator(FinalRatio * AttackingShakeDegree, 0, 0));
-
-	PlayHitElapsedTime += DeltaSeconds;
-}
-
 void ASGEnemyTileBase::Tick(float DeltaSeconds)
 {
-	TickAttacking(DeltaSeconds);
-	TickPlayHit(DeltaSeconds);
 	Super::Tick(DeltaSeconds);
 }
 
@@ -194,9 +101,8 @@ void ASGEnemyTileBase::HandlePlayHit(const FMessage_Gameplay_EnemyGetHit& Messag
 
 void ASGEnemyTileBase::BeginPlayHit()
 {
-	PlayHitElapsedTime = 0;
-	bIsPlayingHit = true;
-
+	StartPlayHitAnimation();
+	
 	// Ensure the cached message is valid
 	if (CachedDamageMessage.TileID == TileID)
 	{
@@ -219,9 +125,4 @@ void ASGEnemyTileBase::BeginPlayHit()
 			GetRenderComponent()->SetSprite(Sprite_Dead);
 		}
 	}
-}
-
-void ASGEnemyTileBase::EndPlayHit()
-{
-	bIsPlayingHit = false;
 }

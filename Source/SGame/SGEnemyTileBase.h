@@ -47,33 +47,25 @@ protected:
 	UPROPERTY(Category = Text, EditAnywhere, BlueprintReadOnly)
 	UTextRenderComponent* Text_HP;
 
-	/** Tick attacking */
-	UFUNCTION(BlueprintCallable, Category = Attack)
-	void TickAttacking(float DeltaSeconds);
-
 	/** Begin attack */
 	UFUNCTION(BlueprintCallable, Category = Attack)
 	void EnemyAttack();
 
 	// Start Attack, using BP function to implement, since it is more convenient to polish
 	UFUNCTION(BlueprintImplementableEvent)
-	void StartAttack();
+	void StartAttackAnimation();
 
 	/** End attack */
 	UFUNCTION(BlueprintCallable, Category = Attack)
-	void EndAttack();
-
-	/** Tick playing hit */
-	UFUNCTION(BlueprintCallable, Category = Hit)
-	void TickPlayHit(float DeltaSeconds);
+	void ResetTile();
 
 	/** Begin play hit */
 	UFUNCTION(BlueprintCallable, Category = Hit)
 	void BeginPlayHit();
 
-	/** End play hit */
-	UFUNCTION(BlueprintCallable, Category = Attack)
-	void EndPlayHit();
+	// Start Attack, using BP function to implement, since it is more convenient to polish
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartPlayHitAnimation();
 
 	bool	bIsAttacking;
 	bool	bIsPlayingHit;
