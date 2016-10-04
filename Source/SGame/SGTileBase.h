@@ -16,7 +16,6 @@ class ASGGrid;
 	if (FilterMessage(Message.TileID) == false) \
 	return;
 
-
 USTRUCT()
 struct FSGTileData
 {
@@ -42,6 +41,36 @@ public:
 	/** The current tile damage info, only valid if the tile can take damage*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTileLifeArmorInfo LifeArmorInfo;
+};
+
+USTRUCT(BlueprintType)
+struct FSGTileType
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Probability;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class ASGTileBase> TileClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool OverrideBaseAbilities;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FSGTileAbilities Abilities;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool OverrideBaseData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FSGTileData Data;
+
+	FSGTileType()
+	{
+		Probability = 1;
+		TileClass = nullptr;
+	}
 };
 
 UCLASS()

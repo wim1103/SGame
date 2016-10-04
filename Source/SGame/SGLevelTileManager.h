@@ -2,20 +2,26 @@
 
 #pragma once
 
-#include "SGame.h"
+#include "GameFramework/Actor.h"
 #include "SGTileBase.h"
 
-#include "SGTileManager.generated.h"
+#include "SGLevelTileManager.generated.h"
 
-/**
-* Tile Manager for create and destroy tiles
-*/
-UCLASS(BlueprintType)
-class SGAME_API USGTileManager : public UObject
+UCLASS()
+class SGAME_API ASGLevelTileManager : public AActor
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	
+public:	
+	// Sets default values for this actor's properties
+	ASGLevelTileManager();
 
-public:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+	
+	// Called every frame
+	virtual void Tick( float DeltaSeconds ) override;
+
 	ASGTileBase* CreateTile(AActor* inOwner, FVector SpawnLocation, int32 SpawnGridAddress, int32 TileTypeID, int32 CurrentRound);
 	int32 SelectTileFromLibrary();
 	bool DestroyTileWithID(int32 TileIDToDelete);
@@ -24,6 +30,7 @@ public:
 	TArray<FSGTileType> TileLibrary;
 
 	void Initialize();
+
 protected:
 	/** Contains all the tiles in the game, including the disappering tiles */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

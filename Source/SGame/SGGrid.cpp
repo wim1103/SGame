@@ -12,7 +12,15 @@ ASGGrid::ASGGrid(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	TileManager = CreateDefaultSubobject<USGTileManager>(TEXT("TileManager"));
+
+	if (bUseOldTileManager == true)
+	{
+		TileManager = CreateDefaultSubobject<USGTileManager>(TEXT("TileManager"));
+	}
+	else
+	{
+		LevelTileManager = nullptr;
+	}
 
 	TileSize.Set(106.67f, 106.67f);
 	IsAttacking = false;
@@ -46,8 +54,22 @@ void ASGGrid::BeginPlay()
 	GridTiles.Empty(GridWidth * GridHeight);
 	GridTiles.AddZeroed(GridWidth * GridHeight);
 
-	checkSlow(TileManager);
-	TileManager->Initialize();
+	// Spawn the tile manager
+	if (bUseOldTileManager == true)
+	{
+		checkSlow(TileManager);
+		TileManager->Initialize();
+	}
+	else
+	{
+		checkSlow(GetWorld());
+
+		// Set the spawn parameters.
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = nullptr;
+		LevelTileManager = GetWorld()->SpawnActor<ASGLevelTileManager>(LevelTileManagerClass, SpawnParams);
+	}
 
 	// Find the link line actor in the world
 	CurrentLinkLine = nullptr;
@@ -233,7 +255,7 @@ void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
 	for (int startRow = 0; startRow < inNum; startRow++)
 	{
 		// Calculate the new grid address
-		int32 TileID = TileManager->SelectTileFromLibrary();
+		int32 TileID = GetTileManager()->SelectTileFromLibrary();
 		int32 GridAddress;
 		FVector SpawnLocation;
 		GridAddress = ColumnRowToGridAddress(inColumnIndex, startRow);
@@ -243,7 +265,7 @@ void ASGGrid::RefillColumn(int32 inColumnIndex, int32 inNum)
 		SpawnLocation.Z += TileSize.Y * inNum;
 
 		// create the tile at the specified location
-		ASGTileBase* NewTile = TileManager->CreateTile(this, SpawnLocation, GridAddress, TileID, CurrentRound);
+		ASGTileBase* NewTile = GetTileManager()->CreateTile(this, SpawnLocation, GridAddress, TileID, CurrentRound);
 		if (NewTile == nullptr)
 		{
 			UE_LOG(LogSGame, Error, TEXT("Cannot create tile at location %d, %d"), inColumnIndex, startRow);

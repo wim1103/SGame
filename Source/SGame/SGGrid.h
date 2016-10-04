@@ -8,6 +8,7 @@
 #include "Messaging.h"
 #include "SGameMessages.h"
 #include "SGTileManager.h"
+#include "SGLevelTileManager.h"
 #include "SGLinkLine.h"
 
 #include "SGGrid.generated.h"
@@ -70,7 +71,11 @@ public:
 	}
 
 	/** Helper to get tile manager */
-	USGTileManager*	GetTileManager() const { return TileManager; }
+	ASGLevelTileManager* GetTileManager() const 
+	{  
+		checkSlow(LevelTileManager);
+		return LevelTileManager; 
+	}
 
 	/** Is some tile is moving */
 	UFUNCTION(BlueprintCallable, Category = Tile)
@@ -159,9 +164,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
 	int32 GridHeight;
 
+	static const bool bUseOldTileManager = false;
+
 	/** Tile Manager for this grid*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Tile)
 	USGTileManager*		TileManager;
+
+	/** Level tile manager class for this grid*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TileManager)
+	TSubclassOf<class ASGLevelTileManager> LevelTileManagerClass;
+	
+	/** Actual level tile manager class for this grid*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TileManager)
+	ASGLevelTileManager* LevelTileManager;
+
+
 
 	/** 
 	 * Calculate the enemy damage 
