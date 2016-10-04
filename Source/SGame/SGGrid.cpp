@@ -577,7 +577,15 @@ void ASGGrid::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Messag
 		checkSlow(MessageEndpoint.IsValid());
 		MessageEndpoint->Publish(PlayerTakeDamageMessage, EMessageScope::Process);
 
-		BeginAttackFadeAnimation();
+		bool bUseCodeAttackAnimation = false;
+		if (bUseCodeAttackAnimation == true)
+		{
+			BeginAttackFadeAnimation();
+		}
+		else
+		{
+			StartAttackFadeAnimation();
+		}
 	}
 }
 

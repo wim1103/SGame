@@ -96,6 +96,10 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = Grid)
 	void ResetTileLinkInfo();
 
+	// Start Attack, using BP function to implement, since it is more convenient to polish
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartAttackFadeAnimation();
+
 	/** Tick attacking */
 	UFUNCTION()
 	void TickAttackFadeAnimation(float DeltaSeconds);
