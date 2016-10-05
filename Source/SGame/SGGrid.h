@@ -104,24 +104,6 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void StartAttackFadeAnimation();
 
-	/** Tick attacking */
-	UFUNCTION()
-	void TickAttackFadeAnimation(float DeltaSeconds);
-
-	/** Tick attacking */
-	UFUNCTION(BlueprintCallable, Category = Attack)
-	void BeginAttackFadeAnimation();
-
-	/** Tick attacking */
-	UFUNCTION(BlueprintCallable, Category = Attack)
-	void EndAttackFadeAnimation();
-
-	/** How long will it takes to finish a attack */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
-	float AttackingDuration;
-	float AttackingElapsedTime;
-	bool IsAttacking;
-
 	/** The time window to fade in and out */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
 	float FadingTimeWindow;

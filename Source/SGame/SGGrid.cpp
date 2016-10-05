@@ -15,7 +15,6 @@ ASGGrid::ASGGrid(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 
 	LevelTileManager = nullptr;
 	TileSize.Set(106.67f, 106.67f);
-	IsAttacking = false;
 	CurrentFallingTileNum = 0;
 }
 
@@ -79,7 +78,6 @@ void ASGGrid::BeginPlay()
 // Called every frame
 void ASGGrid::Tick( float DeltaTime )
 {
-	TickAttackFadeAnimation(DeltaTime);
 	Super::Tick( DeltaTime );
 }
 
@@ -342,57 +340,6 @@ ASGTileBase* ASGGrid::GetTileFromTileID(int32 inTileID)
 	return nullptr;
 }
 
-void ASGGrid::TickAttackFadeAnimation(float DeltaSeconds)
-{
-	if (IsAttacking == false)
-	{
-		return;
-	}
-
-	float Ratio = AttackingElapsedTime / AttackingDuration;
-	if (Ratio > 1)
-	{
-		EndAttackFadeAnimation();
-		return;
-	}
-
-	// Fade in the translucent sprite
-	if (Ratio < FadingTimeWindow)
-	{
-		checkSlow(AttackFadingSprite && AttackFadingSprite->GetRenderComponent());
-		float FinalAlpha = FMath::Lerp(0.0f, ResultFadingAlpha, Ratio / FadingTimeWindow);
-		AttackFadingSprite->GetRenderComponent()->SetSpriteColor(FLinearColor(1.0f, 1.0f, 1.0f, FinalAlpha));
-	}
-	// Fade out the translucent sprite 
-	else if (Ratio > 1 - FadingTimeWindow)
-	{
-		checkSlow(AttackFadingSprite && AttackFadingSprite->GetRenderComponent());
-		float FinalAlpha = FMath::Lerp(0.0f, ResultFadingAlpha, (1.0f - Ratio) / FadingTimeWindow);
-		AttackFadingSprite->GetRenderComponent()->SetSpriteColor(FLinearColor(1.0f, 1.0f, 1.0f, FinalAlpha));
-	}
-	// Do attacking red point animation
-	else
-	{
-
-	}
-
-	AttackingElapsedTime += DeltaSeconds;
-}
-
-void ASGGrid::BeginAttackFadeAnimation()
-{
-	AttackingElapsedTime = 0;
-	IsAttacking = true;
-}
-
-void ASGGrid::EndAttackFadeAnimation()
-{
-	checkSlow(AttackFadingSprite && AttackFadingSprite->GetRenderComponent());
-	AttackFadingSprite->GetRenderComponent()->SetSpriteColor(FLinearColor(1.0f, 1.0f, 1.0f, 0.f));
-
-	IsAttacking = false;
-}
-
 FVector ASGGrid::GetLocationFromGridAddress(int32 GridAddress)
 {
 	checkSlow(TileSize.X > 0.0f);
@@ -584,15 +531,7 @@ void ASGGrid::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Messag
 		checkSlow(MessageEndpoint.IsValid());
 		MessageEndpoint->Publish(PlayerTakeDamageMessage, EMessageScope::Process);
 
-		bool bUseCodeAttackAnimation = false;
-		if (bUseCodeAttackAnimation == true)
-		{
-			BeginAttackFadeAnimation();
-		}
-		else
-		{
-			StartAttackFadeAnimation();
-		}
+		StartAttackFadeAnimation();
 	}
 }
 
