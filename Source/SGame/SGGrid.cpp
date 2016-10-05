@@ -27,7 +27,6 @@ void ASGGrid::BeginPlay()
 		.Handling<FMessage_Gameplay_LinkedTilesCollect>(this, &ASGGrid::HandleTileArrayCollect)
 		.Handling<FMessage_Gameplay_NewTilePicked>(this, &ASGGrid::HandleNewTileIsPicked)
 		.Handling<FMessage_Gameplay_CollectLinkLine>(this, &ASGGrid::HandleCollectLinkLine)
-		.Handling<FMessage_Gameplay_EnemyBeginAttack>(this, &ASGGrid::HandleBeginAttack)
 		.Handling<FMessage_Gameplay_TileBeginMove>(this, &ASGGrid::HandleTileBeginMove)
 		.Handling<FMessage_Gameplay_TileEndMove>(this, &ASGGrid::HandleTileEndMove);
 	if (MessageEndpoint.IsValid() == true)
@@ -36,7 +35,6 @@ void ASGGrid::BeginPlay()
 		MessageEndpoint->Subscribe<FMessage_Gameplay_LinkedTilesCollect>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_NewTilePicked>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_CollectLinkLine>();
-		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyBeginAttack>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileBeginMove>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileEndMove>();
 	}
@@ -279,35 +277,6 @@ void ASGGrid::RefillGridAddressWithTile(int32 inGridAddress, ASGTileBase* inTile
 	GridTiles[inGridAddress] = inTile;
 }
 
-bool ASGGrid::CalculateEnemyDamageToPlayer(float& outDamageCanBeShield, float& outDamageDirectToHP)
-{
-	// Iterate the grid to find the enemy tiles
-	TArray<FTileDamageInfo> EnemyCauseDamageInfoArray;
-	for (int i = 0; i < GridTiles.Num(); i++)
-	{
-		const ASGEnemyTileBase* EnemyTile = Cast<ASGEnemyTileBase>(GridTiles[i]);
-		if (EnemyTile != nullptr)
-		{
-			EnemyCauseDamageInfoArray.Add(EnemyTile->Data.CauseDamageInfo);
-		}
-	}
-
-	if (EnemyCauseDamageInfoArray.Num() == 0)
-	{
-		// We don't find enemy tiles, so return false, means that there is no pending attack
-		return false;
-	}
-
-	// Iterate the damage info array, calculate the final
-	for (int i = 0; i < EnemyCauseDamageInfoArray.Num(); i++)
-	{
-		outDamageCanBeShield += EnemyCauseDamageInfoArray[i].InitialDamage * (1 - EnemyCauseDamageInfoArray[i].PiercingArmorRatio);
-		outDamageDirectToHP += EnemyCauseDamageInfoArray[i].InitialDamage * (EnemyCauseDamageInfoArray[i].PiercingArmorRatio);
-	}
-
-	return true;
-}
-
 void ASGGrid::ResetTiles()
 {
 	ResetTileLinkInfo();
@@ -414,56 +383,6 @@ TArray<ASGTileBase*> ASGGrid::GetTileSquareFromColumnAndRow(int32 inColumn, int3
 	return ResultTileArray;
 }
 
-bool ASGGrid::CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect)
-{
-	// Collect resouce array, using the resource type as index
-	TArray<float> SumupResource;
-	SumupResource.AddZeroed(static_cast<int32>(ESGResourceType::ETT_MAX));
-
-	// Array of tile address should be collected, used for condense the grid
-	TArray<int32> CollectedTileAddressArray;
-
-	// Iterate the link tiles, retrieve their resources
-	for (int i = 0; i < inTileArrayToCollect.Num(); i++)
-	{
-		const ASGTileBase* Tile = inTileArrayToCollect[i];
-		checkSlow(Tile);
-
-		// Insert into the collect tile array
-		CollectedTileAddressArray.Add(Tile->GetGridAddress());
-
-		// Collecte the resouces
-		TArray<FTileResourceUnit> TileResource = Tile->GetTileResource();
-		for (int j = 0; j < TileResource.Num(); j++)
-		{
-			// Sumup the resource
-			SumupResource[static_cast<int32>(TileResource[j].ResourceType)] += TileResource[j].ResourceAmount;
-		}
-	}
-
-	if (SumupResource.Num() > 0)
-	{
-		FMessage_Gameplay_ResourceCollect* ResouceCollectMessage = new FMessage_Gameplay_ResourceCollect();
-		ResouceCollectMessage->SummupResouces = SumupResource;
-
-		checkSlow(MessageEndpoint.IsValid());
-		MessageEndpoint->Publish(ResouceCollectMessage, EMessageScope::Process);
-	}
-
-	// Finally, tell the grid we have finish collect resource, the tiles are collected
-	if (CollectedTileAddressArray.Num() > 0)
-	{
-		FMessage_Gameplay_LinkedTilesCollect* Message = new FMessage_Gameplay_LinkedTilesCollect();
-		Message->TilesAddressToCollect = CollectedTileAddressArray;
-		if (MessageEndpoint.IsValid() == true)
-		{
-			MessageEndpoint->Publish(Message, EMessageScope::Process);
-		}
-	}
-
-	return true;
-}
-
 bool ASGGrid::AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB)
 {
 	if (GridAddressA == GridAddressB)
@@ -515,26 +434,6 @@ void ASGGrid::HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect&
 	Condense();
 }
 
-void ASGGrid::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
-{
-	float ShiledDamage = 0;
-	float DirectDamage = 0;
-	if (CalculateEnemyDamageToPlayer(ShiledDamage, DirectDamage) == true)
-	{
-		UE_LOG(LogSGame, Log, TEXT("Enemy will cause %f shield damage, and %f direct damage "), ShiledDamage, DirectDamage);
-		
-		// Send player pawn take damage message
-		FMessage_Gameplay_PlayerTakeDamage* PlayerTakeDamageMessage = new FMessage_Gameplay_PlayerTakeDamage{ 0 };
-		PlayerTakeDamageMessage->ShiledDamage = ShiledDamage;
-		PlayerTakeDamageMessage->DirectDamage = DirectDamage;
-		
-		checkSlow(MessageEndpoint.IsValid());
-		MessageEndpoint->Publish(PlayerTakeDamageMessage, EMessageScope::Process);
-
-		StartAttackFadeAnimation();
-	}
-}
-
 void ASGGrid::HandleTileBeginMove(const FMessage_Gameplay_TileBeginMove& Message, const IMessageContextRef& Context)
 {
 	checkSlow(CurrentFallingTileNum >= 0);
@@ -581,7 +480,7 @@ void ASGGrid::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Messa
 	}
 
 	// If can link to the last tile, then we build the path
-	if (CanLinkToLastTile(CurrentTile) == true)
+	if (GameMode->CanLinkToLastTile(CurrentTile) == true)
 	{
 		checkSlow(CurrentLinkLine);
 		CurrentLinkLine->BuildPath(CurrentTile);
@@ -637,7 +536,10 @@ void ASGGrid::UpdateTileSelectState()
 
 		FMessage_Gameplay_TileSelectableStatusChange* SelectableMessage = new FMessage_Gameplay_TileSelectableStatusChange{ 0 };
 		SelectableMessage->TileID = testTile->GetTileID();
-		if (CanLinkToLastTile(testTile) == true)
+		
+		ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
+		checkSlow(GameMode);
+		if (GameMode->CanLinkToLastTile(testTile) == true)
 		{
 			// The neighbor tile become selectable
 			SelectableMessage->NewSelectableStatus = true;
@@ -705,40 +607,4 @@ void ASGGrid::ResetTileLinkInfo()
 		LinkStatusChangeMessage->NewLinkStatus = false;
 		MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
 	}
-}
-
-bool ASGGrid::CanLinkToLastTile(const ASGTileBase* inCurrentTile)
-{
-	checkSlow(inCurrentTile);
-	checkSlow(CurrentLinkLine != nullptr);
-	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
-	{
-		// First tile, can always be linked
-		return true;
-	}
-
-	// Check the current tile can be linked with the last tile
-	const ASGTileBase* LastTile = CurrentLinkLine->LinkLineTiles.Last();
-	checkSlow(LastTile != nullptr);
-
-	// Currently only the neighbor tiles can be selected
-	if (AreAddressesNeighbors(inCurrentTile->GetGridAddress(), LastTile->GetGridAddress()) == false)
-	{
-		return false;
-	}
-
-	// Same tile type can always link together
-	if (LastTile->Data.TileType == inCurrentTile->Data.TileType)
-	{
-		return true;
-	}
-
-	// Enemy links 
-	if ((LastTile->Abilities.bCanLinkEnemy == true && inCurrentTile->Abilities.bEnemyTile == true) ||
-		(LastTile->Abilities.bEnemyTile == true && inCurrentTile->Abilities.bCanLinkEnemy == true))
-	{
-		return true;
-	}
-
-	return false;
 }

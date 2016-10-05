@@ -389,13 +389,16 @@ void ASGLinkLine::EndReplayLinkAnimation()
 {
 	UE_LOG(LogSGame, Log, TEXT("End replay link line anim."));
 
+	ASGGameMode* GameMode = Cast<ASGGameMode>(UGameplayStatics::GetGameMode(this));
+	checkSlow(GameMode);
+
 	IsReplayingLinkLineAnimation = false;
 
 	// Finally collect the tile resources
 	if (CachedCollectTiles.Num() > 0)
 	{
 		checkSlow(ParentGrid);
-		ParentGrid->CollectTileArray(CachedCollectTiles);
+		GameMode->CollectTileArray(CachedCollectTiles);
 	}
 	else
 	{
@@ -685,7 +688,7 @@ void ASGLinkLine::OnPlayerFinishBuildPath()
 		checkSlow(ParentGrid);
 
 		// Finally collect the tile resources
-		ParentGrid->CollectTileArray(CollectedTiles);
+		GameMode->CollectTileArray(CollectedTiles);
 
 		// Reset the linkline after all
 		ResetLinkState();

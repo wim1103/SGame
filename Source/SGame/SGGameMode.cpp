@@ -3,6 +3,7 @@
 #include "SGame.h"
 #include "SGGameMode.h"
 #include "SGPlayerController.h"
+#include "SGEnemyTileBase.h"
 
 ASGGameMode::ASGGameMode(const FObjectInitializer& ObjectInitializer)
 {
@@ -27,6 +28,7 @@ void ASGGameMode::BeginPlay()
 		.Handling<FMessage_Gameplay_GameStart>(this, &ASGGameMode::HandleGameStart)
 		.Handling<FMessage_Gameplay_GameStatusUpdate>(this, &ASGGameMode::HandleGameStatusUpdate)
 		.Handling<FMessage_Gameplay_AllTileFinishMove>(this, &ASGGameMode::HandleAllTileFinishMoving)
+		.Handling<FMessage_Gameplay_EnemyBeginAttack>(this, &ASGGameMode::HandleBeginAttack)
 		.WithInbox();
 	if (MessageEndpoint.IsValid() == true)
 	{
@@ -34,6 +36,7 @@ void ASGGameMode::BeginPlay()
 		MessageEndpoint->Subscribe<FMessage_Gameplay_GameStart>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_GameStatusUpdate>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_AllTileFinishMove>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyBeginAttack>();
 	}
 
 	// Find the grid actor in the world
@@ -90,6 +93,56 @@ void ASGGameMode::OnBeginRound()
 		GameStatusUpdateMesssage->NewGameStatus = ESGGameStatus::EGS_PlayerTurnBegin;
 		MessageEndpoint->Publish(GameStatusUpdateMesssage, EMessageScope::Process);
 	}
+}
+
+bool ASGGameMode::CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect)
+{
+	// Collect resouce array, using the resource type as index
+	TArray<float> SumupResource;
+	SumupResource.AddZeroed(static_cast<int32>(ESGResourceType::ETT_MAX));
+
+	// Array of tile address should be collected, used for condense the grid
+	TArray<int32> CollectedTileAddressArray;
+
+	// Iterate the link tiles, retrieve their resources
+	for (int i = 0; i < inTileArrayToCollect.Num(); i++)
+	{
+		const ASGTileBase* Tile = inTileArrayToCollect[i];
+		checkSlow(Tile);
+
+		// Insert into the collect tile array
+		CollectedTileAddressArray.Add(Tile->GetGridAddress());
+
+		// Collecte the resouces
+		TArray<FTileResourceUnit> TileResource = Tile->GetTileResource();
+		for (int j = 0; j < TileResource.Num(); j++)
+		{
+			// Sumup the resource
+			SumupResource[static_cast<int32>(TileResource[j].ResourceType)] += TileResource[j].ResourceAmount;
+		}
+	}
+
+	if (SumupResource.Num() > 0)
+	{
+		FMessage_Gameplay_ResourceCollect* ResouceCollectMessage = new FMessage_Gameplay_ResourceCollect();
+		ResouceCollectMessage->SummupResouces = SumupResource;
+
+		checkSlow(MessageEndpoint.IsValid());
+		MessageEndpoint->Publish(ResouceCollectMessage, EMessageScope::Process);
+	}
+
+	// Finally, tell the grid we have finish collect resource, the tiles are collected
+	if (CollectedTileAddressArray.Num() > 0)
+	{
+		FMessage_Gameplay_LinkedTilesCollect* Message = new FMessage_Gameplay_LinkedTilesCollect();
+		Message->TilesAddressToCollect = CollectedTileAddressArray;
+		if (MessageEndpoint.IsValid() == true)
+		{
+			MessageEndpoint->Publish(Message, EMessageScope::Process);
+		}
+	}
+
+	return true;
 }
 
 void ASGGameMode::OnPlayerTurnBegin()
@@ -196,6 +249,96 @@ bool ASGGameMode::IsLinkLineValid()
 {
 	checkSlow(CurrentLinkLine);
 	if (CurrentLinkLine->LinkLineTiles.Num() >= MinimunLengthLinkLineRequired)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+void ASGGameMode::HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context)
+{
+	float ShiledDamage = 0;
+	float DirectDamage = 0;
+	checkSlow(CurrentGrid);
+	if (CalculateEnemyDamageToPlayer(ShiledDamage, DirectDamage) == true)
+	{
+		UE_LOG(LogSGame, Log, TEXT("Enemy will cause %f shield damage, and %f direct damage "), ShiledDamage, DirectDamage);
+
+		// Send player pawn take damage message
+		FMessage_Gameplay_PlayerTakeDamage* PlayerTakeDamageMessage = new FMessage_Gameplay_PlayerTakeDamage{ 0 };
+		PlayerTakeDamageMessage->ShiledDamage = ShiledDamage;
+		PlayerTakeDamageMessage->DirectDamage = DirectDamage;
+
+		checkSlow(MessageEndpoint.IsValid());
+		MessageEndpoint->Publish(PlayerTakeDamageMessage, EMessageScope::Process);
+
+		CurrentGrid->StartAttackFadeAnimation();
+	}
+}
+
+bool ASGGameMode::CalculateEnemyDamageToPlayer(float& outDamageCanBeShield, float& outDamageDirectToHP)
+{
+	checkSlow(CurrentGrid);
+
+	// Iterate the grid to find the enemy tiles
+	TArray<FTileDamageInfo> EnemyCauseDamageInfoArray;
+	const TArray<ASGTileBase*>& GridTiles = CurrentGrid->GetGridTiles();
+	for (int i = 0; i < GridTiles.Num(); i++)
+	{
+		const ASGEnemyTileBase* EnemyTile = Cast<ASGEnemyTileBase>(GridTiles[i]);
+		if (EnemyTile != nullptr)
+		{
+			EnemyCauseDamageInfoArray.Add(EnemyTile->Data.CauseDamageInfo);
+		}
+	}
+
+	if (EnemyCauseDamageInfoArray.Num() == 0)
+	{
+		// We don't find enemy tiles, so return false, means that there is no pending attack
+		return false;
+	}
+
+	// Iterate the damage info array, calculate the final
+	for (int i = 0; i < EnemyCauseDamageInfoArray.Num(); i++)
+	{
+		outDamageCanBeShield += EnemyCauseDamageInfoArray[i].InitialDamage * (1 - EnemyCauseDamageInfoArray[i].PiercingArmorRatio);
+		outDamageDirectToHP += EnemyCauseDamageInfoArray[i].InitialDamage * (EnemyCauseDamageInfoArray[i].PiercingArmorRatio);
+	}
+
+	return true;
+}
+
+bool ASGGameMode::CanLinkToLastTile(const ASGTileBase* inTestTile)
+{
+	checkSlow(inTestTile);
+	checkSlow(CurrentLinkLine != nullptr);
+	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
+	{
+		// First tile, can always be linked
+		return true;
+	}
+
+	// Check the current tile can be linked with the last tile
+	const ASGTileBase* LastTile = CurrentLinkLine->LinkLineTiles.Last();
+	checkSlow(LastTile != nullptr);
+
+	// Currently only the neighbor tiles can be selected
+	checkSlow(CurrentGrid);
+	if (CurrentGrid->AreAddressesNeighbors(inTestTile->GetGridAddress(), LastTile->GetGridAddress()) == false)
+	{
+		return false;
+	}
+
+	// Same tile type can always link together
+	if (LastTile->Data.TileType == inTestTile->Data.TileType)
+	{
+		return true;
+	}
+
+	// Enemy links 
+	if ((LastTile->Abilities.bCanLinkEnemy == true && inTestTile->Abilities.bEnemyTile == true) ||
+		(LastTile->Abilities.bEnemyTile == true && inTestTile->Abilities.bCanLinkEnemy == true))
 	{
 		return true;
 	}

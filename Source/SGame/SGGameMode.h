@@ -92,6 +92,25 @@ public:
 
 	bool ShouldReplayLinkAnimation() const { return bShouldReplayLinkAnimation; }
 
+	/** Create player skill */
+	UFUNCTION(BlueprintCallable, Category = Tile)
+	bool CanLinkToLastTile(const ASGTileBase* inTestTile);
+
+	/** Collect a array of tiles*/
+	UFUNCTION(BlueprintCallable, Category = Tile)
+	bool CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect);
+
+	/**
+	* Calculate the enemy damage
+	*
+	* @param outDamageCanBeShield damage can be shielded
+	* @param outDamageDirectToHP damage direct to the hp
+	*
+	* @return true means there is enemy who will attack the player
+	*/
+	UFUNCTION(BlueprintCallable, Category = Attack)
+	bool CalculateEnemyDamageToPlayer(float& outDamageCanBeShield, float& outDamageDirectToHP);
+
 protected:
 
 	/** The minum lenth require for on valid link line*/
@@ -119,6 +138,9 @@ private:
 
 	/** Handle all tile has finish moving message, push the game procesdure to next stage */
 	void HandleAllTileFinishMoving(const FMessage_Gameplay_AllTileFinishMove& Message, const IMessageContextRef& Context);
+
+	/** Handle begin attack event*/
+	void HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context);
 
 	/** Current game status for this mode*/
 	ESGGameStatus CurrentGameGameStatus;

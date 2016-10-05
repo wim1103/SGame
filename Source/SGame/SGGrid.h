@@ -58,10 +58,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Tile)
 	TArray<ASGTileBase*> GetTileSquareFromColumnAndRow(int32 inColumn, int32 inRow);
 
-	/** Collect a array of tiles*/
-	UFUNCTION(BlueprintCallable, Category = Tile)
-	bool CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect);
-
 	/** Take into the column and row, return the grid address*/
 	int32 ColumnRowToGridAddress(int columnIndex, int32 rowIndex)
 	{
@@ -80,6 +76,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Tile)
 	bool IsSomeTileFalling() { return CurrentFallingTileNum > 0; }
 
+	/** Calculate if the two address are neighbor, the link is 8 directions*/
+	UFUNCTION(BlueprintCallable, Category = Tile)
+	bool AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB);
+
+	// Start Attack, using BP function to implement, since it is more convenient to polish
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartAttackFadeAnimation();
+
+	const TArray<ASGTileBase*>& GetGridTiles() { return GridTiles; }
+
 protected:
 	/** Contains the tile only on the grid */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -88,10 +94,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	APaperSpriteActor*			AttackFadingSprite;
 
-	/** Return the tile can link to the linkline */
-	UFUNCTION(BlueprintCallable, Category = LinkLine)
-	bool CanLinkToLastTile(const ASGTileBase* inCurrentTile);
-
 	/** Reset the tile select info */
 	UFUNCTION(BlueprintCallable, Category = Grid)
 	void ResetTileSelectInfo();
@@ -99,10 +101,6 @@ protected:
 	/** Reset the tile link info */
 	UFUNCTION(BlueprintCallable, Category = Grid)
 	void ResetTileLinkInfo();
-
-	// Start Attack, using BP function to implement, since it is more convenient to polish
-	UFUNCTION(BlueprintImplementableEvent)
-	void StartAttackFadeAnimation();
 
 	/** The time window to fade in and out */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
@@ -152,21 +150,6 @@ protected:
 	/** Actual level tile manager class for this grid*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TileManager)
 	ASGLevelTileManager* LevelTileManager;
-
-	/** 
-	 * Calculate the enemy damage 
-	 *
-	 * @param outDamageCanBeShield damage can be shielded
-	 * @param outDamageDirectToHP damage direct to the hp
-	 *
-	 * @return true means there is enemy who will attack the player
-	*/
-	UFUNCTION(BlueprintCallable, Category = Attack)
-	bool CalculateEnemyDamageToPlayer(float& outDamageCanBeShield, float& outDamageDirectToHP);
-
-	/** Calculate if the two address are neighbor, the link is 8 directions*/
-	bool AreAddressesNeighbors(int32 GridAddressA, int32 GridAddressB);
-
 private:
 	// Holds the messaging endpoint.
 	FMessageEndpointPtr MessageEndpoint;
@@ -179,9 +162,6 @@ private:
 
 	/** Handle tile grid event*/
 	void HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect& Message, const IMessageContextRef& Context);
-
-	/** Handle begin attack event*/
-	void HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context);
 
 	/** Handle when some tile begin move, just increase the count*/
 	void HandleTileBeginMove(const FMessage_Gameplay_TileBeginMove& Message, const IMessageContextRef& Context);
