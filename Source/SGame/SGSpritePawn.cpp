@@ -13,11 +13,6 @@ ASGSpritePawn::ASGSpritePawn()
 	RenderComponent->Mobility = EComponentMobility::Movable;
 	RenderComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 
-	PlayerHitPSC = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("PlayerHitPSC"));
-	PlayerHitPSC->Mobility = EComponentMobility::Movable;
-	PlayerHitPSC->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-	PlayerHitPSC->bAutoActivate = false;
-
 	HPMax = 100;
 	ArmorMax = 0;
 }
@@ -59,11 +54,7 @@ void ASGSpritePawn::HandlePlayerTakeDamage(const FMessage_Gameplay_PlayerTakeDam
 	CurrentHP = CurrentHP - Message.DirectDamage;
 	SetCurrentHealth(CurrentHP);
 
-	// Play hit psc
-	if (PlayerHitPSC != nullptr)
-	{
-		PlayerHitPSC->ActivateSystem(true);
-	}
+	OnPlayHitAniamtion();
 }
 
 void ASGSpritePawn::HandleCollectResouce(const FMessage_Gameplay_ResourceCollect& Message, const IMessageContextRef& Context)

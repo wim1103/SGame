@@ -12,6 +12,8 @@
 UCLASS()
 class SGAME_API ASGSpritePawn : public APawn
 {
+	friend class USGCheatManager;
+
 	GENERATED_BODY()
 
 public:
@@ -36,10 +38,6 @@ public:
 	/** Returns RenderComponent subobject **/
 	FORCEINLINE class UPaperSpriteComponent* GetRenderComponent() const { return RenderComponent; }
 
-public:
-	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetHealth", Category = "Health"))
-	void SetCurrentHealth(int inNewHealth);
-
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn)
 	int32		CurrentHP;
@@ -50,14 +48,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn)
 	int32		ArmorMax;
 
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetHealth", Category = "Health"))
+	void SetCurrentHealth(int inNewHealth);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = PlayHit)
+	void OnPlayHitAniamtion();
+
 	/** Handles the player picked new tile*/
 	void HandlePlayerTakeDamage(const FMessage_Gameplay_PlayerTakeDamage& Message, const IMessageContextRef& Context);
 
 	/** Handles collect resouce*/
 	void HandleCollectResouce(const FMessage_Gameplay_ResourceCollect& Message, const IMessageContextRef& Context);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Hit)
-	UParticleSystemComponent*		PlayerHitPSC;
 
 private:
 	UPROPERTY(Category = Sprite, VisibleAnywhere, BlueprintReadOnly, meta = (ExposeFunctionCategories = "Sprite,Rendering,Physics,Components|Sprite", AllowPrivateAccess = "true"))
