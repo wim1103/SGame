@@ -13,15 +13,7 @@ ASGGrid::ASGGrid(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	if (bUseOldTileManager == true)
-	{
-		TileManager = CreateDefaultSubobject<USGTileManager>(TEXT("TileManager"));
-	}
-	else
-	{
-		LevelTileManager = nullptr;
-	}
-
+	LevelTileManager = nullptr;
 	TileSize.Set(106.67f, 106.67f);
 	IsAttacking = false;
 	CurrentFallingTileNum = 0;
@@ -55,22 +47,15 @@ void ASGGrid::BeginPlay()
 	GridTiles.AddZeroed(GridWidth * GridHeight);
 
 	// Spawn the tile manager
-	if (bUseOldTileManager == true)
-	{
-		checkSlow(TileManager);
-		TileManager->Initialize();
-	}
-	else
-	{
-		checkSlow(GetWorld());
+	checkSlow(GetWorld());
 
-		// Set the spawn parameters.
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = nullptr;
-		LevelTileManager = GetWorld()->SpawnActor<ASGLevelTileManager>(LevelTileManagerClass, SpawnParams);
-	}
-
+	// Set the spawn parameters.
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = nullptr;
+	LevelTileManager = GetWorld()->SpawnActor<ASGLevelTileManager>(LevelTileManagerClass, SpawnParams);
+	checkSlow(LevelTileManager);
+	
 	// Find the link line actor in the world
 	CurrentLinkLine = nullptr;
 	for (TActorIterator<ASGLinkLine> It(GetWorld()); It; ++It)

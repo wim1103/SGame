@@ -7,7 +7,6 @@
 #include "SGTileBase.h"
 #include "Messaging.h"
 #include "SGameMessages.h"
-#include "SGTileManager.h"
 #include "SGLevelTileManager.h"
 #include "SGLinkLine.h"
 
@@ -164,12 +163,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Tile)
 	int32 GridHeight;
 
-	static const bool bUseOldTileManager = false;
-
-	/** Tile Manager for this grid*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Tile)
-	USGTileManager*		TileManager;
-
 	/** Level tile manager class for this grid*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TileManager)
 	TSubclassOf<class ASGLevelTileManager> LevelTileManagerClass;
@@ -177,8 +170,6 @@ protected:
 	/** Actual level tile manager class for this grid*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TileManager)
 	ASGLevelTileManager* LevelTileManager;
-
-
 
 	/** 
 	 * Calculate the enemy damage 

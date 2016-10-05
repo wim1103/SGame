@@ -9,7 +9,6 @@
 #include "SGameMessages.h"
 #include "SGLinkLine.h"
 #include "SGGrid.h"
-#include "SGTileManager.h"
 #include "SGSpritePawn.h"
 #include "SGPlayerSkillManager.h"
 
