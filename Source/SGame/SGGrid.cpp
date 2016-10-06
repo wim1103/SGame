@@ -67,10 +67,6 @@ void ASGGrid::BeginPlay()
 		}
 	}
 	checkSlow(CurrentLinkLine);
-
-	// Attack fading sprite is needed to play attacking effect
-	checkSlow(AttackFadingSprite);
-	AttackFadingSprite->GetRenderComponent()->SetSpriteColor(FLinearColor(1.0f, 1.0f, 1.0f, 0.f));
 }
 
 // Called every frame
@@ -81,7 +77,7 @@ void ASGGrid::Tick( float DeltaTime )
 
 void ASGGrid::ResetGrid()
 {
-	// Iterate the each colum of grid tiles arry, find the holes
+	// Iterate the each column of grid tiles array, find the holes
 	for (int columnIndex = 0; columnIndex < GridWidth; columnIndex++)
 	{
 		for (int rowIndex = 0; rowIndex < GridHeight; rowIndex++)

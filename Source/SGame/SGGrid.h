@@ -91,9 +91,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<ASGTileBase*> GridTiles;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	APaperSpriteActor*			AttackFadingSprite;
-
 	/** Reset the tile select info */
 	UFUNCTION(BlueprintCallable, Category = Grid)
 	void ResetTileSelectInfo();
