@@ -102,14 +102,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = Grid)
 	void ResetTileLinkInfo();
 
-	/** The time window to fade in and out */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
-	float FadingTimeWindow;
-
-	/** The fading alpha */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
-	float ResultFadingAlpha;
-
 	/** Condense the grid, fill the holes*/
 	UFUNCTION(BlueprintCallable, Category = Refill)
 	void Condense();
