@@ -146,9 +146,6 @@ private:
 	/** Handles the player picked new tile*/
 	void HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Message, const IMessageContextRef& Context);
 
-	/** Handle collect the link line*/
-	void HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context);
-
 	/** Handle tile grid event*/
 	void HandleTileArrayCollect(const FMessage_Gameplay_LinkedTilesCollect& Message, const IMessageContextRef& Context);
 

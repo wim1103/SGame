@@ -26,7 +26,6 @@ void ASGGrid::BeginPlay()
 	MessageEndpoint = FMessageEndpoint::Builder("Gameplay_Grid")
 		.Handling<FMessage_Gameplay_LinkedTilesCollect>(this, &ASGGrid::HandleTileArrayCollect)
 		.Handling<FMessage_Gameplay_NewTilePicked>(this, &ASGGrid::HandleNewTileIsPicked)
-		.Handling<FMessage_Gameplay_CollectLinkLine>(this, &ASGGrid::HandleCollectLinkLine)
 		.Handling<FMessage_Gameplay_TileBeginMove>(this, &ASGGrid::HandleTileBeginMove)
 		.Handling<FMessage_Gameplay_TileEndMove>(this, &ASGGrid::HandleTileEndMove);
 	if (MessageEndpoint.IsValid() == true)
@@ -34,7 +33,6 @@ void ASGGrid::BeginPlay()
 		// Subscribe the grid needed messages
 		MessageEndpoint->Subscribe<FMessage_Gameplay_LinkedTilesCollect>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_NewTilePicked>();
-		MessageEndpoint->Subscribe<FMessage_Gameplay_CollectLinkLine>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileBeginMove>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_TileEndMove>();
 	}
@@ -487,30 +485,6 @@ void ASGGrid::HandleNewTileIsPicked(const FMessage_Gameplay_NewTilePicked& Messa
 
 	// Update the tile link state
 	UpdateTileLinkState();
-}
-
-void ASGGrid::HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context)
-{
-	checkSlow(CurrentLinkLine != nullptr);
-
-	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
-	{
-		UE_LOG(LogSGame, Warning, TEXT("No tiles in the link line, nothing to collect"));
-		return;
-	}
-
-	// Post a tile disappear message
-	FMessage_Gameplay_LinkedTilesCollect* DisappearMessage = new FMessage_Gameplay_LinkedTilesCollect();
-	for (int i = 0; i < CurrentLinkLine->LinkLineTiles.Num(); i++)
-	{
-		checkSlow(CurrentLinkLine->LinkLineTiles[i]);
-		DisappearMessage->TilesAddressToCollect.Push(CurrentLinkLine->LinkLineTiles[i]->GetGridAddress());
-	}
-
-	if (MessageEndpoint.IsValid() == true)
-	{
-		MessageEndpoint->Publish(DisappearMessage, EMessageScope::Process);
-	}
 }
 
 void ASGGrid::UpdateTileSelectState()

@@ -29,6 +29,7 @@ void ASGGameMode::BeginPlay()
 		.Handling<FMessage_Gameplay_GameStatusUpdate>(this, &ASGGameMode::HandleGameStatusUpdate)
 		.Handling<FMessage_Gameplay_AllTileFinishMove>(this, &ASGGameMode::HandleAllTileFinishMoving)
 		.Handling<FMessage_Gameplay_EnemyBeginAttack>(this, &ASGGameMode::HandleBeginAttack)
+		.Handling<FMessage_Gameplay_CollectLinkLine>(this, &ASGGameMode::HandleCollectLinkLine)
 		.WithInbox();
 	if (MessageEndpoint.IsValid() == true)
 	{
@@ -37,6 +38,7 @@ void ASGGameMode::BeginPlay()
 		MessageEndpoint->Subscribe<FMessage_Gameplay_GameStatusUpdate>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_AllTileFinishMove>();
 		MessageEndpoint->Subscribe<FMessage_Gameplay_EnemyBeginAttack>();
+		MessageEndpoint->Subscribe<FMessage_Gameplay_CollectLinkLine>();
 	}
 
 	// Find the grid actor in the world
@@ -95,6 +97,30 @@ void ASGGameMode::OnBeginRound()
 	}
 }
 
+void ASGGameMode::HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context)
+{
+	checkSlow(CurrentLinkLine != nullptr);
+
+	if (CurrentLinkLine->LinkLineTiles.Num() == 0)
+	{
+		UE_LOG(LogSGame, Warning, TEXT("No tiles in the link line, nothing to collect"));
+		return;
+	}
+
+	// Post a tile disappear message
+	FMessage_Gameplay_LinkedTilesCollect* DisappearMessage = new FMessage_Gameplay_LinkedTilesCollect();
+	for (int i = 0; i < CurrentLinkLine->LinkLineTiles.Num(); i++)
+	{
+		checkSlow(CurrentLinkLine->LinkLineTiles[i]);
+		DisappearMessage->TilesAddressToCollect.Push(CurrentLinkLine->LinkLineTiles[i]->GetGridAddress());
+	}
+
+	if (MessageEndpoint.IsValid() == true)
+	{
+		MessageEndpoint->Publish(DisappearMessage, EMessageScope::Process);
+	}
+}
+
 bool ASGGameMode::CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect)
 {
 	// Collect resouce array, using the resource type as index
@@ -131,7 +157,7 @@ bool ASGGameMode::CollectTileArray(TArray<ASGTileBase*> inTileArrayToCollect)
 		MessageEndpoint->Publish(ResouceCollectMessage, EMessageScope::Process);
 	}
 
-	// Finally, tell the grid we have finish collect resource, the tiles are collected
+	// Finally, sent the message indicate the tiles are collected
 	if (CollectedTileAddressArray.Num() > 0)
 	{
 		FMessage_Gameplay_LinkedTilesCollect* Message = new FMessage_Gameplay_LinkedTilesCollect();

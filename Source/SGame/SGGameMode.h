@@ -142,6 +142,9 @@ private:
 	/** Handle begin attack event*/
 	void HandleBeginAttack(const FMessage_Gameplay_EnemyBeginAttack& Message, const IMessageContextRef& Context);
 
+	/** Handle collect the link line*/
+	void HandleCollectLinkLine(const FMessage_Gameplay_CollectLinkLine& Message, const IMessageContextRef& Context);
+
 	/** Current game status for this mode*/
 	ESGGameStatus CurrentGameGameStatus;
 
