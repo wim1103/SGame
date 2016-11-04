@@ -12,6 +12,7 @@ If you want to further know about the game, you can see the gameplay video from 
 
 ## Still under development
 The game is still under development, that is to say, serveral part of the game, including
+
 1. Levelup part (Coin shop, XP full upgrade, Armor full upgrade) is not finished yet.
 2. Majority kinds of the skills and the monsters is still under developement, because of the lacking of art.
 
