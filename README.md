@@ -8,7 +8,7 @@ It is a UE4 made [Dungeon Raid](https://play.google.com/store/apps/details?id=co
 
 ![Gameplay Image](/ArtSource/Reference/Gameplay.png)
 
-If you want to further know about the game, you can see the gameplay video from the youtube [link.](https://youtu.be/VPCGhkHxyRQ)
+If you want to further know about the game, you can see the gameplay video from the youtube [![Gameplay Link](/ArtSource/Reference/Youtubelink.png)](https://www.youtube.com/watch?v=VPCGhkHxyRQ)
 
 ## Still under development
 The game is still under development, that is to say, serveral part of the game, including
