@@ -6,7 +6,7 @@
 #include "Math/UnrealMathUtility.h"
 
 // Sets default values
-ASGLinkLine::ASGLinkLine(): ReplayAnimQueue(FAsyncQueue::Create())
+ASGLinkLine::ASGLinkLine()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -288,9 +288,6 @@ bool ASGLinkLine::ContainsTileAddress(int32 inTileAddress)
 
 bool ASGLinkLine::ReplayLinkAniamtion()
 {
-	// Empty the replay queue
-	checkSlow(ReplayAnimQueue->IsEmpty());
-
 	if (MessageEndpoint.IsValid() == true)
 	{
 		// Reset the tile link status
@@ -310,79 +307,6 @@ bool ASGLinkLine::ReplayLinkAniamtion()
 	BeginReplayLinkAnimation();
 
 	return true;
-}
-
-void ASGLinkLine::BeginReplayLinkAnimation()
-{
-	checkSlow(LinkLinePoints.Num() >= 3);
-
-	for (int ReplayLength = 1; ReplayLength < LinkLinePoints.Num(); ReplayLength++)
-	{
-		// Replaying the link asyncly
-		ReplayAnimQueue->Add(FAsyncDelegate::CreateLambda([this, ReplayLength](const FCallbackDelegate& Callback)
-		{
-			UE_LOG(LogSGameAsyncTask, Log, TEXT("Starting replay link line anim with length: %d"), ReplayLength);
-			FTimerHandle FooBar;
-			GetWorldTimerManager().SetTimer(FooBar, Callback, ReplayHeadAnimationDuration, false);
-
-			TArray<int32> ReplayingLinkLinePoints;
-
-			// Reconstruct the replay link line points one by one
-			ReplayingLinkLinePoints.Empty();
-
-			// Push back the replayed length
-			for (int i = 0; i <= ReplayLength; i++)
-			{
-				ReplayingLinkLinePoints.Push(LinkLinePoints[i]);
-			}
-
-			// Construct the link line again
-			UpdateLinkLineSprites(ReplayingLinkLinePoints);
-
-			checkSlow(ParentGrid);
-			if (this->MessageEndpoint.IsValid() == true)
-			{
-				if (ReplayLength == 1)
-				{
-					// Send the selected message to the fake tail
-					FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
-					const ASGTileBase* FakeSelectedTile = ParentGrid->GetTileFromGridAddress(LinkLinePoints[0]);
-					LinkStatusChangeMessage->TileID = FakeSelectedTile->GetTileID();
-					LinkStatusChangeMessage->NewLinkStatus = true;
-					MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
-
-					// If the tile is an enemy tile, then play hit animation
-					FMessage_Gameplay_EnemyGetHit* HitMessage = new FMessage_Gameplay_EnemyGetHit{ 0 };
-					HitMessage->TileID = FakeSelectedTile->GetTileID();
-					MessageEndpoint->Publish(HitMessage, EMessageScope::Process);
-				}
-
-				// Send the selected message to the fake head
-				FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
-				const ASGTileBase* FakeSelectedTile = ParentGrid->GetTileFromGridAddress(LinkLinePoints[ReplayLength]);
-				LinkStatusChangeMessage->TileID = FakeSelectedTile->GetTileID();
-				LinkStatusChangeMessage->NewLinkStatus = true;
-				MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
-
-				// If the tile is an enemy tile, then play hit animation
-				FMessage_Gameplay_EnemyGetHit* HitMessage = new FMessage_Gameplay_EnemyGetHit{ 0 };
-				HitMessage->TileID = FakeSelectedTile->GetTileID();
-				MessageEndpoint->Publish(HitMessage, EMessageScope::Process);
-			}
-
-			// Replay head anim
-			ReplayLinkHeadAnimation();
-		}));
-	}
-
-	UE_LOG(LogSGame, Log, TEXT("Start async replay link lines."));
-
-	// After the animation, we start async end the Replay work
-	ReplayAnimQueue->Execute(FCallbackDelegate::CreateLambda([this]()
-	{
-		UE_LOG(LogSGameAsyncTask, Log, TEXT("End replay link line anim."));
-		this->EndReplayLinkAnimation();
-	}));
 }
 
 void ASGLinkLine::EndReplayLinkAnimation()
@@ -444,6 +368,58 @@ void ASGLinkLine::TickReplayLinkHeadAnimation(float DeltaSeconds)
 	}
 
 	ReplayHeadAnimationElapsedTime += DeltaSeconds;
+}
+
+void ASGLinkLine::ReplaySingleLinkLineAniamtion(int32 ReplayLength)
+{
+	UE_LOG(LogSGameAsyncTask, Log, TEXT("Starting replay link line anim with length: %d"), ReplayLength);
+	TArray<int32> ReplayingLinkLinePoints;
+
+	// Reconstruct the replay link line points one by one
+	ReplayingLinkLinePoints.Empty();
+
+	// Push back the replayed length
+	for (int i = 0; i <= ReplayLength; i++)
+	{
+		ReplayingLinkLinePoints.Push(LinkLinePoints[i]);
+	}
+
+	// Construct the link line again
+	UpdateLinkLineSprites(ReplayingLinkLinePoints);
+
+	checkSlow(ParentGrid);
+	if (this->MessageEndpoint.IsValid() == true)
+	{
+		if (ReplayLength == 1)
+		{
+			// Send the selected message to the fake tail
+			FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+			const ASGTileBase* FakeSelectedTile = ParentGrid->GetTileFromGridAddress(LinkLinePoints[0]);
+			LinkStatusChangeMessage->TileID = FakeSelectedTile->GetTileID();
+			LinkStatusChangeMessage->NewLinkStatus = true;
+			MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
+
+			// If the tile is an enemy tile, then play hit animation
+			FMessage_Gameplay_EnemyGetHit* HitMessage = new FMessage_Gameplay_EnemyGetHit{ 0 };
+			HitMessage->TileID = FakeSelectedTile->GetTileID();
+			MessageEndpoint->Publish(HitMessage, EMessageScope::Process);
+		}
+
+		// Send the selected message to the fake head
+		FMessage_Gameplay_TileLinkedStatusChange* LinkStatusChangeMessage = new FMessage_Gameplay_TileLinkedStatusChange{ 0 };
+		const ASGTileBase* FakeSelectedTile = ParentGrid->GetTileFromGridAddress(LinkLinePoints[ReplayLength]);
+		LinkStatusChangeMessage->TileID = FakeSelectedTile->GetTileID();
+		LinkStatusChangeMessage->NewLinkStatus = true;
+		MessageEndpoint->Publish(LinkStatusChangeMessage, EMessageScope::Process);
+
+		// If the tile is an enemy tile, then play hit animation
+		FMessage_Gameplay_EnemyGetHit* HitMessage = new FMessage_Gameplay_EnemyGetHit{ 0 };
+		HitMessage->TileID = FakeSelectedTile->GetTileID();
+		MessageEndpoint->Publish(HitMessage, EMessageScope::Process);
+	}
+
+	// Replay head anim
+	ReplayLinkHeadAnimation();
 }
 
 UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngle)

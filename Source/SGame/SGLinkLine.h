@@ -7,7 +7,6 @@
 #include "PaperSpriteComponent.h"
 #include "Messaging.h"
 
-#include "FAsyncQueue.h"
 #include "SGameMessages.h"
 #include "SGTileBase.h"
 
@@ -67,9 +66,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Visitor)
 	bool ReplayLinkAniamtion();
 	bool IsReplayingLinkLineAnimation;
+
+	/**
+	* Replay link animation
+	*/
+	UFUNCTION(BlueprintImplementableEvent)
 	void BeginReplayLinkAnimation();
+
+	/**/
+	UFUNCTION(BlueprintCallable, Category = Visitor)
 	void EndReplayLinkAnimation();
 	void TickReplayLinkHeadAnimation(float DeltaSeconds);
+
+	/**
+	* Replay single unit linkline animation
+	*
+	* @param ReplayLength CurrentReplayLength
+	*/
+	UFUNCTION(BlueprintCallable, Category = Visitor)
+	void ReplaySingleLinkLineAniamtion(int32 ReplayLength);
 
 	/** Whether it is a static line. Test only, for static link lines.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -107,6 +122,7 @@ protected:
 	bool UpdateLinkLineSprites(const TArray<int32>& LinePoints);
 
 	/** Link line points, for drawing the sprites*/
+	UPROPERTY(Category = LinePoints, VisibleAnywhere, BlueprintReadOnly)
 	TArray<int32> LinkLinePoints;
 
 private:
@@ -130,8 +146,6 @@ private:
 	// Hold the reference to its parent grid
 	ASGGrid* ParentGrid;
 
-	// Async queue for replyaing animation
-	TSharedRef<FAsyncQueue, ESPMode::ThreadSafe> ReplayAnimQueue;
 	/** Cached current turn collected tiles for do collect animtion after replay link line animation */
 	TArray<ASGTileBase*> CachedCollectTiles;
 
