@@ -80,14 +80,14 @@ bool ASGLinkLine::UpdateLinkLineSprites()
 bool ASGLinkLine::UpdateLinkLineSprites(const TArray<int32>& LinePoints)
 {
 	// Clean the body sprites
-	for (int32 i = 0; i < BodySpriteRenderComponentsArray.Num(); i++)
+	for (int32 i = 0; i < LinkLineSpriteRendererArray.Num(); i++)
 	{
-		checkSlow(BodySpriteRenderComponentsArray[i] != nullptr);
+		checkSlow(LinkLineSpriteRendererArray[i] != nullptr);
 		// Detach the component
-		BodySpriteRenderComponentsArray[i]->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
-		BodySpriteRenderComponentsArray[i]->UnregisterComponent();
+		LinkLineSpriteRendererArray[i]->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+		LinkLineSpriteRendererArray[i]->UnregisterComponent();
 	}
-	BodySpriteRenderComponentsArray.Empty();
+	LinkLineSpriteRendererArray.Empty();
 
 	if (LinkLinePoints.Num() < 2)
 	{
@@ -270,11 +270,11 @@ bool ASGLinkLine::GetReferencedContentObjects(TArray<UObject*>& Objects) const
 		Objects.Add(TailSpriteRenderComponent->GetSprite());
 	}
 
-	for (int i = 0; i < BodySpriteRenderComponentsArray.Num(); i++)
+	for (int i = 0; i < LinkLineSpriteRendererArray.Num(); i++)
 	{
-		if (BodySpriteRenderComponentsArray[i] != nullptr && BodySpriteRenderComponentsArray[i]->GetSprite() != nullptr)
+		if (LinkLineSpriteRendererArray[i] != nullptr && LinkLineSpriteRendererArray[i]->GetSprite() != nullptr)
 		{
-			Objects.Add(BodySpriteRenderComponentsArray[i]->GetSprite());
+			Objects.Add(LinkLineSpriteRendererArray[i]->GetSprite());
 		}
 	}
 	return true;
@@ -352,10 +352,10 @@ void ASGLinkLine::TickReplayLinkHeadAnimation(float DeltaSeconds)
 	}
 	else
 	{
-		if (BodySpriteRenderComponentsArray.Num() > 0)
+		if (LinkLineSpriteRendererArray.Num() > 0)
 		{
 			// Get the last body sprite
-			UPaperSpriteComponent* LastLinebody = BodySpriteRenderComponentsArray.Last();
+			UPaperSpriteComponent* LastLinebody = LinkLineSpriteRendererArray.Last();
 			checkSlow(LastLinebody);
 			LastLinebody->SetRelativeScale3D(FVector(Ratio + 0.2f, 1.0f, 1.0f));
 		}
@@ -480,7 +480,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineCorner(int inAngle, int inLastAngl
 	}
 
 	// Add to the body sprite array
-	BodySpriteRenderComponentsArray.Add(NewSprite);
+	LinkLineSpriteRendererArray.Add(NewSprite);
 
 	return NewSprite;
 }
@@ -502,7 +502,7 @@ UPaperSpriteComponent* ASGLinkLine::CreateLineSegment(int inAngle, bool inIsHead
 		NewSprite->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 		// Add to the body sprite array
-		BodySpriteRenderComponentsArray.Add(NewSprite);
+		LinkLineSpriteRendererArray.Add(NewSprite);
 	}
 
 	checkSlow(NewSprite != nullptr);

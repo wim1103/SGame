@@ -116,7 +116,7 @@ protected:
 
 	/** Body sprites for render the link line body lines and coners */
 	UPROPERTY(Category = Sprite, VisibleAnywhere, BlueprintReadOnly)
-	TArray<UPaperSpriteComponent*> BodySpriteRenderComponentsArray;
+	TArray<UPaperSpriteComponent*> LinkLineSpriteRendererArray;
 
 	/** Update link line using the line points */
 	bool UpdateLinkLineSprites(const TArray<int32>& LinePoints);
