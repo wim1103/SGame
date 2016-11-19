@@ -92,7 +92,7 @@ public:
 
 	bool ShouldReplayLinkAnimation() const { return bShouldReplayLinkAnimation; }
 
-	/** Create player skill */
+	/** Tell wheter can link to test tile */
 	UFUNCTION(BlueprintCallable, Category = Tile)
 	bool CanLinkToLastTile(const ASGTileBase* inTestTile);
 
@@ -110,6 +110,12 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category = Attack)
 	bool CalculateEnemyDamageToPlayer(float& outDamageCanBeShield, float& outDamageDirectToHP);
+
+	/**
+	* Calculate the linkline resources and the damage
+	*/
+	UFUNCTION(BlueprintCallable, Category = LinkLine)
+	void CalculateLinkLine();
 
 protected:
 
@@ -129,6 +135,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = Game)
 	ASGGrid*			CurrentGrid;
 
+	/**
+	* Calculate the linkline damage
+	*/
+	TArray<FTileDamageInfo> CaculateLinkLineDamage(TArray<ASGTileBase*>& CauseDamageTiles);
 private:
 	/** Handles Game start messages. */
 	void HandleGameStart(const FMessage_Gameplay_GameStart& Message, const IMessageContextRef& Context);

@@ -64,7 +64,7 @@ public:
 	 * @return true to replay successfully
 	 */
 	UFUNCTION(BlueprintCallable, Category = Visitor)
-	bool ReplayLinkAniamtion();
+	bool ReplayLinkAniamtion(TArray<ASGTileBase*>& CollectTiles);
 	bool IsReplayingLinkLineAnimation;
 
 	/**
@@ -146,14 +146,12 @@ private:
 	// Hold the reference to its parent grid
 	ASGGrid* ParentGrid;
 
-	/** Cached current turn collected tiles for do collect animtion after replay link line animation */
+	/** Cached current turn collected tiles for do collect animation after replay link line animation */
 	TArray<ASGTileBase*> CachedCollectTiles;
 
-	TArray<FTileDamageInfo> CaculateDamage(TArray<ASGTileBase*>& CauseDamageTiles);
 	void ReplayLinkHeadAnimation();
-
 public:
 	void ResetLinkState();
 	void BuildPath(ASGTileBase* inNewTile);
-	void OnPlayerFinishBuildPath();
+
 };

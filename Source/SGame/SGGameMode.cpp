@@ -247,9 +247,8 @@ void ASGGameMode::OnPlayerEndBuildPathStage()
 		return;
 	}
 
-	// First we need to forward to linkline for collect some tiles
-	checkSlow(CurrentLinkLine);
-	CurrentLinkLine->OnPlayerFinishBuildPath();
+	// First we need to calculate the link line for resource and damage to enemy
+	CalculateLinkLine();
 
 	// Change the next status to player end input
 	if (MessageEndpoint.IsValid())
@@ -333,6 +332,103 @@ bool ASGGameMode::CalculateEnemyDamageToPlayer(float& outDamageCanBeShield, floa
 	}
 
 	return true;
+}
+
+TArray<FTileDamageInfo> ASGGameMode::CaculateLinkLineDamage(TArray<ASGTileBase*>& CauseDamageTiles)
+{
+	// We can do complex damage calculation here
+	// But currently, we just simply retrieve the damage info
+	TArray<FTileDamageInfo> ResultDamageInfo;
+	for (int i = 0; i < CauseDamageTiles.Num(); i++)
+	{
+		const ASGTileBase* Tile = CauseDamageTiles[i];
+		checkSlow(Tile);
+
+		ResultDamageInfo.Add(Tile->Data.CauseDamageInfo);
+	}
+
+	return ResultDamageInfo;
+}
+
+void ASGGameMode::CalculateLinkLine()
+{
+	TArray<ASGTileBase*> TakeDamageTiles;
+	TArray<ASGTileBase*> CollectedTiles;
+
+	// First we should find the can take damage tiles in the link line
+	checkSlow(CurrentLinkLine != nullptr);
+	for (int i = 0; i < CurrentLinkLine->LinkLineTiles.Num(); i++)
+	{
+		checkSlow(CurrentLinkLine->LinkLineTiles[i]);
+		ASGTileBase* Tile = CurrentLinkLine->LinkLineTiles[i];
+		if (Tile->Abilities.bCanTakeDamage == true && Tile->Abilities.bEnemyTile)
+		{
+			TakeDamageTiles.Add(Tile);
+		}
+		else
+		{
+			// The other tile will be collected after the link
+			CollectedTiles.Add(Tile);
+		}
+	}
+
+	// Cause damage to the take damage tiles
+	if (TakeDamageTiles.Num() > 0)
+	{
+		// If it contains the take damage tiles, we should calculate the damage then
+		TArray<ASGTileBase*> CauseDamageTiles;
+		for (int i = 0; i < CurrentLinkLine->LinkLineTiles.Num(); i++)
+		{
+			checkSlow(CurrentLinkLine->LinkLineTiles[i]);
+			ASGTileBase* Tile = CurrentLinkLine->LinkLineTiles[i];
+			if (Tile->Abilities.bCanCauseDamage == true && Tile->Abilities.bEnemyTile == false)
+			{
+				CauseDamageTiles.Add(Tile);
+			}
+		}
+
+		// Calculate the linked tiles damage
+		TArray<FTileDamageInfo> DamageInfos = CaculateLinkLineDamage(CauseDamageTiles);
+
+		// Then instigate the damage to the take damage tiles
+		for (int i = 0; i < TakeDamageTiles.Num(); i++)
+		{
+			checkSlow(TakeDamageTiles[i]);
+			ASGTileBase* Tile = TakeDamageTiles[i];
+
+			// Evaluate if the tile can suirve, for add the tile to collect tile array
+			if (Tile->EvaluateDamageToTile(DamageInfos) == true)
+			{
+				CollectedTiles.Add(Tile);
+			}
+
+			// Send the harm message to the tile
+			FMessage_Gameplay_DamageToTile* Message = new FMessage_Gameplay_DamageToTile{ 0 };
+			Message->TileID = Tile->GetTileID();
+			Message->DamageInfos = DamageInfos;
+			if (MessageEndpoint.IsValid() == true)
+			{
+				MessageEndpoint->Publish(Message, EMessageScope::Process);
+			}
+		}
+	}
+
+	// Replay the link animation if needed
+	if (ShouldReplayLinkAnimation() == false)
+	{
+		checkSlow(ParentGrid);
+
+		// Finally collect the tile resources
+		CollectTileArray(CollectedTiles);
+
+		// Reset the linkline after all
+		CurrentLinkLine->ResetLinkState();
+	}
+	else
+	{
+		// Replay link line animation if needed
+		CurrentLinkLine->ReplayLinkAniamtion(CollectedTiles);
+	}
 }
 
 bool ASGGameMode::CanLinkToLastTile(const ASGTileBase* inTestTile)
